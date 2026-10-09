@@ -1,0 +1,21 @@
+work/
+outputs/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+frontend/dist/
+fixtures/media/
+fixtures/local-paths.json
+fixtures/ai-selection/private/
+
+# Personal coding-agent setup and historical material stay local.
+agent-roles/
+docs/agent-workflow.md
+docs/archive/
+.codex/
+.agents/
+LOCAL-DEVELOPMENT.md

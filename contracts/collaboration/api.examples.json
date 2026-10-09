@@ -1,0 +1,1480 @@
+{
+  "api_version": "1.0.0",
+  "description": "Canned development examples; all responses are simulation=true, not measured results. Media files are not included.",
+  "examples": {
+    "health": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "status": "ok",
+        "execution_mode": "mock",
+        "limits": {
+          "max_files": 15,
+          "max_file_bytes": 104857600,
+          "max_project_bytes": 524288000,
+          "max_total_duration_seconds": 180
+        }
+      },
+      "schema": "HealthResponse",
+      "status": 200
+    },
+    "create_project": {
+      "request": {
+        "request_id": "request_project_01"
+      },
+      "request_schema": "CreateProjectRequest",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [],
+          "current_version": null,
+          "active_job_id": null,
+          "pending_selection": null
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 201
+    },
+    "project_ready": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [
+            {
+              "clip_id": "clip_01",
+              "filename": "clip_01.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_02",
+              "filename": "clip_02.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_03",
+              "filename": "clip_03.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_04",
+              "filename": "clip_04.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_05",
+              "filename": "clip_05.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_06",
+              "filename": "clip_06.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_07",
+              "filename": "clip_07.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_08",
+              "filename": "clip_08.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_09",
+              "filename": "clip_09.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_10",
+              "filename": "clip_10.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            }
+          ],
+          "current_version": null,
+          "active_job_id": null,
+          "pending_selection": null
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 200
+    },
+    "upload_clip": {
+      "request": {
+        "request_id": "request_upload_01",
+        "file": "<binary file part>"
+      },
+      "request_schema": "UploadForm",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project_id": "project_demo",
+        "clip": {
+          "clip_id": "clip_01",
+          "filename": "clip_01.mp4",
+          "duration_seconds": 8.0,
+          "display_width": 1920,
+          "display_height": 1080,
+          "rotation_degrees": 0,
+          "has_audio": true,
+          "thumbnail_url": null
+        }
+      },
+      "schema": "ClipResponse",
+      "status": 201
+    },
+    "generate": {
+      "request": {
+        "request_id": "request_generate_01",
+        "settings": {}
+      },
+      "request_schema": "GenerateRequest",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project_id": "project_demo",
+        "job_id": "job_demo"
+      },
+      "schema": "JobAccepted",
+      "status": 202
+    },
+    "edit_instruction": {
+      "request": {
+        "request_id": "request_edit_01",
+        "base_version_id": "version_mvp_01",
+        "input": {
+          "kind": "instruction",
+          "text": "删掉有狗的那段"
+        }
+      },
+      "request_schema": "EditRequest",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project_id": "project_demo",
+        "job_id": "job_edit"
+      },
+      "schema": "JobAccepted",
+      "status": 202
+    },
+    "edit_operations": {
+      "request": {
+        "request_id": "request_select_02",
+        "base_version_id": "version_mvp_01",
+        "input": {
+          "kind": "operations",
+          "operations": [
+            {
+              "type": "remove_clip",
+              "clip_id": "clip_07"
+            }
+          ]
+        }
+      },
+      "request_schema": "EditRequest",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project_id": "project_demo",
+        "job_id": "job_confirmed"
+      },
+      "schema": "JobAccepted",
+      "status": 202
+    },
+    "job_queued": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "queued",
+          "message": "模拟：queued",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_analyzing": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "analyzing",
+          "message": "模拟：analyzing",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_planning": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "planning",
+          "message": "模拟：planning",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_rendering": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "rendering",
+          "message": "模拟：rendering",
+          "progress": {
+            "completed": 450,
+            "total": 900,
+            "unit": "frames"
+          },
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_done": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "done",
+          "message": "模拟：done",
+          "progress": null,
+          "version_id": "version_mvp_01",
+          "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+          "summary": "模拟样例：生成校园日常速剪",
+          "resolution": null,
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_failed": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "failed",
+          "message": "模拟：failed",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": {
+            "code": "RENDER_FAILED",
+            "message": "模拟渲染失败",
+            "retryable": true
+          },
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_interrupted": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "generate",
+          "base_version_id": null,
+          "status": "interrupted",
+          "message": "模拟：interrupted",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": null,
+          "error": {
+            "code": "JOB_INTERRUPTED",
+            "message": "模拟服务重启，任务已中断",
+            "retryable": true
+          },
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "job_needs_selection": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "job": {
+          "job_id": "job_demo",
+          "project_id": "project_demo",
+          "request_id": "request_generate_01",
+          "kind": "edit",
+          "base_version_id": "version_mvp_01",
+          "status": "needs_selection",
+          "message": "模拟：needs_selection",
+          "progress": null,
+          "version_id": null,
+          "video_url": null,
+          "summary": null,
+          "resolution": {
+            "decision": "needs_selection",
+            "prompt": "两段素材都有狗，请选择要删除的一段。",
+            "candidates": [
+              {
+                "clip_id": "clip_07",
+                "label": "公园里的狗"
+              },
+              {
+                "clip_id": "clip_08",
+                "label": "门口的狗"
+              }
+            ]
+          },
+          "error": null,
+          "created_at": "2026-10-09T12:00:00Z",
+          "updated_at": "2026-10-09T12:00:00Z"
+        }
+      },
+      "schema": "JobResponse",
+      "status": 200
+    },
+    "project_done": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [
+            {
+              "clip_id": "clip_01",
+              "filename": "clip_01.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_02",
+              "filename": "clip_02.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_03",
+              "filename": "clip_03.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_04",
+              "filename": "clip_04.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_05",
+              "filename": "clip_05.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_06",
+              "filename": "clip_06.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_07",
+              "filename": "clip_07.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_08",
+              "filename": "clip_08.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_09",
+              "filename": "clip_09.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_10",
+              "filename": "clip_10.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            }
+          ],
+          "current_version": {
+            "version_id": "version_mvp_01",
+            "parent_version_id": null,
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟样例：生成校园日常速剪",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": null,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          },
+          "active_job_id": null,
+          "pending_selection": null
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 200
+    },
+    "project_busy": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [
+            {
+              "clip_id": "clip_01",
+              "filename": "clip_01.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_02",
+              "filename": "clip_02.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_03",
+              "filename": "clip_03.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_04",
+              "filename": "clip_04.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_05",
+              "filename": "clip_05.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_06",
+              "filename": "clip_06.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_07",
+              "filename": "clip_07.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_08",
+              "filename": "clip_08.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_09",
+              "filename": "clip_09.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_10",
+              "filename": "clip_10.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            }
+          ],
+          "current_version": {
+            "version_id": "version_mvp_01",
+            "parent_version_id": null,
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟样例：生成校园日常速剪",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": null,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          },
+          "active_job_id": "job_demo",
+          "pending_selection": null
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 200
+    },
+    "project_needs_selection": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [
+            {
+              "clip_id": "clip_01",
+              "filename": "clip_01.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_02",
+              "filename": "clip_02.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_03",
+              "filename": "clip_03.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_04",
+              "filename": "clip_04.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_05",
+              "filename": "clip_05.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_06",
+              "filename": "clip_06.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_07",
+              "filename": "clip_07.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_08",
+              "filename": "clip_08.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_09",
+              "filename": "clip_09.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_10",
+              "filename": "clip_10.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            }
+          ],
+          "current_version": {
+            "version_id": "version_mvp_01",
+            "parent_version_id": null,
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟样例：生成校园日常速剪",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": null,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          },
+          "active_job_id": null,
+          "pending_selection": {
+            "job_id": "job_demo",
+            "base_version_id": "version_mvp_01",
+            "resolution": {
+              "decision": "needs_selection",
+              "prompt": "两段素材都有狗，请选择要删除的一段。",
+              "candidates": [
+                {
+                  "clip_id": "clip_07",
+                  "label": "公园里的狗"
+                },
+                {
+                  "clip_id": "clip_08",
+                  "label": "门口的狗"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 200
+    },
+    "versions": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project_id": "project_demo",
+        "current_version_id": "version_mvp_02",
+        "versions": [
+          {
+            "version_id": "version_mvp_02",
+            "parent_version_id": "version_mvp_01",
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟：暖度提高到 0.25",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_02/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": 0.25,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          },
+          {
+            "version_id": "version_mvp_01",
+            "parent_version_id": null,
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟样例：生成校园日常速剪",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": null,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          }
+        ]
+      },
+      "schema": "VersionsResponse",
+      "status": 200
+    },
+    "select_version": {
+      "request": {
+        "request_id": "request_undo_01",
+        "base_version_id": "version_mvp_02",
+        "version_id": "version_mvp_01"
+      },
+      "request_schema": "SelectVersionRequest",
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "project": {
+          "project_id": "project_demo",
+          "created_at": "2026-10-09T12:00:00Z",
+          "settings": {
+            "output": {
+              "width": 1280,
+              "height": 720,
+              "fps": 30,
+              "encoding_profile": "mp4_h264_aac"
+            },
+            "duration_policy": {
+              "mode": "target",
+              "target_seconds": 30,
+              "tolerance_frames": 30
+            },
+            "style_id": "magazine_scrapbook",
+            "style_revision": 1,
+            "mood_id": null,
+            "title_overrides": {},
+            "warmth_override": null,
+            "music_asset_id": "bgm_lofi_01",
+            "voice_enabled": false,
+            "subtitles_enabled": false,
+            "excluded_clip_ids": [],
+            "creation_brief": {
+              "text": null,
+              "reference_image_asset_ids": []
+            }
+          },
+          "clips": [
+            {
+              "clip_id": "clip_01",
+              "filename": "clip_01.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_02",
+              "filename": "clip_02.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_03",
+              "filename": "clip_03.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_04",
+              "filename": "clip_04.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_05",
+              "filename": "clip_05.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_06",
+              "filename": "clip_06.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_07",
+              "filename": "clip_07.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_08",
+              "filename": "clip_08.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_09",
+              "filename": "clip_09.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1920,
+              "display_height": 1080,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            },
+            {
+              "clip_id": "clip_10",
+              "filename": "clip_10.mp4",
+              "duration_seconds": 8.0,
+              "display_width": 1080,
+              "display_height": 1920,
+              "rotation_degrees": 0,
+              "has_audio": true,
+              "thumbnail_url": null
+            }
+          ],
+          "current_version": {
+            "version_id": "version_mvp_01",
+            "parent_version_id": null,
+            "created_at": "2026-10-09T12:00:00Z",
+            "summary": "模拟样例：生成校园日常速剪",
+            "duration_frames": 900,
+            "video_url": "/api/projects/project_demo/versions/version_mvp_01/video",
+            "poster_url": null,
+            "origin": "fixture",
+            "settings": {
+              "output": {
+                "width": 1280,
+                "height": 720,
+                "fps": 30,
+                "encoding_profile": "mp4_h264_aac"
+              },
+              "duration_policy": {
+                "mode": "target",
+                "target_seconds": 30,
+                "tolerance_frames": 30
+              },
+              "style_id": "magazine_scrapbook",
+              "style_revision": 1,
+              "mood_id": null,
+              "title_overrides": {},
+              "warmth_override": null,
+              "music_asset_id": "bgm_lofi_01",
+              "voice_enabled": false,
+              "subtitles_enabled": false,
+              "excluded_clip_ids": [],
+              "creation_brief": {
+                "text": null,
+                "reference_image_asset_ids": []
+              }
+            }
+          },
+          "active_job_id": null,
+          "pending_selection": null
+        }
+      },
+      "schema": "ProjectResponse",
+      "status": 200
+    },
+    "error_bad_request": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "BAD_REQUEST",
+          "message": "模拟错误：BAD_REQUEST",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 400
+    },
+    "error_not_found": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "NOT_FOUND",
+          "message": "模拟错误：NOT_FOUND",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 404
+    },
+    "error_project_busy": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "PROJECT_BUSY",
+          "message": "模拟错误：PROJECT_BUSY",
+          "retryable": true
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 409
+    },
+    "error_stale_version": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "STALE_VERSION",
+          "message": "模拟错误：STALE_VERSION",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 409
+    },
+    "error_idempotency_conflict": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "IDEMPOTENCY_CONFLICT",
+          "message": "模拟错误：IDEMPOTENCY_CONFLICT",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 409
+    },
+    "error_upload_too_large": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "UPLOAD_TOO_LARGE",
+          "message": "模拟错误：UPLOAD_TOO_LARGE",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 413
+    },
+    "error_unsupported_media": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "UNSUPPORTED_MEDIA",
+          "message": "模拟错误：UNSUPPORTED_MEDIA",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 415
+    },
+    "error_validation_error": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "模拟错误：VALIDATION_ERROR",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 422
+    },
+    "error_queue_full": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "QUEUE_FULL",
+          "message": "模拟错误：QUEUE_FULL",
+          "retryable": true
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 429
+    },
+    "error_internal_error": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "模拟错误：INTERNAL_ERROR",
+          "retryable": true
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 500
+    },
+    "error_fixture_media_missing": {
+      "response": {
+        "api_version": "1.0.0",
+        "simulation": true,
+        "error": {
+          "code": "FIXTURE_MEDIA_MISSING",
+          "message": "模拟错误：FIXTURE_MEDIA_MISSING",
+          "retryable": false
+        }
+      },
+      "schema": "ErrorResponse",
+      "status": 404
+    }
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "edit_plan",
+  "project_id": "project_demo",
+  "version_id": "version_mvp_01",
+  "parent_version_id": null,
+  "origin": "fixture",
+  "plan": {
+    "title": {
+      "eyebrow": "A DAY IN MY LIFE",
+      "headline": "SLOW SUNDAY",
+      "tagline": "little moments, kept"
+    },
+    "shots": [
+      {
+        "shot_id": "shot_01",
+        "clip_id": "clip_01",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 5,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_02",
+        "clip_id": "clip_02",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_03",
+        "clip_id": "clip_03",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_04",
+        "clip_id": "clip_04",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_05",
+        "clip_id": "clip_05",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_06",
+        "clip_id": "clip_06",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_07",
+        "clip_id": "clip_07",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_08",
+        "clip_id": "clip_08",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_09",
+        "clip_id": "clip_09",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 3,
+        "section_id": null,
+        "speech_sentence_ids": []
+      },
+      {
+        "shot_id": "shot_10",
+        "clip_id": "clip_10",
+        "source_window": {
+          "in_seconds": 1.0,
+          "out_seconds": 5.0
+        },
+        "preferred_duration_seconds": 3.0,
+        "importance": 5,
+        "section_id": null,
+        "speech_sentence_ids": []
+      }
+    ],
+    "sections": []
+  }
+}

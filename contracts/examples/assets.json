@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "assets",
+  "project_id": "project_demo",
+  "assets": [
+    {
+      "asset_id": "clip_01",
+      "storage_key": "projects/project_demo/originals/clip_01.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1920,
+      "display_height": 1080,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_02",
+      "storage_key": "projects/project_demo/originals/clip_02.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1080,
+      "display_height": 1920,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_03",
+      "storage_key": "projects/project_demo/originals/clip_03.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1920,
+      "display_height": 1080,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_04",
+      "storage_key": "projects/project_demo/originals/clip_04.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1080,
+      "display_height": 1920,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_05",
+      "storage_key": "projects/project_demo/originals/clip_05.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1920,
+      "display_height": 1080,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_06",
+      "storage_key": "projects/project_demo/originals/clip_06.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1080,
+      "display_height": 1920,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_07",
+      "storage_key": "projects/project_demo/originals/clip_07.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1920,
+      "display_height": 1080,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_08",
+      "storage_key": "projects/project_demo/originals/clip_08.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1080,
+      "display_height": 1920,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_09",
+      "storage_key": "projects/project_demo/originals/clip_09.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1920,
+      "display_height": 1080,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "clip_10",
+      "storage_key": "projects/project_demo/originals/clip_10.mp4",
+      "origin": "upload",
+      "kind": "video",
+      "duration_seconds": 8.0,
+      "display_width": 1080,
+      "display_height": 1920,
+      "rotation_degrees": 0,
+      "has_audio": true
+    },
+    {
+      "asset_id": "bgm_lofi_01",
+      "storage_key": "assets/audio/bgm_lofi_01.wav",
+      "origin": "bundled",
+      "kind": "audio",
+      "duration_seconds": 90.0
+    },
+    {
+      "asset_id": "bgm_acoustic_01",
+      "storage_key": "assets/audio/bgm_acoustic_01.wav",
+      "origin": "bundled",
+      "kind": "audio",
+      "duration_seconds": 90.0
+    },
+    {
+      "asset_id": "narration_01",
+      "storage_key": "assets/audio/narration_01.wav",
+      "origin": "generated",
+      "kind": "audio",
+      "duration_seconds": 4.0
+    },
+    {
+      "asset_id": "font_inter",
+      "storage_key": "assets/fonts/font_inter.ttf",
+      "origin": "bundled",
+      "kind": "font"
+    },
+    {
+      "asset_id": "font_playfair",
+      "storage_key": "assets/fonts/font_playfair.ttf",
+      "origin": "bundled",
+      "kind": "font"
+    },
+    {
+      "asset_id": "font_pinyon",
+      "storage_key": "assets/fonts/font_pinyon.ttf",
+      "origin": "bundled",
+      "kind": "font"
+    },
+    {
+      "asset_id": "font_noto_sans_sc",
+      "storage_key": "assets/fonts/font_noto_sans_sc.ttf",
+      "origin": "bundled",
+      "kind": "font"
+    },
+    {
+      "asset_id": "decor_tape",
+      "storage_key": "assets/images/decor_tape.png",
+      "origin": "bundled",
+      "kind": "image",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "asset_id": "sticker_01",
+      "storage_key": "assets/images/sticker_01.png",
+      "origin": "generated",
+      "kind": "image",
+      "width": 512,
+      "height": 512
+    },
+    {
+      "asset_id": "reference_01",
+      "storage_key": "assets/images/reference_01.png",
+      "origin": "upload",
+      "kind": "image",
+      "width": 512,
+      "height": 512
+    }
+  ]
+}

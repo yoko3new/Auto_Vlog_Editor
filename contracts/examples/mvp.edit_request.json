@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "edit_request",
+  "project_id": "project_demo",
+  "request_id": "request_remove_01",
+  "base_version_id": "version_mvp_01",
+  "instruction": "删掉有狗的那段",
+  "resolution": {
+    "decision": "ready",
+    "operations": [
+      {
+        "type": "remove_clip",
+        "clip_id": "clip_07"
+      }
+    ]
+  }
+}

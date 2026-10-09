@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "document_type": "project_config",
+  "project_id": "project_demo",
+  "version_id": "version_mvp_02",
+  "parent_version_id": "version_mvp_01",
+  "settings": {
+    "output": {
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "encoding_profile": "mp4_h264_aac"
+    },
+    "duration_policy": {
+      "mode": "natural",
+      "target_seconds": null,
+      "tolerance_frames": 0
+    },
+    "style_id": "magazine_scrapbook",
+    "style_revision": 1,
+    "mood_id": null,
+    "title_overrides": {},
+    "warmth_override": null,
+    "music_asset_id": "bgm_lofi_01",
+    "voice_enabled": false,
+    "subtitles_enabled": false,
+    "excluded_clip_ids": [
+      "clip_07"
+    ],
+    "creation_brief": {
+      "text": null,
+      "reference_image_asset_ids": []
+    }
+  }
+}
