@@ -86,6 +86,15 @@ frontend/         React + TypeScript + Vite editor
 tests/           Validation, failure recovery, API and real-media checks
 ```
 
+## Web design
+
+The editor follows the layout of Emergence Magazine's long-form features: a thin white masthead with a reading-progress rule, a centred serif title block, one 684 px reading column, the film shown full width on a dark band with a quiet circular Play button, centred chapter breaks and one wide pull quote. Interface text is set in a sans serif, reading text in a serif.
+
+- Palette: light mint is the primary colour (logo tile `#CCF0E4`, buttons `#8DD0B8`, links `#2B735B` for AA contrast), with butter yellow (`#FFF4CF`, upload area) and sky blue (`#E2EFFA`, empty film band and notes) as accents. Text is a green-tinted near-black on `#F8FAF7`.
+- Logo: the approved vlogii lockup and tile live in `frontend/public/brand/` (lockup, 32/180/512 px tiles and an opaque Apple touch icon).
+- Type: Newsreader, Libre Franklin and Courier Prime (all SIL Open Font License) are bundled through `@fontsource` packages, so the browser makes no font requests to third parties. Emergence's own typefaces are commercial and are not used.
+- The design covers the web UI only. Captions and titles burned into exported MP4 files are unchanged.
+
 ## Verify
 
 ```sh
