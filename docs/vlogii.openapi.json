@@ -79,6 +79,70 @@
         }
       }
     },
+    "/api/vlogii/presets": {
+      "get": {
+        "summary": "Presets",
+        "operationId": "presets_api_vlogii_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetLibrary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vlogii/presets/{kind}/{identifier}": {
+      "get": {
+        "summary": "Preset File",
+        "operationId": "preset_file_api_vlogii_presets__kind___identifier__get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Identifier"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vlogii/projects/{name}": {
       "get": {
         "summary": "Project",
@@ -353,6 +417,54 @@
   },
   "components": {
     "schemas": {
+      "Appearance": {
+        "properties": {
+          "font": {
+            "type": "string",
+            "enum": [
+              "default",
+              "noto-sans",
+              "noto-serif",
+              "ma-shan-zheng",
+              "zcool-xiaowei",
+              "caveat",
+              "playfair-display"
+            ],
+            "title": "Font",
+            "default": "default"
+          },
+          "music": {
+            "type": "string",
+            "enum": [
+              "none",
+              "auto",
+              "holizna-dreams",
+              "holizna-day-jobs",
+              "holizna-dancing",
+              "holizna-deja-vu",
+              "holizna-childhood",
+              "holizna-advertisements"
+            ],
+            "title": "Music",
+            "default": "none"
+          },
+          "music_volume": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Music Volume",
+            "default": 0.16
+          },
+          "duck_music": {
+            "type": "boolean",
+            "title": "Duck Music",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Appearance"
+      },
       "Body_upload_api_vlogii_projects_post": {
         "properties": {
           "name": {
@@ -387,6 +499,16 @@
       },
       "EditRequest": {
         "properties": {
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Appearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "title": {
             "anyOf": [
               {
@@ -515,6 +637,16 @@
             "title": "Shot Seconds",
             "default": 0.5
           },
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Appearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "direction": {
             "type": "string",
             "maxLength": 2000,
@@ -609,6 +741,97 @@
         ],
         "title": "JobState"
       },
+      "PresetEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "license": {
+            "type": "string",
+            "title": "License"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "url",
+          "source",
+          "license",
+          "sha256",
+          "bytes"
+        ],
+        "title": "PresetEntry"
+      },
+      "PresetLibrary": {
+        "properties": {
+          "fonts": {
+            "items": {
+              "$ref": "#/components/schemas/PresetEntry"
+            },
+            "type": "array",
+            "title": "Fonts"
+          },
+          "music": {
+            "items": {
+              "$ref": "#/components/schemas/PresetEntry"
+            },
+            "type": "array",
+            "title": "Music"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fonts",
+          "music"
+        ],
+        "title": "PresetLibrary"
+      },
       "ProjectView": {
         "properties": {
           "name": {
@@ -676,6 +899,9 @@
                 "type": "null"
               }
             ]
+          },
+          "appearance": {
+            "$ref": "#/components/schemas/Appearance"
           }
         },
         "additionalProperties": false,
@@ -743,6 +969,9 @@
       },
       "Settings": {
         "properties": {
+          "appearance": {
+            "$ref": "#/components/schemas/Appearance"
+          },
           "width": {
             "type": "integer",
             "maximum": 3840.0,

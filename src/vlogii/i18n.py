@@ -3,6 +3,9 @@
 import re
 
 MESSAGES = {
+    "Mixing background music": "正在混合背景音乐",
+    "A bundled preset is missing or changed. Restore the application assets.": "内置资源缺失或已变化，请恢复应用资源文件。",
+    "A caption contains unsupported font glyphs. Remove emoji or use supported text.": "字幕含字体不支持的字符，请移除表情符号或改用可显示的文字。",
     "Planning your film": "正在规划你的影片",
     "Joining segments": "正在合并视频片段",
     "Checking video and audio": "正在检查画面与音频",

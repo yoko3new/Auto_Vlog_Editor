@@ -13,12 +13,14 @@ import './style.css';
 import { Language, translations, localizeMessage } from './i18n';
 import { parseTargetSeconds } from './duration';
 import { jobProgress, ProgressStage } from './job-progress';
+import { Appearance, AppearanceControls, defaultAppearance, PresetLibrary } from './appearance';
 
 type Job = { status: 'queued' | 'running' | 'complete' | 'failed'; message: string; error: string | null; retryable: boolean; kind: 'generate' | 'edit' | null };
 type EditMode = 'auto' | 'highlights' | 'keep_most' | 'keep_all';
 type Project = { name: string; clips: { id: string; name: string; duration: number }[]; job: Job | null;
   latest: { cut: string; history: string[] } | null; video_url: string | null; duration_seconds: number | null;
-  selection: { mode: EditMode; target_seconds: number | null; remove_no_speech: boolean; speed: number; shot_seconds: number } | null };
+  selection: { mode: EditMode; target_seconds: number | null; remove_no_speech: boolean; speed: number; shot_seconds: number } | null;
+  appearance: Appearance };
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const result = await fetch('/api/vlogii' + url, options);
@@ -92,6 +94,9 @@ function App() {
   const [speed, setSpeed] = useState(1);
   const [editSpeed, setEditSpeed] = useState<number | null>(null);
   const [shotSeconds, setShotSeconds] = useState(0.5);
+  const [library, setLibrary] = useState<PresetLibrary | null>(null);
+  const [appearance, setAppearance] = useState<Appearance>(defaultAppearance);
+  const [editAppearance, setEditAppearance] = useState<Appearance | null>(null);
   const [mode, setMode] = useState<EditMode>('auto');
   const [removeNoSpeech, setRemoveNoSpeech] = useState(false);
   const [orientation, setOrientation] = useState('portrait');
@@ -130,6 +135,8 @@ function App() {
     setMode(example.mode); setSeconds(''); setRemoveNoSpeech(example.removeNoSpeech || false);
   }
   useEffect(() => { setInstruction(''); setExcluded([]); setTitle(''); setWarmer(false); setEditSpeed(null); }, [project?.name]);
+  useEffect(() => { setEditAppearance(null); }, [project?.name, project?.latest?.cut]);
+  useEffect(() => { request<PresetLibrary>('/presets').then(setLibrary).catch(exc => setError(exc.message)); }, []);
 
   useEffect(() => {
     request<Project[]>('/projects').then(items => {
@@ -178,7 +185,7 @@ function App() {
     if (!project || (!retention && !validSeconds)) return;
     await perform(async () => {
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/generate`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention ? null : targetSeconds, speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language }) });
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention ? null : targetSeconds, speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, appearance, language }) });
       setProject({ ...project, job });
     });
   }
@@ -188,8 +195,8 @@ function App() {
     await perform(async () => {
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/edit`, { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim() || null, exclude_clip_ids: excluded, warmth: warmer ? 0.5 : null, instruction, speed: editSpeed, language }) });
-      setProject({ ...project, job }); setExcluded([]); setInstruction(''); setEditSpeed(null);
+        body: JSON.stringify({ title: title.trim() || null, exclude_clip_ids: excluded, warmth: warmer ? 0.5 : null, instruction, speed: editSpeed, appearance: appearanceChanged ? editAppearance : null, language }) });
+      setProject({ ...project, job }); setExcluded([]); setInstruction(''); setEditSpeed(null); setEditAppearance(null);
     });
   }
 
@@ -214,7 +221,8 @@ function App() {
     return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); window.cancelAnimationFrame(frame); };
   }, []);
 
-  const editDisabled = !project?.latest || busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null);
+  const appearanceChanged = editAppearance !== null && JSON.stringify(editAppearance) !== JSON.stringify(project?.appearance);
+  const editDisabled = !project?.latest || busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null && !appearanceChanged);
   const footage = project ? Math.round(project.clips.reduce((sum, clip) => sum + clip.duration, 0)) : 0;
   const version = project?.latest?.cut.replace('cut_', t.version + ' ') || null;
 
@@ -290,6 +298,7 @@ function App() {
           {mode === 'highlights' && <fieldset className="radio-bar" disabled={busy || active}><legend>{t.cadence}</legend>{[0.25, 0.35, 0.5, 0.8].map(value => <label key={value}><input type="radio" name="cadence" value={value} checked={shotSeconds === value} onChange={() => setShotSeconds(value)}/>{value}s</label>)}</fieldset>}
           <fieldset className="radio-bar" disabled={busy || active}><legend>{t.speed}</legend>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="generate-speed" value={value} checked={speed === value} onChange={() => setSpeed(value)}/>{value}×</label>)}</fieldset><p className="note">{t.speedHint}</p>
           <p className="note">{mode === 'highlights' ? t.highlightsAudioHint : t.audioHint}</p>
+          <AppearanceControls id="generate" value={appearance} onChange={setAppearance} library={library} language={language} disabled={busy || active} muted={mode === 'highlights'}/>
           <p className="note">{t.privacy}</p>
           <button className="button primary" onClick={generateFilm} disabled={!project || busy || active || (!retention && !validSeconds)}>{active ? t.making : project?.latest ? t.newVersion : t.generate}</button>
         </section>
@@ -299,6 +308,7 @@ function App() {
           <fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset>
           <div className="actions edit-actions-top"><button className="button primary" disabled={editDisabled} onClick={applyEdit}>{t.apply}</button><a className="button quiet" href="#film">{t.viewFilm}</a></div>
           <p className="note">{t.editSpeedHint}</p>
+          <AppearanceControls id="edit" value={editAppearance || project.appearance} onChange={setEditAppearance} library={library} language={language} disabled={busy || active} muted={project.selection?.mode === 'highlights'}/>
           <div className="field">
             <label htmlFor="time-edits-input">{t.timeEdits}</label>
             <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{[t.exampleRemove, t.exampleSpeed].map(example => <button type="button" key={example} disabled={busy || active || instruction.length + example.length + 2 > 1000} onClick={() => setInstruction(value => value.trim() ? value.trim() + '; ' + example : example)}>{example}</button>)}</div>

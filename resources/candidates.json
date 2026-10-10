@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-10-10",
-  "stage": "downloaded candidates; integration pending",
+  "stage": "initial research snapshot; bundled runtime presets are registered separately",
   "fonts": [
     {
       "id": "noto-sans-sc-regular",
@@ -56,5 +56,6 @@
       "bytes": 5429965,
       "sha256": "c974c57cf242be09806002a236a4d97fad80e015c1f36535c800a782f9396228"
     }
-  ]
+  ],
+  "runtime_manifest": "src/vlogii/assets/manifest.json"
 }

@@ -31,14 +31,14 @@ Input constraints: at most 50 clips, single file 512 MiB, single upload 2 GiB, t
 | Upload and Footage Display | Partially covered | Thumbnails, orientation display, and acceptance on competition footage set |
 | AI Understanding/Selection/Sequencing | Main pipeline available | Human-annotated key moments, duplicate shots, and content quality evaluation |
 | Fixed Magazine-Style Output | Not yet covered | Designing and rendering fixed title hierarchy, decorations, and unified visual styling; web aesthetics do not equal MP4 style |
-| Fixed BGM and Beat Editing | Not yet covered | Music assets/licensing, beat data, timeline beat-matching, audio mixing; currently uses original audio, unlike the original muted plan |
+| Fixed BGM and Beat Editing | Partially covered | Six bundled CC0 tracks, continuous mixing and speech ducking are implemented; beat data and timeline syncing remain pending. See [assets](free-resources.en.md) |
 | First Cut 30±1 Seconds, 720p/16:9/30 fps | Partially covered | Current specs configurable, web defaults to 1080p portrait; 30 seconds is only a target, needs verification to meet competition duration and specs |
 | Three Types of Natural Language Edits | Available via controls | Parsing, ambiguity confirmation, and summarization of arbitrary semantic operations; currently supports field/file ID operations and controlled time deletion/speed adjustment expressions |
 | Versioning/Undo/Failure Protection | Main behaviors available | Re-testing full scenarios such as continuing edits after undo; do not claim full support for old API versions and idempotency semantics |
 | Complete Single-Page Interaction | Basic page available | Teammates handle frontend polish and real API integration; do not display entry points that are not yet implemented |
 | Official Replit Deployment/Persistent Recovery | Not yet covered | Cloud storage, official deployment, real load, and reboot recovery acceptance; currently local file storage only |
 
-The original [Product Definition](product.en.md) continues to serve as the competition goal. Having capabilities like original audio subtitles, portrait orientation, and HDR now does not mean the entire original V2/V3 stage is complete: for example, subtitles exist, but BGM ducking does not. Whether to change the competition scope requires separate clarification; this page only records actual coverage and does not treat subsequent proposals as implemented.
+The original [Product Definition](product.en.md) continues to serve as the competition goal. Having capabilities like original audio subtitles, portrait orientation, and HDR now does not mean the entire original V2/V3 stage is complete: for example, subtitles and BGM ducking exist, but beat syncing does not. Whether to change the competition scope requires separate clarification; this page only records actual coverage and does not treat subsequent proposals as implemented.
 
 ## How to Read Verification Conclusions
 

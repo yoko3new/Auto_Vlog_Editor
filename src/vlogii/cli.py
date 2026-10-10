@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from .i18n import translate
 from .media import Tools
-from .models import Plan, Settings
+from .models import Appearance, Plan, Settings
 from .pipeline import (
     analyze,
     edit,
@@ -40,6 +40,20 @@ def choose_language(argv):
         value = input("Language / 语言 [1 中文 / 2 English] (1): ").strip().lower()
         return "en" if value in {"2", "en", "english"} else "zh"
     return os.environ.get("VLOGII_LANGUAGE", "en")
+
+
+def selected_appearance(args, directory):
+    values = {key: getattr(args, key, None) for key in ("font", "music", "music_volume")}
+    if all(value is None for value in values.values()):
+        return None
+    path = directory / "project.json"
+    if args.command == "edit" and (directory / "latest.json").exists():
+        latest = read_json(directory / "latest.json")
+        path = directory / "cuts" / latest["cut"] / "project.json"
+    current = Settings.model_validate(read_json(path)["settings"]).appearance.model_dump()
+    return Appearance.model_validate(
+        {**current, **{k: v for k, v in values.items() if v is not None}}
+    )
 
 
 def execute(args, resume=False):
@@ -87,6 +101,7 @@ def execute(args, resume=False):
             remove_no_speech=getattr(args, "remove_no_speech", False),
             speed=getattr(args, "speed", 1),
             shot_seconds=getattr(args, "shot_seconds", 0.5),
+            appearance=selected_appearance(args, directory),
         )
     elif command == "edit":
         edit(
@@ -98,6 +113,7 @@ def execute(args, resume=False):
             resume=resume,
             instruction=getattr(args, "instruction", ""),
             speed=getattr(args, "speed", None),
+            appearance=selected_appearance(args, directory),
         )
     elif command == "undo":
         cut = undo(directory)
@@ -328,6 +344,8 @@ def interactive_session(projects, language):
                 mode=mode,
                 speed=speed,
                 shot_seconds=shot_seconds,
+                font="default",
+                music="auto",
                 language=language,
             )
 
@@ -445,6 +463,18 @@ def main(argv=None):
             )
         if command == "analyze":
             sub.add_argument("--force", action="store_true")
+        if command in {"run", "edit"}:
+            from typing import get_args
+
+            from .models import FontPreset, MusicPreset
+
+            sub.add_argument("--font", choices=get_args(FontPreset))
+            sub.add_argument(
+                "--music",
+                choices=get_args(MusicPreset),
+                default="auto" if command == "run" else None,
+            )
+            sub.add_argument("--music-volume", type=float)
         if command == "edit":
             sub.add_argument("--title")
             sub.add_argument("--exclude-clip-ids", nargs="*", default=[])

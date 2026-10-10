@@ -42,6 +42,7 @@ Open **http://127.0.0.1:8000**. macOS automatically prefers Homebrew's `ffmpeg-f
 - Chinese/English switching, optional creative direction and clickable input examples; the user confirms before submitting.
 - Portrait/landscape, original audio, captions and occasional text. SDR/H.264 is the default; all-HLG footage can preserve 10-bit HEVC.
 - Edit titles, warmth, clip exclusions, film time-range removals and whole-film or local speed; captions and audio follow the timeline.
+- Six bundled free fonts and six CC0 instrumental tracks: automatic loading, font previews, music listening, volume and speech ducking; existing films can change presets and undo.
 - Successful versions, preview, undo and download. Failures preserve old films; Retry reuses saved requests, valid analysis caches and completed render segments.
 
 | Generation mode | Default behavior |
@@ -76,7 +77,7 @@ npm --prefix frontend run build
 python3 tools/check_docs.py
 ```
 
-The latest code validation recorded **95 passing Python tests**, including real FFmpeg exports, and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
+The latest code validation recorded **101 passing Python tests**, including real FFmpeg exports, and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
 
 ## Documentation and ownership
 
@@ -84,8 +85,8 @@ Each document has a Chinese/English language switch at the top; code, field name
 
 - [Mac / Safari setup](docs/vlogii-mac-setup.en.md) · [User guide](docs/vlogii-guide.md) · [Feature coverage](docs/mvp-coverage.en.md) · [Current status](docs/status.en.md)
 - [Editing rules](docs/editing-modes.en.md) · [Product definition](docs/product.en.md) · [Architecture](docs/architecture.en.md)
-- [Free font/BGM candidates and licenses](docs/free-resources.en.md): research and downloads are complete; bundled presets, mixing and custom uploads are pending.
+- [Free font/BGM candidates and licenses](docs/free-resources.en.md): fonts, instrumental music and mixing are bundled and load on demand; custom uploads and beat syncing are pending.
 - [Team handoff](docs/collaboration.en.md): Yang Kang owns video, AI, backend, rendering and integration; the teammate owns the frontend.
 - [Current OpenAPI](docs/vlogii.openapi.json): `/api/vlogii`, runtime `/docs`; the [older competition contracts](docs/contracts.en.md) are planning references.
 
-Pending: artistic/sticker covers, automatic opening/body assembly, BGM/beat matching, film styles, arbitrary semantic natural-language edits, authentication, cloud storage and deployment. Full competition acceptance remains incomplete; the current implementation has a separate boundary from the older `/api` contract.
+Pending: artistic/sticker covers, automatic opening/body assembly, beat matching, film styles, arbitrary semantic natural-language edits, authentication, cloud storage and deployment. Full competition acceptance remains incomplete; the current implementation has a separate boundary from the older `/api` contract.

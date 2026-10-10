@@ -192,10 +192,9 @@ def test_changed_source_is_rejected_before_render(tmp_path, tools, source):
 def test_cjk_wrapping_and_missing_font_is_actionable(tmp_path, monkeypatch):
     from vlogii.render import draw_text, wrapped_text
 
-    monkeypatch.delenv("VLOGII_FONT", raising=False)
-    monkeypatch.setattr("vlogii.render.FONT_CANDIDATES", ())
+    monkeypatch.setenv("VLOGII_FONT", str(tmp_path / "missing.ttf"))
     assert wrapped_text("早" * 20) == "早" * 16 + "\n" + "早" * 4
-    with pytest.raises(VlogiiError, match="CJK captions"):
+    with pytest.raises(VlogiiError, match="existing font"):
         draw_text(Text(start=0, end=1, text="你好"), tmp_path / "text.txt", 1920, True)
 
 

@@ -1,5 +1,14 @@
 export type Language = 'en' | 'zh';
 const en = {
+  appearance: 'Fonts & music', captionFont: 'Video title and caption font', fontDefault: 'Default · Noto Sans (or your configured font)',
+  fontNames: { 'noto-sans': 'Noto Sans · Clear', 'noto-serif': 'Noto Serif · Bookish', 'ma-shan-zheng': 'Ma Shan Zheng · Brush lettering', 'zcool-xiaowei': 'ZCOOL XiaoWei · Literary', caveat: 'Caveat · English handwriting', 'playfair-display': 'Playfair Display · English editorial' },
+  fontPreview: 'Font preview', fontFallback: 'Missing glyphs use Noto Sans for the whole text entry. English-only fonts use this fallback for Chinese. The preview of Default uses Noto Sans; a server font override may differ.',
+  backgroundMusic: 'Background music', musicAuto: 'Automatic · Use a bundled default', musicNone: 'No background music',
+  musicAutoOpening: 'Opening default: Dancing. Source audio remains muted.', musicAutoBody: 'Main film default: Day Jobs. Original audio is preserved.',
+  listen: 'Listen', musicVolume: 'Music volume', duckMusic: 'Lower music during recognized speech', resourceSource: 'Source',
+  musicLength: 'Music is trimmed or looped to fit, with a fade at each end. Ducking follows recognized speech; no beat syncing yet.',
+  appearanceApply: 'These settings change the exported film after generation or Apply changes. Listening plays the original track without the export volume or ducking.',
+  mixingMusic: 'Mixing background music',
   progressHeading: 'Video production progress', progressActive: '{stage}…', progressPrepare: 'Video parsing', progressSpeech: 'Speech recognition',
   progressVisual: 'Scene analysis', progressPlanning: 'Edit planning', progressRender: 'Video production', progressQueue: 'Waiting to start',
   progressPaused: 'Task paused', progressClip: 'Clip {current} / {total}',
@@ -41,8 +50,8 @@ const en = {
   exampleLong: 'Keep about 2 minutes, preserving complete spoken thoughts', exampleRemove: 'delete 00:12 to 00:18',
   cadence: 'Maximum shot length', speed: 'Speed for the next generation', speedHint: 'Select a speed, then click Make my film / Make a new version to generate with these settings. To change only the existing film’s speed, use Whole-film speed below and click Apply changes. Audio and captions follow playback time.',
   editSpeed: 'Whole-film speed', unchanged: 'Keep current speeds', editSpeedHint: 'Select a speed, then click Apply changes. Reuses the current edit without selecting new scenes. The rate is absolute relative to the source; time-range instructions override it inside their range.', exampleSpeed: 'speed up 00:12 to 00:18 to 2x',
-  highlightsAudioHint: 'Opening montage: source audio is muted to avoid chopped speech. No background music yet.',
-  audioHint: 'Natural audio, speech captions and occasional text. Background music is not added.',
+  highlightsAudioHint: 'Opening montage: source audio is muted to avoid chopped speech. Choose background music below.',
+  audioHint: 'Natural audio, speech captions and occasional text. Background music is optional below.',
   privacy: 'Video copies and audio are sent to Google Gemini for analysis. Originals and exports stay on this computer.',
   making: 'Making your film…', newVersion: 'Make a new version ↗', generate: 'Make my film ↗',
   film: 'YOUR LITTLE FILM', slate: 'A CLEAN SLATE', emptyHeading: 'A day becomes a story.',
@@ -58,6 +67,15 @@ const en = {
   selected: 'clips selected', footage: 'seconds of footage', ready: 'seconds · Ready for a closer look.', version: 'VERSION',
 };
 const zh: typeof en = {
+  appearance: '字体与配乐', captionFont: '视频标题与字幕字体', fontDefault: '默认 · 思源黑体（或本地已配置字体）',
+  fontNames: { 'noto-sans': '思源黑体 · 清晰字幕', 'noto-serif': '思源宋体 · 书页风', 'ma-shan-zheng': '马善政 · 毛笔手写', 'zcool-xiaowei': '站酷小薇 · 文艺标题', caveat: 'Caveat · 英文手写', 'playfair-display': 'Playfair Display · 英文杂志标题' },
+  fontPreview: '字体预览', fontFallback: '遇到缺字时整条文字使用思源黑体；英文专用字体显示中文时也会回退。默认预览为思源黑体，本地配置字体可能不同。',
+  backgroundMusic: '背景音乐', musicAuto: '自动 · 使用内置默认曲', musicNone: '不添加背景音乐',
+  musicAutoOpening: '快剪默认使用 Dancing，素材原声仍静音。', musicAutoBody: '正文默认使用 Day Jobs，保留素材原声。',
+  listen: '试听', musicVolume: '配乐音量', duckMusic: '识别到口播时自动降低配乐', resourceSource: '来源',
+  musicLength: '音乐按成片长度裁切或循环，开头与结尾淡入淡出；压低配乐依据识别到的口播，暂不自动卡点。',
+  appearanceApply: '生成影片或点击“应用修改”后写入成片。试听播放原曲，不应用导出的音量和口播压低效果。',
+  mixingMusic: '正在混合背景音乐',
   progressHeading: '视频制作进度', progressActive: '{stage}中', progressPrepare: '视频解析', progressSpeech: '语音识别',
   progressVisual: '画面分析', progressPlanning: '剪辑规划', progressRender: '视频制作', progressQueue: '等待开始',
   progressPaused: '任务已暂停', progressClip: '片段 {current} / {total}',
@@ -99,8 +117,8 @@ const zh: typeof en = {
   exampleAll: '全部保留，按素材顺序', exampleMost: '保留大部分内容',
   exampleNoSpeech: '没有语音的都删掉', exampleHighlights: '生成5秒的开头精华快剪',
   exampleLong: '保留约2分钟，口播尽量完整', exampleRemove: '删掉00:12到00:18',
-  highlightsAudioHint: '快剪默认静音，避免人声被截断；当前尚未添加背景音乐。',
-  audioHint: '保留原声、语音字幕和少量文字；当前不添加背景音乐。',
+  highlightsAudioHint: '快剪素材原声默认静音，避免人声被截断；下方可选择背景音乐。',
+  audioHint: '保留原声、语音字幕和少量文字；下方可选择是否添加背景音乐。',
   privacy: '视频副本与音频会发送给 Google Gemini 分析。原素材和成片保存在本机。',
   making: '正在生成影片…', newVersion: '生成一个新版本 ↗', generate: '生成我的影片 ↗',
   film: '你的日常影片', slate: '等待开始', emptyHeading: '把一天变成小故事。',
@@ -148,6 +166,9 @@ const errors: Record<string, string> = {
 };
 export function localizeMessage(message: string, language: Language): string {
   if (language === 'en') return message;
+  if (message === 'A bundled preset is missing or changed. Restore the application assets.') return '内置资源缺失或已变化，请恢复应用资源文件。';
+  if (message === 'A caption contains unsupported font glyphs. Remove emoji or use supported text.') return '字幕含字体不支持的字符，请移除表情符号或改用可显示的文字。';
+  if (message === 'Mixing background music') return zh.mixingMusic;
   if (errors[message]) return errors[message];
   const patterns: [RegExp, string][] = [
     [/^Inspecting (\d+)\/(\d+)$/, '正在解析视频 $1/$2'],

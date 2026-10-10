@@ -1,0 +1,145 @@
+{
+  "checked_at": "2026-10-10",
+  "fonts": [
+    {
+      "id": "noto-sans",
+      "file": "fonts/NotoSansCJKsc-Regular.otf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/notofonts/noto-cjk",
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "name": "Noto Sans CJK SC"
+    },
+    {
+      "id": "noto-serif",
+      "file": "fonts/NotoSerifCJKsc-Regular.otf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/notofonts/noto-cjk",
+      "bytes": 24543080,
+      "sha256": "2a2eae2628df83556c54018c41e20fa532c1b862c5256ae8b3f23feb918d12ca",
+      "name": "Noto Serif CJK SC"
+    },
+    {
+      "id": "ma-shan-zheng",
+      "name": "Ma Shan Zheng",
+      "file": "fonts/MaShanZheng-Regular.ttf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts/tree/main/ofl/mashanzheng",
+      "bytes": 5857936,
+      "sha256": "6d2546bb189c732a8ca29af9e22457b152387d158aa459e4ac2ce1e51788b7fb"
+    },
+    {
+      "id": "zcool-xiaowei",
+      "name": "ZCOOL XiaoWei",
+      "file": "fonts/ZCOOLXiaoWei-Regular.ttf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts/tree/main/ofl/zcoolxiaowei",
+      "bytes": 6313808,
+      "sha256": "a42b620140f493db42f741351dfbf343c0936d58588ee8004b8b2a218d997ff1"
+    },
+    {
+      "id": "caveat",
+      "name": "Caveat",
+      "file": "fonts/Caveat[wght].ttf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts/tree/main/ofl/caveat",
+      "bytes": 403648,
+      "sha256": "0bdb6b660482d31531b3945849fba5916b3ef8695da7024a9e6b9ee3c4157988"
+    },
+    {
+      "id": "playfair-display",
+      "name": "Playfair Display",
+      "file": "fonts/PlayfairDisplay[wght].ttf",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts/tree/main/ofl/playfairdisplay",
+      "bytes": 300724,
+      "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6"
+    }
+  ],
+  "music": [
+    {
+      "title": "Dreams",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-dreams.mp3",
+      "duration_seconds": 306.636,
+      "sample_rate": "48000",
+      "channels": 2,
+      "bytes": 12267085,
+      "sha256": "4537fdb9b3bed68cf32fa3a6c59a270098d3b7b91bdffa3e643e6a9596e26c19",
+      "id": "holizna-dreams",
+      "name": "Dreams"
+    },
+    {
+      "title": "Day Jobs",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-day-jobs.mp3",
+      "duration_seconds": 138.54,
+      "sample_rate": "48000",
+      "channels": 2,
+      "bytes": 5543245,
+      "sha256": "46fa363b02688d495bd8af49f849c7710febc9d5757ad519b0dcbc46d8101982",
+      "id": "holizna-day-jobs",
+      "name": "Day Jobs"
+    },
+    {
+      "title": "Dancing",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-dancing.mp3",
+      "duration_seconds": 135.708,
+      "sample_rate": "48000",
+      "channels": 2,
+      "bytes": 5429965,
+      "sha256": "c974c57cf242be09806002a236a4d97fad80e015c1f36535c800a782f9396228",
+      "id": "holizna-dancing",
+      "name": "Dancing"
+    },
+    {
+      "id": "holizna-deja-vu",
+      "name": "Deja Vu",
+      "title": "Deja Vu",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-deja-vu.mp3",
+      "bytes": 4992205,
+      "sha256": "e88dd63bf46caf439d962bbcd6c1f56314d1eb1b85b1644f881c9c159b8e9d66",
+      "duration_seconds": 124.764,
+      "sample_rate": "48000",
+      "channels": 2
+    },
+    {
+      "id": "holizna-childhood",
+      "name": "Childhood",
+      "title": "Childhood",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-childhood.mp3",
+      "bytes": 5333005,
+      "sha256": "a8da6e982ef5e7ee2a709c9f29cb1ef8c907f128248e1a96bddd7fc9799dc89e",
+      "duration_seconds": 133.284,
+      "sample_rate": "48000",
+      "channels": 2
+    },
+    {
+      "id": "holizna-advertisements",
+      "name": "Advertisements",
+      "title": "Advertisements",
+      "author": "Holizna",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/chillout-instrumentals-collection",
+      "file": "music/holizna-advertisements.mp3",
+      "bytes": 7329805,
+      "sha256": "a64f13ec7490732c91da837d555916c7f0107889ee8fe2421de4882a8e5530fd",
+      "duration_seconds": 183.204,
+      "sample_rate": "48000",
+      "channels": 2
+    }
+  ]
+}

@@ -12,7 +12,7 @@ from .editorial import (
     transform_output_ranges,
 )
 from .media import Tools, build_proxy, inspect_clip
-from .models import Plan, Project, Review, Settings, SpeedRange, Text, TimeRange
+from .models import Appearance, Plan, Project, Review, Settings, SpeedRange, Text, TimeRange
 from .render import render
 from .speech import speech_config, transcribe
 from .storage import VlogiiError, locked, read_json, write_json
@@ -174,9 +174,12 @@ def generate(
     remove_no_speech=False,
     speed=1,
     shot_seconds=0.5,
+    appearance: Appearance | None = None,
 ):
     with locked(project_dir):
         project = load_project(project_dir)
+        if appearance is not None:
+            project.settings.appearance = Appearance.model_validate(appearance)
         selection = selection_intent(direction, mode, target, remove_no_speech, speed, shot_seconds)
         context = {
             "direction": direction,
@@ -248,6 +251,7 @@ def edit(
     instruction: str = "",
     speed: float | None = None,
     speed_ranges: list[SpeedRange] | None = None,
+    appearance: Appearance | None = None,
 ):
     with locked(project_dir):
         latest = read_json(project_dir / "latest.json")
@@ -263,6 +267,7 @@ def edit(
             "instruction": instruction,
             "speed": speed,
             "speed_ranges": [r.model_dump() for r in sped],
+            "appearance": appearance.model_dump(mode="json") if appearance is not None else None,
         }
         checkpoint = read_json(checkpoint_path) if resume and checkpoint_path.exists() else {}
         if checkpoint.get("request") == request and checkpoint.get("status") == "complete":
@@ -274,6 +279,8 @@ def edit(
         write_json(checkpoint_path, checkpoint)
         version = project_dir / "cuts" / latest["cut"]
         project = Project.model_validate(read_json(version / "project.json"))
+        if appearance is not None:
+            project.settings.appearance = Appearance.model_validate(appearance)
         plan = Plan.model_validate(read_json(version / "plan.json"))
         if (version / "selection.json").is_file() and read_json(version / "selection.json").get(
             "mode"

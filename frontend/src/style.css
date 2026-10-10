@@ -214,3 +214,11 @@ details>.field,details>.note,details>.check{margin-top:8px}
 .job-progress.paused{border-color:var(--danger)}.job-progress.paused .progress-title{color:var(--danger)}
 .preview-shortcut{display:flex;justify-content:flex-end;margin:8px 0}
 @media(prefers-reduced-motion:reduce){.progress-track .indeterminate{animation:none;width:100%;opacity:.5}}
+
+.appearance-controls{border:1px solid var(--field);border-radius:12px;padding:16px;margin:24px 0;min-width:0}
+.appearance-controls legend{font:600 13px/1.6 var(--sans);padding:0 8px;color:var(--ink-strong)}
+.appearance-controls:disabled{opacity:.6}
+.font-sample{display:grid;gap:4px;border-radius:8px;background:var(--paper);padding:12px;font-size:22px;overflow-wrap:anywhere}
+.music-preview audio{display:block;width:100%;margin:8px 0 16px}
+.music-preview p{font:400 13px/1.6 var(--sans)}
+.music-preview input[type=range]{padding:0;accent-color:var(--mint-deep)}

@@ -13,14 +13,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 from .media import Tools, codec_args, color_args, sha256, tone_map
 from .models import Plan, Project, Review, Text
+from .music import mix_music, speech_ranges
+from .presets import asset_path, music_id, supports_text
 from .storage import VlogiiError, read_json, write_json
 from .timeline import compile_timeline, resolve_color
-
-FONT_CANDIDATES = (
-    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-    "/System/Library/Fonts/PingFang.ttc",
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-)
 
 
 def wrapped_text(text: str, font=None, max_width=None) -> str:
@@ -53,39 +49,27 @@ def wrapped_text(text: str, font=None, max_width=None) -> str:
     return "\n".join(lines)
 
 
-def font_path(text: str):
-    configured = os.environ.get("VLOGII_FONT")
+def font_path(text: str, preset="default"):
+    configured = os.environ.get("VLOGII_FONT") if preset == "default" else None
     if configured and not Path(configured).is_file():
         raise VlogiiError("VLOGII_FONT must point to an existing font file.")
     font = (
         Path(configured)
         if configured
-        else next((Path(value) for value in FONT_CANDIDATES if Path(value).is_file()), None)
+        else asset_path("fonts", "noto-sans" if preset == "default" else preset, verify_hash=False)
     )
-    if font is None:
-        if any(unicodedata.east_asian_width(char) in {"W", "F"} for char in text):
+    if not supports_text(font, text):
+        font = asset_path("fonts", "noto-sans", verify_hash=False)
+        if not supports_text(font, text):
             raise VlogiiError(
-                "CJK captions require a suitable font. Install fonts-noto-cjk or set VLOGII_FONT."
+                "A caption contains unsupported font glyphs. Remove emoji or use supported text."
             )
-        font = next(
-            (
-                Path(p)
-                for p in (
-                    "/System/Library/Fonts/Supplemental/Arial.ttf",
-                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                )
-                if Path(p).is_file()
-            ),
-            None,
-        )
-    if font is None:
-        raise VlogiiError("Install a text font or set VLOGII_FONT.")
     return font
 
 
-def text_layout(text: str, width: int, height: int, caption: bool):
+def text_layout(text: str, width: int, height: int, caption: bool, preset="default"):
     """Fit complete text within the actual output rectangle in either orientation."""
-    path = font_path(text)
+    path = font_path(text, preset)
     margin = max(2, round(width * 0.05))
     stroke = max(0, round(min(width, height) * 0.001))
     box_padding = max(1, round(min(width, height) * 0.004))
@@ -105,12 +89,18 @@ def text_layout(text: str, width: int, height: int, caption: bool):
     raise VlogiiError("Text cannot fit this output size. Use a larger output or a shorter title.")
 
 
-def draw_text(item: Text, path: Path, height: int, caption: bool, width: int | None = None) -> str:
+def draw_text(
+    item: Text, path: Path, height: int, caption: bool, width: int | None = None, preset="default"
+) -> str:
     width = width or round(height * 9 / 16)
-    text, size, spacing, stroke, padding, margin, _ = text_layout(item.text, width, height, caption)
+    text, size, spacing, stroke, padding, margin, _ = text_layout(
+        item.text, width, height, caption, preset
+    )
     path.write_text(text, encoding="utf-8")
-    font = font_path(item.text)
-    local_font = path.parent / ("font" + font.suffix)
+    font = font_path(item.text, preset)
+    local_font = path.parent / (
+        "font-" + hashlib.sha256(str(font).encode()).hexdigest()[:12] + font.suffix
+    )
     if not local_font.exists():
         shutil.copyfile(font, local_font)
     anchor = "h*0.82-th/2" if caption else "h*0.17-th/2"
@@ -142,6 +132,24 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
     timeline = compile_timeline(project, plan, reviews)
     color = resolve_color(project)
     codec = tools.encoder(color, project.settings.encoder)
+    appearance = project.settings.appearance
+    if appearance.font != "default" or not os.environ.get("VLOGII_FONT"):
+        asset_path("fonts", "noto-sans" if appearance.font == "default" else appearance.font)
+    font = font_path("", appearance.font)
+    font_hash = sha256(font)
+    font_digests = {font: font_hash}
+    fallback_used = False
+    for segment in timeline.segments:
+        for item in segment.overlays + segment.captions:
+            actual = font_path(item.text, appearance.font)
+            if actual not in font_digests:
+                if actual == asset_path("fonts", "noto-sans", verify_hash=False):
+                    asset_path("fonts", "noto-sans")
+                font_digests[actual] = sha256(actual)
+            fallback_used |= actual != font
+    selected_music = music_id(appearance.music, plan.mute_source_audio)
+    music = asset_path("music", selected_music) if selected_music else None
+    duck_ranges = speech_ranges(project, plan, reviews) if music and appearance.duck_music else []
     if any(s.overlays or s.captions for s in timeline.segments):
         tools.require_filters({"drawtext"})
     if color == "sdr" and any(c.color != "sdr" for c in project.clips):
@@ -160,6 +168,21 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
     write_json(version / "plan.json", plan)
     write_json(version / "timeline.json", timeline)
     write_json(version / "state.json", {"status": "rendering"})
+    write_json(
+        version / "assets.json",
+        {
+            "requested": appearance.model_dump(mode="json"),
+            "font": {
+                "id": appearance.font
+                if appearance.font != "default"
+                else ("configured" if os.environ.get("VLOGII_FONT") else "noto-sans"),
+                "sha256": font_hash,
+            },
+            "music": {"id": selected_music, "sha256": sha256(music)} if music else None,
+            "duck_ranges": duck_ranges,
+            "font_fallback": "noto-sans" if fallback_used else None,
+        },
+    )
     fps = timeline.fps
     fmt = project.settings
     try:
@@ -197,19 +220,25 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                                 fmt.height,
                                 kind == "caption",
                                 width=fmt.width,
+                                preset=appearance.font,
                             )
                         )
                 output = work / f"seg-{index:04d}.mp4"
-                font_hashes = [
-                    sha256(font_path(item.text)) for item in segment.overlays + segment.captions
-                ]
+                font_hashes = sorted(
+                    {
+                        font_digests[font_path(item.text, appearance.font)]
+                        for item in segment.overlays + segment.captions
+                    }
+                )
                 fingerprint = hashlib.sha256(
                     json.dumps(
                         {
-                            "renderer_revision": 5,
+                            "renderer_revision": 6,
                             "mute_source_audio": plan.mute_source_audio,
                             "clip": clip.sha256,
-                            "settings": project.settings.model_dump(mode="json"),
+                            "settings": project.settings.model_dump(
+                                mode="json", exclude={"appearance"}
+                            ),
                             "segment": segment.model_dump(mode="json"),
                             "color": color,
                             "codec": codec,
@@ -297,7 +326,23 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                 ],
                 version / "logs" / "concat.log",
             )
-            evidence = verify(tools, pending, project, color, timeline.total_frames / fps)
+            duration = timeline.total_frames / fps
+            if music:
+                progress("Mixing background music")
+                mixed = version / "mixed.mp4"
+                mix_music(
+                    tools,
+                    pending,
+                    music,
+                    mixed,
+                    duration,
+                    appearance.music_volume,
+                    duck_ranges,
+                    version / "logs" / "music.log",
+                    work,
+                )
+                mixed.replace(pending)
+            evidence = verify(tools, pending, project, color, duration)
             progress("Checking video and audio")
             tools.run(
                 ["-v", "error", "-xerror", "-i", str(pending), "-f", "null", "-"],

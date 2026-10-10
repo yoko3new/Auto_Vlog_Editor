@@ -43,6 +43,8 @@
 - 本轮体验修复增加 `/retry`（无请求体）、`job.retryable/kind` 与可选 `language`；模型默认及真实验收限制见 [修复记录](mvp-fixes.md)。已同步前端切换中英文与重试按钮，后续由 B 维护。
 - 新增生成 `mode`、可空 `target_seconds`、`remove_no_speech`，编辑 `remove_ranges/instruction`，以及版本 `selection`；页面已同步模式和可点击示例。省略时长由默认 30 秒改为 AI 决定，旧调用方可显式传 30；见[剪辑模式](editing-modes.md)。
 - 生成新增 `speed/shot_seconds`，编辑新增可空 `speed` 和 `speed_ranges`；时间指令支持删除/倍速，时间坐标取同一当前成片。页面单选栏与现行 OpenAPI 同步；[Shorts 作品结构](shorts-direction.md)是下一批方向，封面/贴画/开头正文拼接仍待实现。
+- 内置资源接口为 `GET /api/vlogii/presets`；生成/编辑可选 `appearance` 包含 `font/music/music_volume/duck_music`，项目响应返回当前成功版本的外观。旧请求省略时保持无配乐；字体与音乐登记、版本/撤销及渲染由 A 维护，页面调用已同步，见[资源说明](free-resources.md)。
+
 - 旧 `/api` OpenAPI、`simulation`、`request_id`、`base_version_id` 与 mock 是原比赛设计；当前 Vlogii 没有这些兼容保证。不能把旧 mock 换成 Vlogii 后端就假设前端字段不变。
 
 <a id="s13-3"></a>
@@ -102,7 +104,7 @@ uv run vlogii serve
 
 ## 比赛关卡的适用范围
 
-原 36 小时方案是比赛验收目标，不再作为“当前从零开发”的进度表。当前实现已有原声字幕、竖屏等能力，仍缺 BGM、杂志风、自然语言编辑、固定时长与 Replit 验证，详见 [覆盖对照](mvp-coverage.md)。
+原 36 小时方案是比赛验收目标，不再作为“当前从零开发”的进度表。当前实现已有原声字幕、竖屏等能力，仍缺卡点、杂志风、自然语言编辑、固定时长与 Replit 验证，详见 [覆盖对照](mvp-coverage.md)。
 
 原比赛范围未在本次调整中改变；如继续按该范围参赛，依次验证：
 

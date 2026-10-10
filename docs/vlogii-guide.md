@@ -69,7 +69,7 @@ Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage
 
 ## Scope and compatibility
 
-This branch implements a **local vlog web MVP** based on the tested VX workflow. It is not a claim that the original team's full competition MVP has been delivered. Background music, beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment, scene-detection heuristics and NLE exports are outside this release.
+This branch implements a **local vlog web MVP** based on the tested VX workflow. It is not a claim that the original team's full competition MVP has been delivered. Beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment, scene-detection heuristics and NLE exports are outside this release.
 
 The existing [team product plan](product.en.md), [architecture](architecture.en.md), [contracts](contracts.en.md), schemas, examples and development substitutes are preserved as planning material. Vlogii uses an explicit, separate `/api/vlogii` namespace and local models; it does not pretend to implement the older `/api` contract. The live API specification is at `/openapi.json`, with interactive docs at `/docs`; the checked-in snapshot is [vlogii.openapi.json](vlogii.openapi.json).
 
@@ -146,7 +146,7 @@ This first release is suitable for local testing and iteration. Successful decod
 
 `run/plan --speed 1 --shot-seconds 0.5` changes export speed and the maximum output shot length for highlights. `edit --speed 1` restores source speed; `edit --instruction "00:12到00:18加速到2倍"` changes only that interval in the current film. Rates are absolute; subtitles and audio follow the frame timeline. The web UI offers separate radio groups for cadence and speed. See [editing rules](editing-modes.en.md) and the [Shorts direction](shorts-direction.en.md); cover styling and automatic opening/body assembly are still pending.
 
-Highlights exports now mute source audio by default, preserving that choice through edits/retries. Normal body/retention modes keep source audio. A silent AAC track keeps the MP4 suitable for future opening/body concatenation; BGM is still pending.
+Highlights exports now mute source audio by default, preserving that choice through edits/retries. Normal body/retention modes keep source audio. A silent AAC track keeps the MP4 suitable for future opening/body concatenation; Optional bundled BGM can now be mixed over the muted opening.
 
 <a id="web-design"></a>
 
@@ -163,3 +163,5 @@ License notices are included in `frontend/public/fonts` and served with the fron
 Duration input accepts seconds and common notation such as “about 2 minutes”, “约120秒” or “01:30”, resolves them to an approximate seconds target and rejects invalid/out-of-range entries. Example buttons sit between each question and its input. Generation speed takes effect after Make my film / Make a new version; Whole-film speed in the edit chapter reuses the current plan after Apply changes.
 
 The masthead has no completion badge. An active-task progress panel shows parsing, speech recognition, scene analysis, edit planning and rendering with real job messages and clip counters. It follows the current batch rather than estimating a global percentage or remaining time; analysis stages can alternate by clip. Queueing, planning, joining and verification without counters use an indeterminate bar. The panel remains visible while scrolling and disappears after success.
+
+Fonts and music: the generation chapter defaults to bundled Noto Sans and Automatic music. Preview fonts, listen to six instrumental tracks, choose No background music, or adjust volume and speech ducking. For an existing film, change presets in the edit chapter and Apply changes; the previous version remains available for undo. Assets load automatically with the app; see [bundled assets and licenses](free-resources.en.md). Custom uploads and automatic beat syncing remain pending.

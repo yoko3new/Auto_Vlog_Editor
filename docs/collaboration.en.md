@@ -43,6 +43,8 @@ Both people first synchronize to the same commit of `kang` and reproduce the sta
 - This round of UX fixes adds `/retry` (no request body), `job.retryable/kind`, and optional `language`; see [Fix Records](mvp-fixes.en.md) for model defaults and real acceptance constraints. Frontend Chinese/English switching and retry buttons have been synchronized and will be maintained by B going forward.
 - Added generation `mode`, nullable `target_seconds`, `remove_no_speech`, editing `remove_ranges/instruction`, and version `selection`; the page has synchronized modes and clickable examples. Omitting duration is changed from default 30 seconds to AI-decided; old callers can explicitly pass 30; see [Editing Modes](editing-modes.en.md).
 - Generation added `speed/shot_seconds`, editing added nullable `speed` and `speed_ranges`; temporal commands support deletion/speed adjustment, and time coordinates are referenced to the same current finished video. The page single-select bar is synchronized with current OpenAPI; [Shorts Output Structure](shorts-direction.en.md) is the direction for the next batch, with covers/stickers/intro-body splicing still pending implementation.
+- Bundled assets use `GET /api/vlogii/presets`. Generation/editing accept optional `appearance` containing `font/music/music_volume/duck_music`; project responses return the current successful version’s appearance. Older requests that omit it retain no music. A maintains the asset registry, versions/undo and rendering; page callers are synchronized. See [assets](free-resources.en.md).
+
 - The legacy `/api` OpenAPI, `simulation`, `request_id`, `base_version_id`, and mocks were the original competition design; current Vlogii provides no such compatibility guarantees. You cannot replace the legacy mock with the Vlogii backend and assume frontend fields remain unchanged.
 
 <a id="s13-3"></a>
@@ -102,7 +104,7 @@ Provide for each handoff: commit/file scope, API basis, startup or invocation co
 
 ## Scope of Application for Competition Stages
 
-The original 36-hour plan represents competition acceptance targets and is no longer a schedule for "current development from scratch." The current implementation already possesses original audio subtitles, vertical video, and other capabilities, but still lacks BGM, magazine style, natural language editing, fixed duration, and Replit verification; see [Coverage Comparison](mvp-coverage.en.md) for details.
+The original 36-hour plan represents competition acceptance targets and is no longer a schedule for "current development from scratch." The current implementation already possesses original audio subtitles, vertical video, and other capabilities, but still lacks beat syncing, magazine style, natural language editing, fixed duration, and Replit verification; see [Coverage Comparison](mvp-coverage.en.md) for details.
 
 The original competition scope was not changed in this adjustment; if continuing to participate under that scope, verify in sequence:
 

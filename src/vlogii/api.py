@@ -15,17 +15,20 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
 from .editorial import parse_edit_instruction, selection_intent
-from .models import Model, Selection, Settings, Speed, SpeedRange, TimeRange
+from .models import Appearance, Model, Project, Selection, Settings, Speed, SpeedRange, TimeRange
 from .pipeline import EXTENSIONS, edit, generate, initialize, load_project, undo
+from .presets import asset_path, library
 from .storage import VlogiiError, locked, project_path, read_json, write_json
 
 
 class GenerateRequest(Selection):
+    appearance: Appearance | None = None
     direction: str = Field(default="", max_length=2000)
     language: Literal["en", "zh"] = "en"
 
 
 class EditRequest(Model):
+    appearance: Appearance | None = None
     title: str | None = Field(default=None, min_length=1, max_length=100)
     exclude_clip_ids: list[str] = Field(default_factory=list, max_length=50)
     warmth: float | None = Field(default=None, ge=0, le=1)
@@ -65,6 +68,24 @@ class ProjectView(Model):
     video_url: str | None
     duration_seconds: float | None
     selection: Selection | None = None
+    appearance: Appearance = Field(default_factory=Appearance)
+
+
+class PresetEntry(Model):
+    id: str
+    name: str
+    url: str
+    source: str
+    license: str
+    sha256: str
+    bytes: int
+    author: str | None = None
+    duration_seconds: float | None = None
+
+
+class PresetLibrary(Model):
+    fonts: list[PresetEntry]
+    music: list[PresetEntry]
 
 
 def public_job(job):
@@ -138,6 +159,13 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 for c in project.clips
             ],
             "settings": project.settings.model_dump(),
+            "appearance": (
+                Project.model_validate(
+                    read_json(directory / "cuts" / latest["cut"] / "project.json")
+                ).settings.appearance.model_dump()
+                if latest and (directory / "cuts" / latest["cut"] / "project.json").is_file()
+                else project.settings.appearance.model_dump()
+            ),
             "job": public_job(job) if job else None,
             "latest": latest,
             "selection": (
@@ -175,6 +203,25 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
     @app.get("/api/vlogii/projects", response_model=list[ProjectView])
     def projects():
         return [describe(path.parent) for path in sorted(root.glob("*/project.json"))]
+
+    @app.get("/api/vlogii/presets", response_model=PresetLibrary)
+    def presets():
+        return library()
+
+    @app.get("/api/vlogii/presets/{kind}/{identifier}")
+    def preset_file(kind: str, identifier: str):
+        if kind not in {"fonts", "music"}:
+            raise HTTPException(404, "Preset not found.")
+        try:
+            path = asset_path(kind, identifier)
+        except VlogiiError as exc:
+            raise HTTPException(404, "Preset not found.") from exc
+        media_type = (
+            "audio/mpeg"
+            if kind == "music"
+            else ("font/otf" if path.suffix == ".otf" else "font/ttf")
+        )
+        return FileResponse(path, media_type=media_type)
 
     @app.post("/api/vlogii/projects", status_code=201, response_model=ProjectView)
     def upload(
@@ -256,6 +303,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     instruction=request.instruction,
                     speed=request.speed,
                     speed_ranges=request.speed_ranges,
+                    appearance=request.appearance,
                 )
             else:
                 generate(
@@ -268,6 +316,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     remove_no_speech=request.remove_no_speech,
                     speed=request.speed,
                     shot_seconds=request.shot_seconds,
+                    appearance=request.appearance,
                 )
             write_json(
                 directory / "job.json",
@@ -292,6 +341,8 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     message = "Speech recognition failed. Check the Gemini connection, key, quota and speech model, then retry."
                 elif "Gemini" in str(exc):
                     message = "Video analysis or planning failed. Check the Gemini connection, key and quota, then retry."
+                elif "bundled preset" in str(exc) or "unsupported font glyphs" in str(exc):
+                    message = str(exc)
                 elif "font" in str(exc).lower():
                     message = (
                         "A caption font is missing. Set VLOGII_FONT to a suitable font, then retry."
@@ -405,6 +456,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             and not request.speed_ranges
             and not request.remove_ranges
             and not request.instruction.strip()
+            and request.appearance is None
         ):
             raise HTTPException(400, "Choose at least one change.")
         return enqueue(directory, request)

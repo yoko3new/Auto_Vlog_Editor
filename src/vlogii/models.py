@@ -7,10 +7,36 @@ from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 Seconds = Annotated[FiniteFloat, Field(ge=0)]
 Speed = Annotated[FiniteFloat, Field(ge=0.25, le=8)]
 EditMode = Literal["auto", "highlights", "keep_most", "keep_all"]
+FontPreset = Literal[
+    "default",
+    "noto-sans",
+    "noto-serif",
+    "ma-shan-zheng",
+    "zcool-xiaowei",
+    "caveat",
+    "playfair-display",
+]
+MusicPreset = Literal[
+    "none",
+    "auto",
+    "holizna-dreams",
+    "holizna-day-jobs",
+    "holizna-dancing",
+    "holizna-deja-vu",
+    "holizna-childhood",
+    "holizna-advertisements",
+]
 
 
 class Model(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class Appearance(Model):
+    font: FontPreset = "default"
+    music: MusicPreset = "none"
+    music_volume: Annotated[FiniteFloat, Field(ge=0, le=1)] = 0.16
+    duck_music: bool = True
 
 
 class Selection(Model):
@@ -49,6 +75,7 @@ class Clip(Model):
 
 
 class Settings(Model):
+    appearance: Appearance = Field(default_factory=Appearance)
     width: int = Field(default=1080, ge=64, le=3840)
     height: int = Field(default=1920, ge=64, le=3840)
     fps: int = Field(default=30, ge=1, le=60)
