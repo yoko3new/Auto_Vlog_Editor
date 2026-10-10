@@ -152,10 +152,14 @@ Highlights exports now mute source audio by default, preserving that choice thro
 
 ## Integrated web editor
 
-The `codex/integrate-feng-ui` branch combines the frontend from `feng-emergence` with current `kang` behavior. The page uses a thin white masthead with reading progress, one reading column, a wide film band, a round Play control and three numbered chapters. Chinese/English switching, retry, generation modes, examples, cadence, speed, time-range edits and undo remain available.
+The `codex/integrate-feng-ui` branch combines the frontend from `feng-emergence` with current `kang` behavior. The page uses a thin white masthead with reading progress, one reading column, a wide film band, a round Play control and numbered chapters. The page starts with project creation/import, followed by generation controls, editing an existing film and the final preview. Imported clip details are collapsible. Apply changes is available beside whole-film speed and at the end of the edit form; View film jumps to the final player. Chinese/English switching, retry, generation modes, examples, cadence, speed, time-range edits and undo remain available.
 
 The fresh palette uses mint emphasis on a light background. Newsreader, Libre Franklin and Courier Prime are bundled through Fontsource under OFL; no external font requests are required. Chinese uses local system fallbacks. Browser typography changes the editor only; MP4 caption fonts and layouts retain their existing rendering rules. Brand assets are in `frontend/public/brand`.
 
 For first-time macOS and Safari setup, see the [Mac guide](vlogii-mac-setup.en.md).
 
 License notices are included in `frontend/public/fonts` and served with the frontend.
+
+Duration input accepts seconds and common notation such as “about 2 minutes”, “约120秒” or “01:30”, resolves them to an approximate seconds target and rejects invalid/out-of-range entries. Example buttons sit between each question and its input. Generation speed takes effect after Make my film / Make a new version; Whole-film speed in the edit chapter reuses the current plan after Apply changes.
+
+The masthead has no completion badge. An active-task progress panel shows parsing, speech recognition, scene analysis, edit planning and rendering with real job messages and clip counters. It follows the current batch rather than estimating a global percentage or remaining time; analysis stages can alternate by clip. Queueing, planning, joining and verification without counters use an indeterminate bar. The panel remains visible while scrolling and disappears after success.

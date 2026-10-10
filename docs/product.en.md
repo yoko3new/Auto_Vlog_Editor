@@ -10,6 +10,8 @@ When to read: Read this when referring to the original competition positioning, 
 
 The user decided to focus Vlogii on lifestyle Shorts: a cover with stickers or artistic text → several shots flashing past quickly → body content featuring basic subtitles, a few short words/time stamps, and light special effects. Full compositions are the next batch of design directions; the current standalone quick cut and subtitles cannot be considered as completion of the full style suite. See [Structure and Implementation Boundaries](shorts-direction.en.md) for details. Existing retention ratios, optional durations, and playback speeds remain available, without enforcing a fixed 30-second duration.
 
+A future [Personal Style Library](shorts-direction.en.md#personal-style-library) will turn natural-language iterations into readable style documents that users can choose to save when satisfied, then import and adapt to new footage. Reusable style is separate from instructions such as deletion intervals for the current footage; this requirement is not yet implemented.
+
 The phased plan and acceptance criteria of the original competition are preserved below, where descriptions like "only generates a 30-second opening, no voiceover needed, landscape mode" reflect the historical competition scope; the current product's default direction is governed by the user decision above, and formal competition acceptance has not yet been reformulated or finalized.
 
 <a id="s1"></a>

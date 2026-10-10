@@ -11,6 +11,8 @@ import '@fontsource/courier-prime/400.css';
 import './style.css';
 
 import { Language, translations, localizeMessage } from './i18n';
+import { parseTargetSeconds } from './duration';
+import { jobProgress, ProgressStage } from './job-progress';
 
 type Job = { status: 'queued' | 'running' | 'complete' | 'failed'; message: string; error: string | null; retryable: boolean; kind: 'generate' | 'edit' | null };
 type EditMode = 'auto' | 'highlights' | 'keep_most' | 'keep_all';
@@ -54,6 +56,29 @@ function Film({ src, onError, labels }: { src: string; onError: () => void; labe
   </div>;
 }
 
+function JobProgress({ job, importing, language }: { job: Job | null; importing: boolean; language: Language }) {
+  const t = translations(language);
+  const progress = importing ? { stage: 'prepare' as const, current: null, total: null, percent: null } : jobProgress(job?.message || '');
+  const paused = job?.status === 'failed';
+  const stages: { id: ProgressStage; label: string }[] = [
+    { id: 'prepare', label: t.progressPrepare }, { id: 'speech', label: t.progressSpeech },
+    { id: 'visual', label: t.progressVisual }, { id: 'planning', label: t.progressPlanning },
+    { id: 'render', label: t.progressRender },
+  ];
+  const stage = stages.find(item => item.id === progress.stage);
+  const label = paused ? t.progressPaused : importing ? t.importing : stage ? t.progressActive.replace('{stage}', stage.label) : t.progressQueue;
+  const detail = importing ? t.progressImport : localizeMessage(job?.message || '', language);
+  return <section className={'job-progress' + (paused ? ' paused' : '')} aria-label={t.progressHeading}>
+    <div className="progress-title" aria-live="polite"><strong>{label}</strong>{progress.current !== null && <span>{t.progressClip.replace('{current}', String(progress.current)).replace('{total}', String(progress.total))}</span>}</div>
+    {!paused && <div className="progress-track" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress.percent ?? undefined} aria-valuetext={detail}>
+      <span className={progress.percent === null ? 'indeterminate' : ''} style={progress.percent !== null ? { width: `${progress.percent}%` } : undefined}/>
+    </div>}
+    <ol className="job-stages">{stages.map(item => <li key={item.id} className={item.id === progress.stage ? 'is-current' : ''} aria-current={item.id === progress.stage ? 'step' : undefined}>{item.label}</li>)}</ol>
+    <p className="progress-detail">{detail}</p>
+    {!paused && !importing && <p className="progress-note">{t.progressNote}</p>}
+  </section>;
+}
+
 function App() {
   const [language, setLanguage] = useState<Language>(() => localStorage.getItem('vlogii-language') === 'en' ? 'en' : 'zh');
   const t = translations(language);
@@ -84,7 +109,8 @@ function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const active = project?.job?.status === 'queued' || project?.job?.status === 'running';
   const retention = mode === 'keep_all' || mode === 'keep_most';
-  const validSeconds = !seconds.trim() || (Number.isFinite(Number(seconds)) && Number(seconds) >= 1 && Number(seconds) <= 1800);
+  const targetSeconds = parseTargetSeconds(seconds);
+  const validSeconds = !seconds.trim() || targetSeconds !== null;
   const examples: { text: string; mode: EditMode; removeNoSpeech?: boolean }[] = [
     { text: t.exampleAll, mode: 'keep_all' },
     { text: t.exampleMost, mode: 'keep_most' },
@@ -149,10 +175,10 @@ function App() {
   }
 
   async function generateFilm() {
-    if (!project) return;
+    if (!project || (!retention && !validSeconds)) return;
     await perform(async () => {
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/generate`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention || !seconds.trim() ? null : Number(seconds), speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language }) });
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention ? null : targetSeconds, speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language }) });
       setProject({ ...project, job });
     });
   }
@@ -188,20 +214,18 @@ function App() {
     return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); window.cancelAnimationFrame(frame); };
   }, []);
 
+  const editDisabled = !project?.latest || busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null);
   const footage = project ? Math.round(project.clips.reduce((sum, clip) => sum + clip.duration, 0)) : 0;
   const version = project?.latest?.cut.replace('cut_', t.version + ' ') || null;
-  const failed = !!error || project?.job?.status === 'failed';
-  const state = active ? t.stateWorking : failed ? t.stateAttention : project?.latest ? t.stateFilmReady : project ? t.stateImported : t.stateReady;
 
   return <>
     <header className="masthead">
       <nav className="sections" aria-label={t.sections}>
-        <a href="#film">{t.film}</a><a href="#moments">{t.moments}</a><a href="#direction">{t.directionHeading}</a>
-        {project?.latest && <><span className="divider" aria-hidden="true"/><a href="#edit">{t.edits}</a></>}
+        <a href="#moments">{t.moments}</a><a href="#direction">{t.directionHeading}</a>
+        {project?.latest && <a href="#edit">{t.edits}</a>}<span className="divider" aria-hidden="true"/><a href="#film">{t.film}</a>
       </nav>
       <p className="feature">{project ? <><span className="kicker">{t.project}</span>{' '}<b>{project.name}</b>{version && <span className="feature-version"> | {version}</span>}</> : <span className="kicker">{t.localStudio}</span>}</p>
       <div className="mast-end"><div className="language-switch" aria-label="Language"><button aria-pressed={language === 'zh'} onClick={() => setLanguage('zh')}>中文</button><button aria-pressed={language === 'en'} onClick={() => setLanguage('en')}>English</button></div>
-        <p className={'state' + (active ? ' working' : '') + (failed ? ' failed' : '')}><span className="state-dot" aria-hidden="true"/>{state}</p>
         <a className="brand" href="/" aria-label={t.home}><img src="/brand/vlogii-logo.png" alt="vlogii" width="118" height="32"/></a>
       </div>
       <span className="read" ref={progress} aria-hidden="true"/>
@@ -210,34 +234,18 @@ function App() {
     <main>
       <section className="titles">
         <h1><span className="title">{t.heading1}</span><span className="subheading">{t.heading2}</span></h1>
-        <p className="byline">{t.byline}</p>
-        <p className="edition">{t.eyebrow}</p>
+        <p className="byline">{t.intro} {t.intro2}</p>
       </section>
 
-      <section id="film" className={'band' + (project?.video_url ? ' has-film' : '')} aria-label={t.film}>
-        {project?.video_url
-          ? <Film key={project.video_url} src={project.video_url} labels={t} onError={() => setError(t.playbackError)}/>
-          : <div className="band-empty">
-            <img src="/brand/vlogii-mark-180.png" alt="" width="72" height="72"/>
-            <h2>{t.emptyHeading}</h2>
-            <p>{active ? t.emptyWorking : t.empty}</p>
-            {!project && <a className="caps-link" href="#moments">{t.startMoments}</a>}
-          </div>}
-      </section>
-      <div className="caption">
-        <p><span className="kicker">{version || t.slate}</span>{' '}{project?.latest ? `${project.duration_seconds?.toFixed(1) || '—'} ${t.ready}` : t.footerEmpty}</p>
-        {project?.video_url && <a className="caps-link" href={project.video_url + '?download=true'}>{t.download}</a>}
-      </div>
-
+      {(active || project?.job?.status === 'failed' || (busy && !project && files.length > 0)) && <div className="column processing-progress"><JobProgress job={project?.job || null} importing={busy && !project} language={language}/></div>}
       <div className="column">
-        <p aria-live="polite" className={'status' + (active ? ' working' : '')}><span className="state-dot" aria-hidden="true"/>{project?.job?.message ? localizeMessage(project.job.message, language) : project ? (project.latest ? t.stateFilmReady : t.stateImported) : t.begin}</p>
+        {project?.video_url && <div className="preview-shortcut"><a className="caps-link" href="#film">{t.viewFilm}</a></div>}
         {(error || project?.job?.error) && <div role="alert" ref={alertBox} className="alert"><span className="kicker">{t.stateAttention}</span>{localizeMessage(error || project?.job?.error || '', language)}</div>}
 
         {project?.job?.status === 'failed' && project.job.retryable && <div className="retry-panel"><button className="button primary" disabled={busy || active} onClick={() => perform(async () => {
           const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/retry`, { method: 'POST' });
           setProject({ ...project, job });
         })}>{t.retry}</button><p className="note">{t.retryHint}</p></div>}
-        <p className="lede">{t.intro} {t.intro2}</p>
 
         <section id="moments" className="chapter" aria-labelledby="moments-title">
           <div className="break"><span className="no">No. 1</span><h2 id="moments-title">{t.moments}</h2></div>
@@ -258,7 +266,7 @@ function App() {
           </> : <>
             <p className="project-name">{project.name}</p>
             <p className="note">{project.clips.length} {t.selected} · {footage} {t.footage}</p>
-            <ul className="clips">{project.clips.map(clip => <li key={clip.id}><span title={clip.name}>{clip.name}</span><small>{clip.duration.toFixed(1)}s</small></li>)}</ul>
+            <details className="imported-clips"><summary>{t.clipDetails}</summary><ul className="clips">{project.clips.map(clip => <li key={clip.id}><span title={clip.name}>{clip.name}</span><small>{clip.duration.toFixed(1)}s</small></li>)}</ul></details>
             <button className="caps-link" disabled={busy || active} onClick={() => {setProject(null);setTitle('');setExcluded([]);}}>{t.another}</button>
           </>}
         </section>
@@ -272,9 +280,13 @@ function App() {
           <label className="field"><span>{t.mode}</span><select value={mode} onChange={event => {setMode(event.target.value as EditMode);setSeconds('');}} disabled={busy || active}><option value="auto">{t.modeAuto}</option><option value="highlights">{t.modeHighlights}</option><option value="keep_most">{t.modeMost}</option><option value="keep_all">{t.modeAll}</option></select></label>
           <p className="note">{mode === 'keep_all' ? t.allHint : mode === 'keep_most' ? t.mostHint : mode === 'highlights' ? t.highlightsHint : t.autoHint}</p>
           {mode === 'keep_most' && <label className="check"><input type="checkbox" checked={removeNoSpeech} onChange={event => setRemoveNoSpeech(event.target.checked)} disabled={busy || active}/>{t.removeNoSpeech}</label>}
-          <label className="field"><span>{t.direction}</span><textarea placeholder={t.directionPlaceholder} value={direction} onChange={event => setDirection(event.target.value)} maxLength={2000} disabled={busy || active}/></label>
-          <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{examples.map(example => <button type="button" key={example.text} disabled={busy || active || (direction.length + example.text.length + 1 > 2000)} onClick={() => addExample(example)}>{example.text}</button>)}</div>
-          {!retention && <><label className="field"><span>{t.target}</span><input type="number" min={1} max={1800} step="any" placeholder={t.targetPlaceholder} value={seconds} onChange={event => setSeconds(event.target.value)} disabled={busy || active}/></label><p className="note">{t.targetHint}</p></>}
+          <div className="field">
+            <label htmlFor="direction-input">{t.direction}</label>
+            <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{examples.map(example => <button type="button" key={example.text} disabled={busy || active || (direction.length + example.text.length + 1 > 2000)} onClick={() => addExample(example)}>{example.text}</button>)}</div>
+            <textarea id="direction-input" placeholder={t.directionPlaceholder} value={direction} onChange={event => setDirection(event.target.value)} maxLength={2000} disabled={busy || active}/>
+          </div>
+          {!retention && <><label className="field"><span>{t.target}</span><input type="text" maxLength={80} placeholder={t.targetPlaceholder} value={seconds} onChange={event => setSeconds(event.target.value)} aria-invalid={!validSeconds} aria-describedby="target-hint" disabled={busy || active}/></label>
+            <p id="target-hint" className={'note' + (!validSeconds ? ' invalid' : '')} role={!validSeconds ? 'alert' : undefined}>{!validSeconds ? t.targetInvalid : targetSeconds !== null ? t.targetResolved.replace('{seconds}', String(targetSeconds)) : t.targetHint}</p></>}
           {mode === 'highlights' && <fieldset className="radio-bar" disabled={busy || active}><legend>{t.cadence}</legend>{[0.25, 0.35, 0.5, 0.8].map(value => <label key={value}><input type="radio" name="cadence" value={value} checked={shotSeconds === value} onChange={() => setShotSeconds(value)}/>{value}s</label>)}</fieldset>}
           <fieldset className="radio-bar" disabled={busy || active}><legend>{t.speed}</legend>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="generate-speed" value={value} checked={speed === value} onChange={() => setSpeed(value)}/>{value}×</label>)}</fieldset><p className="note">{t.speedHint}</p>
           <p className="note">{mode === 'highlights' ? t.highlightsAudioHint : t.audioHint}</p>
@@ -284,17 +296,38 @@ function App() {
 
         {project?.latest && <section id="edit" className="chapter" aria-labelledby="edit-title">
           <div className="break"><span className="no">No. 3</span><h2 id="edit-title">{t.edits}</h2></div>
-          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset><p className="note">{t.editSpeedHint}</p>
-          <label className="field"><span>{t.timeEdits}</span><textarea placeholder={t.timeEditsPlaceholder} value={instruction} onChange={event => setInstruction(event.target.value)} maxLength={1000} disabled={busy || active}/></label><p className="note">{t.timeEditsHint}</p>
-          <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{[t.exampleRemove, t.exampleSpeed].map(example => <button type="button" key={example} disabled={busy || active || instruction.length + example.length + 2 > 1000} onClick={() => setInstruction(value => value.trim() ? value.trim() + '; ' + example : example)}>{example}</button>)}</div>
+          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset>
+          <div className="actions edit-actions-top"><button className="button primary" disabled={editDisabled} onClick={applyEdit}>{t.apply}</button><a className="button quiet" href="#film">{t.viewFilm}</a></div>
+          <p className="note">{t.editSpeedHint}</p>
+          <div className="field">
+            <label htmlFor="time-edits-input">{t.timeEdits}</label>
+            <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{[t.exampleRemove, t.exampleSpeed].map(example => <button type="button" key={example} disabled={busy || active || instruction.length + example.length + 2 > 1000} onClick={() => setInstruction(value => value.trim() ? value.trim() + '; ' + example : example)}>{example}</button>)}</div>
+            <textarea id="time-edits-input" placeholder={t.timeEditsPlaceholder} value={instruction} onChange={event => setInstruction(event.target.value)} maxLength={1000} disabled={busy || active}/>
+          </div><p className="note">{t.timeEditsHint}</p>
           <label className="field"><span>{t.title}</span><input placeholder={t.titlePlaceholder} value={title} onChange={event => setTitle(event.target.value)} maxLength={100} disabled={busy || active}/></label>
           <label className="check"><input type="checkbox" checked={warmer} onChange={event => setWarmer(event.target.checked)} disabled={busy || active}/> {t.warmer}</label>
           <details><summary>{t.exclude}</summary>{project.clips.map(clip => <label className="check" key={clip.id}><input type="checkbox" disabled={busy || active} checked={excluded.includes(clip.id)} onChange={event => setExcluded(items => event.target.checked ? [...items,clip.id] : items.filter(id=>id!==clip.id))}/>{clip.name}</label>)}</details>
-          <div className="actions"><button className="button primary" disabled={busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null)} onClick={applyEdit}>{t.apply}</button>
+          <div className="actions"><button className="button primary" disabled={editDisabled} onClick={applyEdit}>{t.apply}</button>
           <button className="button quiet" disabled={busy || active || project.latest.history.length < 2} onClick={() => perform(async () => { setProject(await request<Project>(`/projects/${encodeURIComponent(project.name)}/undo`, { method: 'POST' })); })}>{t.undo}</button></div>
           <p className="note">{t.editHint}</p>
         </section>}
       </div>
+      <div className="column preview-heading"><div className="break"><span className="no">{project?.latest ? 'No. 4' : 'No. 3'}</span><h2 id="film-title">{t.film}</h2></div></div>
+      <section id="film" className={'band' + (project?.video_url ? ' has-film' : '')} aria-labelledby="film-title">
+        {project?.video_url
+          ? <Film key={project.video_url} src={project.video_url} labels={t} onError={() => setError(t.playbackError)}/>
+          : <div className="band-empty">
+            <img src="/brand/vlogii-mark-180.png" alt="" width="72" height="72"/>
+            <h2>{t.emptyHeading}</h2>
+            <p>{active ? t.emptyWorking : t.empty}</p>
+            {!project && <a className="caps-link" href="#moments">{t.startMoments}</a>}
+          </div>}
+      </section>
+      <div className="caption">
+        <p><span className="kicker">{version || t.slate}</span>{' '}{project?.latest ? `${project.duration_seconds?.toFixed(1) || '—'} ${t.ready}` : t.footerEmpty}</p>
+        {project?.video_url && <a className="caps-link" href={project.video_url + '?download=true'}>{t.download}</a>}
+      </div>
+
     </main>
 
     <footer className="colophon">
