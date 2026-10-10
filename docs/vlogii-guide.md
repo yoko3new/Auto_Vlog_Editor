@@ -90,7 +90,7 @@ tests/           Validation, failure recovery, API and real-media checks
 
 The editor follows the layout of Emergence Magazine's long-form features: a thin white masthead with a reading-progress rule, a centred serif title block, one 684 px reading column, the film shown full width on a dark band with a quiet circular Play button, centred chapter breaks and one wide pull quote. Interface text is set in a sans serif, reading text in a serif.
 
-- Palette: light mint is the primary colour (logo tile `#CCF0E4`, buttons `#8DD0B8`, links `#2B735B` for AA contrast), with butter yellow (`#FFF4CF`, upload area) and sky blue (`#E2EFFA`, empty film band and notes) as accents. Text is a green-tinted near-black on `#F8FAF7`.
+- Palette (vlogii fresh palette): large areas use the light base `#F8FBF7`; mint `#8CCFB8` is the primary emphasis (buttons, progress rule, status dots); light blue `#C7DFF0` and light green `#DDEBD5` are supporting surfaces (empty film band, upload area, notes, focus halo); light yellow `#F7EDB8` appears only as small accents (upload icon, pull-quote rule, text selection). Text is deep grey-green `#355A50`. For WCAG AA, button labels on mint use the darker `#244038`, secondary text uses `#5B776E` on light surfaces only, and field borders use `#7F9990`.
 - Logo: the approved vlogii lockup and tile live in `frontend/public/brand/` (lockup, 32/180/512 px tiles and an opaque Apple touch icon).
 - Type: Newsreader, Libre Franklin and Courier Prime (all SIL Open Font License) are bundled through `@fontsource` packages, so the browser makes no font requests to third parties. Emergence's own typefaces are commercial and are not used.
 - The design covers the web UI only. Captions and titles burned into exported MP4 files are unchanged.
