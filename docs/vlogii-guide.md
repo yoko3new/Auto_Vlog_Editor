@@ -8,6 +8,8 @@ This is an independent implementation informed by a successful VX workflow and i
 
 ## Run locally
 
+A step-by-step Chinese tutorial for macOS and Safari, including a demo without an API key, is in [Mac setup](vlogii-mac-setup.md).
+
 Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astral.sh/uv/), and FFmpeg with `drawtext`, `zscale`, `tonemap`, AAC, H.264 and HEVC support.
 
 On macOS:
@@ -26,7 +28,7 @@ sudo apt-get install ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
 Clone the implementation branch and install the locked dependencies:
 
 ```sh
-git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+git clone --branch feng-emergence https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
