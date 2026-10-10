@@ -61,6 +61,8 @@ function App() {
   const [color, setColor] = useState('sdr');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Counts errors caused by the user's own actions; only these move the page to the alert.
+  const [errorTick, setErrorTick] = useState(0);
   const [title, setTitle] = useState('');
   const [excluded, setExcluded] = useState<string[]>([]);
   const [warmer, setWarmer] = useState(false);
@@ -85,14 +87,20 @@ function App() {
     let cancelled = false;
     const timer = window.setInterval(() => {
       request<Project>(`/projects/${project.name}`).then(value => {
-        if (!cancelled) setProject(value);
+        if (!cancelled) { setProject(value); setError(''); }
       }).catch(exc => { if (!cancelled) setError(exc.message); });
     }, 1500);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [project?.name, active]);
 
-  // Actions sit far below the status area in the single-column layout, so show a new error where it is.
-  useEffect(() => { if (error) alertBox.current?.scrollIntoView({ block: 'center' }); }, [error]);
+  // Actions sit far below the status area in the single-column layout, so show an action's error where it is.
+  // Background errors (playback, polling) only update the alert and masthead, without moving the page.
+  useEffect(() => { if (errorTick) alertBox.current?.scrollIntoView({ block: 'center' }); }, [errorTick]);
+  useEffect(() => setError(''), [project?.name]);
+
+  function report(message: string) {
+    setError(message); setErrorTick(count => count + 1);
+  }
 
   // Reading progress, as in the masthead of a long-form feature.
   useEffect(() => {
@@ -111,13 +119,14 @@ function App() {
 
   async function perform(action: () => Promise<void>) {
     setBusy(true); setError('');
-    try { await action(); } catch (exc) { setError(exc instanceof Error ? exc.message : 'Something went wrong.'); }
+    try { await action(); } catch (exc) { report(exc instanceof Error ? exc.message : 'Something went wrong.'); }
     finally { setBusy(false); }
   }
 
   function choose(items: File[]) {
     const videos = items.filter(item => /\.(mp4|mov|m4v|mkv)$/i.test(item.name));
-    setFiles(videos); setError(videos.length === items.length ? '' : 'Choose MP4, MOV, M4V or MKV video clips.');
+    setFiles(videos);
+    if (videos.length === items.length) setError(''); else report('Choose MP4, MOV, M4V or MKV video clips.');
   }
 
   async function create() {
@@ -198,7 +207,7 @@ function App() {
 
         <section id="moments" className="chapter" aria-labelledby="moments-title">
           <div className="break"><span className="no">No. 1</span><h2 id="moments-title">Your Moments</h2></div>
-          {projects.length > 0 && <label className="field"><span>Open a saved project</span><select value={project?.name || ''} onChange={event => {if (event.target.value) {request<Project>(`/projects/${event.target.value}`).then(setProject).catch(exc=>setError(exc.message));} else {setProject(null);} setTitle('');setExcluded([]);}} disabled={busy || active}><option value="">New project</option>{projects.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}</select></label>}
+          {projects.length > 0 && <label className="field"><span>Open a saved project</span><select value={project?.name || ''} onChange={event => {if (event.target.value) {request<Project>(`/projects/${event.target.value}`).then(setProject).catch(exc=>report(exc.message));} else {setProject(null);} setTitle('');setExcluded([]);}} disabled={busy || active}><option value="">New project</option>{projects.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}</select></label>}
           {!project ? <>
             <label className="field"><span>Project name</span><input value={name} onChange={event => setName(event.target.value)} maxLength={64} pattern="[A-Za-z0-9][A-Za-z0-9_-]*"/></label>
             <div className={'dropzone' + (dragging ? ' is-over' : '')} onDragOver={event => {event.preventDefault();setDragging(true);}} onDragLeave={() => setDragging(false)} onDrop={event => {event.preventDefault();setDragging(false);if (!busy) choose(Array.from(event.dataTransfer.files));}}>
