@@ -130,3 +130,53 @@ class Timeline(Model):
     fps: int
     total_frames: int
     segments: list[TimelineSegment]
+
+
+class Music(Model):
+    file: str = Field(pattern=r"^[0-9a-f]{32}\.[a-z0-9]{2,5}$")
+    name: str = Field(min_length=1, max_length=255)
+    sha256: str
+    duration: Annotated[FiniteFloat, Field(gt=0)]
+
+
+class StyleMoment(Model):
+    clip_id: str
+    in_sec: Seconds
+    out_sec: Seconds
+    label: str | None = Field(default=None, min_length=1, max_length=40)
+
+    @model_validator(mode="after")
+    def ordered(self):
+        if self.out_sec <= self.in_sec:
+            raise ValueError("Moment end must be greater than start.")
+        return self
+
+
+class StyleText(Model):
+    kicker: str | None = Field(default=None, min_length=1, max_length=40)
+    title: str | None = Field(default=None, min_length=1, max_length=40)
+    subtitle: str | None = Field(default=None, min_length=1, max_length=60)
+    location: str | None = Field(default=None, min_length=1, max_length=30)
+    end_card: str | None = Field(default=None, min_length=1, max_length=80)
+
+
+class StyleSelection(Model):
+    """What AI (or the no-AI fallback) chooses; code computes every cut from it."""
+
+    schema_version: Literal[1] = 1
+    reasoning: str = ""
+    text: StyleText = Field(default_factory=StyleText)
+    moments: list[StyleMoment] = Field(min_length=1, max_length=60)
+
+
+class StyleRequest(Model):
+    """Everything needed to re-render a style version without another AI call."""
+
+    schema_version: Literal[1] = 1
+    style_id: str
+    revision: int
+    music: Music
+    selection: StyleSelection
+    ai_selected: bool
+    warmth: Annotated[FiniteFloat, Field(ge=0, le=1)] = 0
+    excluded: list[str] = Field(default_factory=list)

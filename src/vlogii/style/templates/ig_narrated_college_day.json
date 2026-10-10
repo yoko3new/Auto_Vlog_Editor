@@ -1,7 +1,7 @@
 {
   "template_version": 1,
   "id": "ig_narrated_college_day",
-  "revision": 1,
+  "revision": 2,
   "display_name": "Narrated college day",
   "description": "Rainy campus day with narration: a 2.9 s strobe hook of ~0.13 s shots under a crimson title, phrase-length body shots, digital clock, music ducked under the voiceover, black end card.",
   "reference": {
@@ -40,15 +40,15 @@
   "grade": {"target": {"luma": 0.39, "saturation": 0.27, "warmth": 0.06}, "strength": 0.4},
   "text": {
     "roles": {
-      "range": {"fonts": ["Inter"], "bold": true, "size": 0.022, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": 1, "uppercase": true, "box": null},
-      "kicker": {"fonts": ["Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
-      "main": {"fonts": ["Inter Display Black", "Inter Display", "Inter"], "bold": true, "size": 0.085, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": -2, "uppercase": false, "box": null},
-      "sub": {"fonts": ["Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "range": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.022, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": 1, "uppercase": true, "box": null},
+      "kicker": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "main": {"fonts": ["Poppins Black", "Inter Display Black", "Inter"], "bold": false, "size": 0.085, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": -2, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
       "star": {"fonts": ["DejaVu Sans"], "bold": false, "size": 0.035, "color": "#FFFFFF", "outline": 0, "shadow": 0, "spacing": 0, "uppercase": false, "box": null},
-      "clock": {"fonts": ["DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.03, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
-      "clock_caption": {"fonts": ["Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
-      "caption": {"fonts": ["Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
-      "end": {"fonts": ["Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 0, "spacing": 0, "uppercase": false, "box": null}
+      "clock": {"fonts": ["Share Tech Mono", "DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.03, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
+      "clock_caption": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "caption": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
+      "end": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 0, "spacing": 0, "uppercase": false, "box": null}
     },
     "title": {
       "show_until_s": "hook_end",

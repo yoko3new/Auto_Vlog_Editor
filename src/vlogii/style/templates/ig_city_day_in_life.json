@@ -1,7 +1,7 @@
 {
   "template_version": 1,
   "id": "ig_city_day_in_life",
-  "revision": 1,
+  "revision": 2,
   "display_name": "City day in my life",
   "description": "Bright city day: a 3.8 s hook of ~0.3 s shots under a bold 'day in my life' title, then 0.5-1.3 s shots with a digital clock stamp, music only.",
   "reference": {
@@ -40,12 +40,12 @@
   "grade": {"target": {"luma": 0.46, "saturation": 0.3, "warmth": 0.11}, "strength": 0.4},
   "text": {
     "roles": {
-      "range": {"fonts": ["Inter"], "bold": true, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 1, "uppercase": true, "box": null},
-      "main": {"fonts": ["Inter Display", "Inter"], "bold": true, "size": 0.06, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": -1, "uppercase": false, "box": null},
-      "sub": {"fonts": ["Inter"], "bold": false, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
-      "tag": {"fonts": ["Inter"], "bold": true, "size": 0.015, "color": "#1E1E1E", "outline": 4, "shadow": 0, "spacing": 1, "uppercase": true, "box": "#FFFFFF"},
-      "clock": {"fonts": ["DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.032, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
-      "clock_caption": {"fonts": ["Inter"], "bold": false, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
+      "range": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 1, "uppercase": true, "box": null},
+      "main": {"fonts": ["Poppins", "Inter Display", "Inter"], "bold": true, "size": 0.06, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": -1, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "tag": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.015, "color": "#1E1E1E", "outline": 4, "shadow": 0, "spacing": 1, "uppercase": true, "box": "#FFFFFF"},
+      "clock": {"fonts": ["Share Tech Mono", "DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.032, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
+      "clock_caption": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
     },
     "title": {
       "show_until_s": "hook_end",

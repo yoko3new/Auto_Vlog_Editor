@@ -1,9 +1,10 @@
-"""Beat, accent and level analysis for a music track or a finished reel's soundtrack."""
+"""Beat, accent and level analysis for a music track or a finished reel's soundtrack.
 
-from __future__ import annotations
+librosa is imported inside the functions: it is slow to import and only needed while a
+style film is planned or a reference is analysed.
+"""
 
 import numpy as np
-import librosa
 
 HOP = 512
 BEATS_PER_BAR = 4
@@ -15,6 +16,8 @@ def analyze_music(y: np.ndarray, sr: int, start_bpm: float = 120.0) -> dict:
     Downbeats are an estimate: the bar phase whose beats carry the most low-band
     (kick/bass) onset energy. ``downbeat_confidence`` near 0 means the phase is a guess.
     """
+    import librosa
+
     if y.size < sr:
         raise ValueError("audio shorter than one second")
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP)
@@ -46,17 +49,23 @@ def analyze_music(y: np.ndarray, sr: int, start_bpm: float = 120.0) -> dict:
         "tempo_bpm": round(tempo, 2),
         "attack_offset_s": round(attack_offset, 4),
         "beat_period_s": round(beat_period, 4),
-        "beat_interval_cv": round(float(np.std(intervals) / np.mean(intervals)), 4) if intervals.size else None,
+        "beat_interval_cv": round(float(np.std(intervals) / np.mean(intervals)), 4)
+        if intervals.size
+        else None,
         "beats_s": [round(float(t), 3) for t in beat_times],
         "downbeat_phase": best,
         "downbeat_confidence": round(float(downbeat_confidence), 3),
         "downbeats_s": [round(float(t), 3) for t in beat_times[best::BEATS_PER_BAR]],
         "strong_accents_s": [round(float(t), 3) for t in accents],
-        "onsets_s": [round(float(t), 3) for t in librosa.frames_to_time(onset_frames, sr=sr, hop_length=HOP)],
+        "onsets_s": [
+            round(float(t), 3) for t in librosa.frames_to_time(onset_frames, sr=sr, hop_length=HOP)
+        ],
     }
 
 
-def refine_beats(beat_times: np.ndarray, y: np.ndarray, sr: int, half_window: int = 4) -> tuple[np.ndarray, float]:
+def refine_beats(
+    beat_times: np.ndarray, y: np.ndarray, sr: int, half_window: int = 4
+) -> tuple[np.ndarray, float]:
     """Move beats onto the audible attack and smooth tracker jitter.
 
     The onset envelope peaks roughly one analysis hop after the attack, so cuts would land
@@ -64,6 +73,8 @@ def refine_beats(beat_times: np.ndarray, y: np.ndarray, sr: int, half_window: in
     corrects that bias; a local linear fit over +-4 beats then removes per-beat jitter
     while still following gradual tempo changes.
     """
+    import librosa
+
     if beat_times.size < 2 * half_window + 1:
         return beat_times, 0.0
     hop = 64
@@ -111,7 +122,7 @@ def mix_shape(y: np.ndarray, sr: int) -> dict:
     last_full = reach[-1] if reach.size else end_idx
     fade_out = max(0.0, float(times[end_idx] - times[last_full]))
 
-    rolling = np.array([np.median(db[max(0, i - 20): i + 21]) for i in range(db.size)])
+    rolling = np.array([np.median(db[max(0, i - 20) : i + 21]) for i in range(db.size)])
     low = db < rolling - 6
     dips, i = [], 0
     while i < low.size:
@@ -119,15 +130,27 @@ def mix_shape(y: np.ndarray, sr: int) -> dict:
             j = i
             while j < low.size and low[j]:
                 j += 1
-            if (j - i) * 0.1 >= 0.3 and times[i] > start + 0.5 and times[min(j, low.size - 1)] < times[end_idx] - 0.5:
-                dips.append({"start_s": round(float(times[i]), 2), "end_s": round(float(times[j - 1] + 0.1), 2),
-                             "depth_db": round(float(np.mean(rolling[i:j] - db[i:j])), 1)})
+            if (
+                (j - i) * 0.1 >= 0.3
+                and times[i] > start + 0.5
+                and times[min(j, low.size - 1)] < times[end_idx] - 0.5
+            ):
+                dips.append(
+                    {
+                        "start_s": round(float(times[i]), 2),
+                        "end_s": round(float(times[j - 1] + 0.1), 2),
+                        "depth_db": round(float(np.mean(rolling[i:j] - db[i:j])), 1),
+                    }
+                )
             i = j
         else:
             i += 1
     return {
         "body_level_dbfs": round(float(body), 1),
-        "level_p10_p90_dbfs": [round(float(np.percentile(db, 10)), 1), round(float(np.percentile(db, 90)), 1)],
+        "level_p10_p90_dbfs": [
+            round(float(np.percentile(db, 10)), 1),
+            round(float(np.percentile(db, 90)), 1),
+        ],
         "audio_starts_at_s": round(start, 2),
         "fade_in_s": round(fade_in, 2),
         "fade_out_s": round(fade_out, 2),

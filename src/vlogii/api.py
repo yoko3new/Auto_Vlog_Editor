@@ -18,11 +18,16 @@ from .editorial import parse_edit_instruction, selection_intent
 from .models import Model, Selection, Settings, Speed, SpeedRange, TimeRange
 from .pipeline import EXTENSIONS, edit, generate, initialize, load_project, undo
 from .storage import VlogiiError, locked, project_path, read_json, write_json
+from .style import film as style_film
+from .style import templates
+from .style.planner import PlanError
+from .style.templates import TemplateError
 
 
 class GenerateRequest(Selection):
     direction: str = Field(default="", max_length=2000)
     language: Literal["en", "zh"] = "en"
+    style_id: str | None = Field(default=None, pattern=r"^[a-z0-9_]{3,64}$")
 
 
 class EditRequest(Model):
@@ -56,6 +61,38 @@ class VersionHistory(Model):
     history: list[str]
 
 
+class MusicView(Model):
+    name: str
+    duration: float
+
+
+class StyleVersion(Model):
+    id: str
+    name: str
+    ai_selected: bool
+    music: str
+    tempo_bpm: float | None
+    loudness_lufs: float | None
+    warnings: list[str]
+
+
+class StyleDuration(Model):
+    min: float
+    target: float
+    max: float
+
+
+class StyleOption(Model):
+    id: str
+    revision: int
+    name: str
+    description: str
+    reference_url: str
+    orientation: Literal["portrait", "landscape"]
+    duration: StyleDuration
+    voiceover: bool
+
+
 class ProjectView(Model):
     name: str
     clips: list[WebClip]
@@ -65,6 +102,8 @@ class ProjectView(Model):
     video_url: str | None
     duration_seconds: float | None
     selection: Selection | None = None
+    music: MusicView | None = None
+    style: StyleVersion | None = None
 
 
 def public_job(job):
@@ -127,6 +166,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             if (directory / "upload-names.json").exists()
             else {}
         )
+        music = style_film.load_music(directory)
         return {
             "name": project.name,
             "clips": [
@@ -153,6 +193,10 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             "video_url": f"/api/vlogii/projects/{project.name}/cuts/{latest['cut']}/film.mp4"
             if latest
             else None,
+            "music": {"name": music.name, "duration": music.duration} if music else None,
+            "style": style_film.describe_version(directory / "cuts" / latest["cut"])
+            if latest
+            else None,
         }
 
     @app.get("/api/vlogii/health")
@@ -171,6 +215,10 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
             ),
         }
+
+    @app.get("/api/vlogii/styles", response_model=list[StyleOption])
+    def styles():
+        return templates.summaries()
 
     @app.get("/api/vlogii/projects", response_model=list[ProjectView])
     def projects():
@@ -236,6 +284,22 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
     def project(name: str):
         return describe(existing(name))
 
+    def busy(directory):
+        job_path = directory / "job.json"
+        return job_path.exists() and read_json(job_path).get("status") in {"queued", "running"}
+
+    @app.post("/api/vlogii/projects/{name}/music", response_model=ProjectView)
+    def add_music(name: str, file: Annotated[UploadFile, File()]):
+        directory = existing(name)
+        try:
+            if busy(directory):
+                raise HTTPException(409, "Wait for the current film to finish.")
+            with locked(directory):
+                style_film.store_music(directory, file.file, file.filename or "music")
+        finally:
+            file.file.close()
+        return describe(directory)
+
     def worker(directory, request, job):
         def progress(message):
             write_json(
@@ -256,6 +320,14 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     instruction=request.instruction,
                     speed=request.speed,
                     speed_ranges=request.speed_ranges,
+                )
+            elif request.style_id:
+                style_film.generate_style(
+                    directory,
+                    request.style_id,
+                    request.direction,
+                    progress=progress,
+                    resume=job.get("resume", False),
                 )
             else:
                 generate(
@@ -285,7 +357,11 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 directory / "last-error.json", {"type": type(exc).__name__, "message": str(exc)}
             )
             message = "Generation failed. Previous films are preserved. Check the server terminal or retry."
-            if isinstance(exc, VlogiiError) and "GEMINI_API_KEY" in str(exc):
+            # Style planning problems need the user's change (more footage, longer music).
+            user_fixable = isinstance(exc, PlanError | TemplateError) or "Style films" in str(exc)
+            if user_fixable:
+                message = str(exc)
+            elif isinstance(exc, VlogiiError) and "GEMINI_API_KEY" in str(exc):
                 message = "Set GEMINI_API_KEY in the server's .env file and restart."
             elif isinstance(exc, VlogiiError):
                 if "Gemini" in str(exc) and "speech" in str(exc).lower():
@@ -315,7 +391,8 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     "status": "failed",
                     "message": message,
                     "error": message,
-                    "retryable": not any(
+                    "retryable": not user_fixable
+                    and not any(
                         label in str(exc)
                         for label in (
                             "Keep at least",
@@ -375,7 +452,14 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             )
         except ValueError as exc:
             raise VlogiiError("Choose a target between 1 and 1800 seconds.") from exc
-        if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
+        if request.style_id:
+            # Styles also work without a key: clips stay in import order with template text.
+            template = templates.load(request.style_id)
+            settings = load_project(directory).settings
+            style_film.planner.output_for(template, (settings.width, settings.height))
+            if style_film.load_music(directory) is None:
+                raise HTTPException(400, "Add a music track before making a style film.")
+        elif not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
             raise HTTPException(400, "Set GEMINI_API_KEY in .env and restart the server.")
         return enqueue(directory, request)
 

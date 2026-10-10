@@ -10,7 +10,7 @@ import '@fontsource/libre-franklin/700.css';
 import '@fontsource/courier-prime/400.css';
 import './style.css';
 
-import { Language, translations, localizeMessage } from './i18n';
+import { Language, translations, localizeMessage, styleTextZh } from './i18n';
 import { parseTargetSeconds } from './duration';
 import { jobProgress, ProgressStage } from './job-progress';
 
@@ -18,7 +18,11 @@ type Job = { status: 'queued' | 'running' | 'complete' | 'failed'; message: stri
 type EditMode = 'auto' | 'highlights' | 'keep_most' | 'keep_all';
 type Project = { name: string; clips: { id: string; name: string; duration: number }[]; job: Job | null;
   latest: { cut: string; history: string[] } | null; video_url: string | null; duration_seconds: number | null;
-  selection: { mode: EditMode; target_seconds: number | null; remove_no_speech: boolean; speed: number; shot_seconds: number } | null };
+  selection: { mode: EditMode; target_seconds: number | null; remove_no_speech: boolean; speed: number; shot_seconds: number } | null;
+  settings: { width: number; height: number }; music: { name: string; duration: number } | null; style: StyleVersion | null };
+type StyleVersion = { id: string; name: string; ai_selected: boolean; music: string; tempo_bpm: number | null; loudness_lufs: number | null; warnings: string[] };
+type StyleOption = { id: string; name: string; description: string; reference_url: string;
+  orientation: 'portrait' | 'landscape'; duration: { min: number; target: number; max: number }; voiceover: boolean };
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const result = await fetch('/api/vlogii' + url, options);
@@ -107,6 +111,10 @@ function App() {
   const [warmer, setWarmer] = useState(false);
   const [instruction, setInstruction] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
+  const [styles, setStyles] = useState<StyleOption[]>([]);
+  const [styleId, setStyleId] = useState('');
+  const [music, setMusic] = useState<File | null>(null);
+  const musicInput = useRef<HTMLInputElement>(null);
   const active = project?.job?.status === 'queued' || project?.job?.status === 'running';
   const retention = mode === 'keep_all' || mode === 'keep_most';
   const targetSeconds = parseTargetSeconds(seconds);
@@ -130,6 +138,8 @@ function App() {
     setMode(example.mode); setSeconds(''); setRemoveNoSpeech(example.removeNoSpeech || false);
   }
   useEffect(() => { setInstruction(''); setExcluded([]); setTitle(''); setWarmer(false); setEditSpeed(null); }, [project?.name]);
+
+  useEffect(() => { request<StyleOption[]>('/styles').then(setStyles).catch(() => setStyles([])); }, []);
 
   useEffect(() => {
     request<Project[]>('/projects').then(items => {
@@ -175,11 +185,22 @@ function App() {
   }
 
   async function generateFilm() {
-    if (!project || (!retention && !validSeconds)) return;
+    if (!project || (!styleId && !retention && !validSeconds)) return;
     await perform(async () => {
+      let current = project;
+      if (styleId && music) {
+        const data = new FormData();
+        data.append('file', music);
+        current = await request<Project>(`/projects/${encodeURIComponent(project.name)}/music`, { method: 'POST', body: data });
+        setProject(current); setMusic(null);
+        if (musicInput.current) musicInput.current.value = '';
+      }
+      const body = styleId
+        ? { direction, style_id: styleId, language }
+        : { direction, mode, target_seconds: retention ? null : targetSeconds, speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language };
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/generate`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention ? null : targetSeconds, speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language }) });
-      setProject({ ...project, job });
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      setProject({ ...current, job });
     });
   }
 
@@ -216,6 +237,11 @@ function App() {
 
   const editDisabled = !project?.latest || busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null);
   const footage = project ? Math.round(project.clips.reduce((sum, clip) => sum + clip.duration, 0)) : 0;
+  const portrait = project ? project.settings.height > project.settings.width : orientation === 'portrait';
+  const chosenStyle = styles.find(item => item.id === styleId) || null;
+  const needsMusic = !!chosenStyle && !music && !project?.music;
+  const styleName = (id: string, fallback: string) => language === 'zh' && styleTextZh[id] ? styleTextZh[id].name : fallback;
+  const styleFilm = project?.style;
   const version = project?.latest?.cut.replace('cut_', t.version + ' ') || null;
 
   return <>
@@ -277,33 +303,46 @@ function App() {
       <div className="column">
         <section id="direction" className="chapter" aria-labelledby="direction-title">
           <div className="break"><span className="no">No. 2</span><h2 id="direction-title">{t.directionHeading}</h2></div>
-          <label className="field"><span>{t.mode}</span><select value={mode} onChange={event => {setMode(event.target.value as EditMode);setSeconds('');}} disabled={busy || active}><option value="auto">{t.modeAuto}</option><option value="highlights">{t.modeHighlights}</option><option value="keep_most">{t.modeMost}</option><option value="keep_all">{t.modeAll}</option></select></label>
+          <label className="field"><span>{t.style}</span><select value={styleId} onChange={event => setStyleId(event.target.value)} disabled={busy || active}>
+            <option value="">{t.styleNone}</option>
+            {styles.map(item => { const mismatch = (item.orientation === 'portrait') !== portrait; return <option key={item.id} value={item.id} disabled={mismatch}>{styleName(item.id, item.name)} · {item.duration.min}–{item.duration.max}s{mismatch ? ' · ' + t.styleOrientation.replace('{orientation}', item.orientation === 'portrait' ? t.portrait : t.landscape) : ''}</option>; })}
+          </select></label>
+          {chosenStyle && <>
+            <p className="note">{language === 'zh' && styleTextZh[chosenStyle.id] ? styleTextZh[chosenStyle.id].description : chosenStyle.description} {t.styleLength.replace('{seconds}', String(chosenStyle.duration.target))} <a href={chosenStyle.reference_url} target="_blank" rel="noreferrer">{t.styleReference}</a></p>
+            <div className="field"><span>{t.music}</span>
+              <p className="note">{music ? t.musicPending.replace('{name}', music.name) : project?.music ? t.musicCurrent.replace('{name}', project.music.name).replace('{seconds}', String(Math.round(project.music.duration))) : t.musicNone}</p>
+              <button type="button" className="button quiet" onClick={() => musicInput.current?.click()} disabled={busy || active}>{project?.music || music ? t.musicChange : t.musicChoose}</button>
+            </div>
+            <input ref={musicInput} type="file" accept=".mp3,.m4a,.aac,.wav,.flac,.ogg,audio/*" onChange={event => setMusic(event.target.files?.[0] || null)} hidden/>
+          </>}
+          {!chosenStyle && <><label className="field"><span>{t.mode}</span><select value={mode} onChange={event => {setMode(event.target.value as EditMode);setSeconds('');}} disabled={busy || active}><option value="auto">{t.modeAuto}</option><option value="highlights">{t.modeHighlights}</option><option value="keep_most">{t.modeMost}</option><option value="keep_all">{t.modeAll}</option></select></label>
           <p className="note">{mode === 'keep_all' ? t.allHint : mode === 'keep_most' ? t.mostHint : mode === 'highlights' ? t.highlightsHint : t.autoHint}</p>
-          {mode === 'keep_most' && <label className="check"><input type="checkbox" checked={removeNoSpeech} onChange={event => setRemoveNoSpeech(event.target.checked)} disabled={busy || active}/>{t.removeNoSpeech}</label>}
+          {mode === 'keep_most' && <label className="check"><input type="checkbox" checked={removeNoSpeech} onChange={event => setRemoveNoSpeech(event.target.checked)} disabled={busy || active}/>{t.removeNoSpeech}</label>}</>}
           <div className="field">
             <label htmlFor="direction-input">{t.direction}</label>
-            <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{examples.map(example => <button type="button" key={example.text} disabled={busy || active || (direction.length + example.text.length + 1 > 2000)} onClick={() => addExample(example)}>{example.text}</button>)}</div>
+            {!chosenStyle && <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{examples.map(example => <button type="button" key={example.text} disabled={busy || active || (direction.length + example.text.length + 1 > 2000)} onClick={() => addExample(example)}>{example.text}</button>)}</div>}
             <textarea id="direction-input" placeholder={t.directionPlaceholder} value={direction} onChange={event => setDirection(event.target.value)} maxLength={2000} disabled={busy || active}/>
           </div>
-          {!retention && <><label className="field"><span>{t.target}</span><input type="text" maxLength={80} placeholder={t.targetPlaceholder} value={seconds} onChange={event => setSeconds(event.target.value)} aria-invalid={!validSeconds} aria-describedby="target-hint" disabled={busy || active}/></label>
+          {!chosenStyle && !retention && <><label className="field"><span>{t.target}</span><input type="text" maxLength={80} placeholder={t.targetPlaceholder} value={seconds} onChange={event => setSeconds(event.target.value)} aria-invalid={!validSeconds} aria-describedby="target-hint" disabled={busy || active}/></label>
             <p id="target-hint" className={'note' + (!validSeconds ? ' invalid' : '')} role={!validSeconds ? 'alert' : undefined}>{!validSeconds ? t.targetInvalid : targetSeconds !== null ? t.targetResolved.replace('{seconds}', String(targetSeconds)) : t.targetHint}</p></>}
-          {mode === 'highlights' && <fieldset className="radio-bar" disabled={busy || active}><legend>{t.cadence}</legend>{[0.25, 0.35, 0.5, 0.8].map(value => <label key={value}><input type="radio" name="cadence" value={value} checked={shotSeconds === value} onChange={() => setShotSeconds(value)}/>{value}s</label>)}</fieldset>}
-          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.speed}</legend>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="generate-speed" value={value} checked={speed === value} onChange={() => setSpeed(value)}/>{value}×</label>)}</fieldset><p className="note">{t.speedHint}</p>
-          <p className="note">{mode === 'highlights' ? t.highlightsAudioHint : t.audioHint}</p>
+          {!chosenStyle && mode === 'highlights' && <fieldset className="radio-bar" disabled={busy || active}><legend>{t.cadence}</legend>{[0.25, 0.35, 0.5, 0.8].map(value => <label key={value}><input type="radio" name="cadence" value={value} checked={shotSeconds === value} onChange={() => setShotSeconds(value)}/>{value}s</label>)}</fieldset>}
+          {!chosenStyle && <><fieldset className="radio-bar" disabled={busy || active}><legend>{t.speed}</legend>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="generate-speed" value={value} checked={speed === value} onChange={() => setSpeed(value)}/>{value}×</label>)}</fieldset><p className="note">{t.speedHint}</p></>}
+          <p className="note">{chosenStyle ? t.styleAudioHint : mode === 'highlights' ? t.highlightsAudioHint : t.audioHint}</p>
           <p className="note">{t.privacy}</p>
-          <button className="button primary" onClick={generateFilm} disabled={!project || busy || active || (!retention && !validSeconds)}>{active ? t.making : project?.latest ? t.newVersion : t.generate}</button>
+          <button className="button primary" onClick={generateFilm} disabled={!project || busy || active || needsMusic || (!chosenStyle && !retention && !validSeconds)}>{active ? t.making : needsMusic ? t.musicFirst : project?.latest ? t.newVersion : t.generate}</button>
         </section>
 
         {project?.latest && <section id="edit" className="chapter" aria-labelledby="edit-title">
           <div className="break"><span className="no">No. 3</span><h2 id="edit-title">{t.edits}</h2></div>
-          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset>
+          {styleFilm && <p className="note">{t.styleEditHint}</p>}
+          {!styleFilm && <><fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset>
           <div className="actions edit-actions-top"><button className="button primary" disabled={editDisabled} onClick={applyEdit}>{t.apply}</button><a className="button quiet" href="#film">{t.viewFilm}</a></div>
           <p className="note">{t.editSpeedHint}</p>
           <div className="field">
             <label htmlFor="time-edits-input">{t.timeEdits}</label>
             <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{[t.exampleRemove, t.exampleSpeed].map(example => <button type="button" key={example} disabled={busy || active || instruction.length + example.length + 2 > 1000} onClick={() => setInstruction(value => value.trim() ? value.trim() + '; ' + example : example)}>{example}</button>)}</div>
             <textarea id="time-edits-input" placeholder={t.timeEditsPlaceholder} value={instruction} onChange={event => setInstruction(event.target.value)} maxLength={1000} disabled={busy || active}/>
-          </div><p className="note">{t.timeEditsHint}</p>
+          </div><p className="note">{t.timeEditsHint}</p></>}
           <label className="field"><span>{t.title}</span><input placeholder={t.titlePlaceholder} value={title} onChange={event => setTitle(event.target.value)} maxLength={100} disabled={busy || active}/></label>
           <label className="check"><input type="checkbox" checked={warmer} onChange={event => setWarmer(event.target.checked)} disabled={busy || active}/> {t.warmer}</label>
           <details><summary>{t.exclude}</summary>{project.clips.map(clip => <label className="check" key={clip.id}><input type="checkbox" disabled={busy || active} checked={excluded.includes(clip.id)} onChange={event => setExcluded(items => event.target.checked ? [...items,clip.id] : items.filter(id=>id!==clip.id))}/>{clip.name}</label>)}</details>
@@ -326,6 +365,7 @@ function App() {
       <div className="caption">
         <p><span className="kicker">{version || t.slate}</span>{' '}{project?.latest ? `${project.duration_seconds?.toFixed(1) || '—'} ${t.ready}` : t.footerEmpty}</p>
         {project?.video_url && <a className="caps-link" href={project.video_url + '?download=true'}>{t.download}</a>}
+        {styleFilm && <p className="caption-note">{t.styleFilm.replace('{style}', styleName(styleFilm.id, styleFilm.name)).replace('{music}', styleFilm.music)}{styleFilm.tempo_bpm ? t.styleTempo.replace('{bpm}', String(Math.round(styleFilm.tempo_bpm))) : ''}{styleFilm.ai_selected ? '' : t.styleNoAi}{styleFilm.warnings.length ? ' · ' + styleFilm.warnings.map(item => localizeMessage(item, language)).join(' ') : ''}</p>}
       </div>
 
     </main>

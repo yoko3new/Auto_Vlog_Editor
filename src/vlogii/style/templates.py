@@ -1,22 +1,20 @@
-"""Load and validate style templates (stdlib only).
+"""Load and validate style templates (standard library only).
 
 The structural checker covers exactly the JSON Schema keywords used by
-style/templates/style_template.schema.json; semantic checks follow it.
-Run: python3 tools/style_lab/templates.py
+templates/style_template.schema.json; semantic checks follow it.
 """
-
-from __future__ import annotations
 
 import json
 import math
 import re
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-TEMPLATE_DIR = ROOT / "style" / "templates"
+from ..storage import VlogiiError
+
+TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 SCHEMA_FILE = "style_template.schema.json"
-SCHEMA = json.loads((TEMPLATE_DIR / SCHEMA_FILE).read_text())
+SCHEMA = json.loads((TEMPLATE_DIR / SCHEMA_FILE).read_text(encoding="utf-8"))
+REPOSITORY = Path(__file__).resolve().parents[3]
 TYPES = {
     "object": lambda v: isinstance(v, dict),
     "array": lambda v: isinstance(v, list),
@@ -28,7 +26,7 @@ TYPES = {
 }
 
 
-class TemplateError(ValueError):
+class TemplateError(VlogiiError):
     pass
 
 
@@ -51,18 +49,29 @@ def structural(value, spec: dict, path: str = "$") -> None:
                 pass
         need(matches == 1, f"{path}: oneOf matched {matches} branches")
     if "const" in spec:
-        need(type(value) is type(spec["const"]) and value == spec["const"], f"{path}: must be {spec['const']!r}")
+        need(
+            type(value) is type(spec["const"]) and value == spec["const"],
+            f"{path}: must be {spec['const']!r}",
+        )
     if "enum" in spec:
         numeric = type(value) in (int, float)
-        need(any(value == x and (type(value) is type(x) or (numeric and type(x) in (int, float)))
-                 for x in spec["enum"]), f"{path}: not one of {spec['enum']}")
+        need(
+            any(
+                value == x and (type(value) is type(x) or (numeric and type(x) in (int, float)))
+                for x in spec["enum"]
+            ),
+            f"{path}: not one of {spec['enum']}",
+        )
     if "type" in spec:
         need(TYPES[spec["type"]](value), f"{path}: expected {spec['type']}")
     if isinstance(value, dict):
         props = spec.get("properties", {})
         missing = set(spec.get("required", [])) - value.keys()
         need(not missing, f"{path}: missing {sorted(missing)}")
-        need(len(value) >= spec.get("minProperties", 0), f"{path}: needs at least {spec.get('minProperties')} entries")
+        need(
+            len(value) >= spec.get("minProperties", 0),
+            f"{path}: needs at least {spec.get('minProperties')} entries",
+        )
         extra = spec.get("additionalProperties", True)
         for key, item in value.items():
             if key in props:
@@ -72,26 +81,41 @@ def structural(value, spec: dict, path: str = "$") -> None:
             elif isinstance(extra, dict):
                 structural(item, extra, f"{path}.{key}")
     elif isinstance(value, list):
-        need(len(value) >= spec.get("minItems", 0), f"{path}: needs at least {spec.get('minItems')} items")
+        need(
+            len(value) >= spec.get("minItems", 0),
+            f"{path}: needs at least {spec.get('minItems')} items",
+        )
         if spec.get("uniqueItems"):
             need(len({json.dumps(x) for x in value}) == len(value), f"{path}: duplicate items")
         for i, item in enumerate(value):
             if "items" in spec:
                 structural(item, spec["items"], f"{path}[{i}]")
     elif isinstance(value, str):
-        need(spec.get("minLength", 0) <= len(value) <= spec.get("maxLength", math.inf), f"{path}: length")
+        need(
+            spec.get("minLength", 0) <= len(value) <= spec.get("maxLength", math.inf),
+            f"{path}: length",
+        )
         if "pattern" in spec:
-            need(re.search(spec["pattern"], value) is not None, f"{path}: does not match {spec['pattern']}")
+            need(
+                re.search(spec["pattern"], value) is not None,
+                f"{path}: does not match {spec['pattern']}",
+            )
     elif type(value) in (int, float):
-        need(spec.get("minimum", -math.inf) <= value <= spec.get("maximum", math.inf), f"{path}: out of range")
+        need(
+            spec.get("minimum", -math.inf) <= value <= spec.get("maximum", math.inf),
+            f"{path}: out of range",
+        )
 
 
-def semantic(t: dict) -> None:
+def semantic(t: dict, check_files: bool) -> None:
     def check_range(r: dict, path: str) -> None:
         need(r["min_s"] <= r["target_s"] <= r["max_s"], f"{path}: needs min_s <= target_s <= max_s")
 
     out = t["output"]
-    need((out["width"], out["height"]) in ((720, 1280), (1280, 720)), "output: only 720x1280 or 1280x720")
+    need(
+        (out["width"], out["height"]) in ((720, 1280), (1280, 720)),
+        "output: only 720x1280 or 1280x720",
+    )
     check_range(t["duration"], "duration")
     roles = [s["role"] for s in t["sections"]]
     need(roles.count("body") == 1, "sections: exactly one body section")
@@ -100,7 +124,10 @@ def semantic(t: dict) -> None:
     fixed = 0.0
     for i, s in enumerate(t["sections"]):
         check_range(s["shot"], f"sections[{i}].shot")
-        need((s["length_s"] is None) == (s["role"] == "body"), f"sections[{i}]: only body has length_s null")
+        need(
+            (s["length_s"] is None) == (s["role"] == "body"),
+            f"sections[{i}]: only body has length_s null",
+        )
         fixed += s["length_s"] or 0.0
     if t["end_card"]:
         fixed += t["end_card"]["length_s"]
@@ -120,45 +147,62 @@ def semantic(t: dict) -> None:
     if text["title"]["show_until_s"] == "hook_end":
         need("hook" in roles, "text.title: show_until_s=hook_end needs a hook section")
     if text["captions"]["mode"] == "transcript":
-        need(t["voiceover"]["supported"], "text.captions: transcript captions need voiceover.supported")
-    need((ROOT / t["reference"]["profile"]).is_file(), f"reference.profile: {t['reference']['profile']} not found")
+        need(
+            t["voiceover"]["supported"],
+            "text.captions: transcript captions need voiceover.supported",
+        )
+    if check_files:
+        profile = REPOSITORY / t["reference"]["profile"]
+        need(profile.is_file(), f"reference.profile: {t['reference']['profile']} not found")
 
 
-def validate(template: dict) -> dict:
+def validate(template: dict, check_files: bool = False) -> dict:
+    """Check structure and meaning. ``check_files`` also requires the measured reference profile."""
     structural(template, SCHEMA)
-    semantic(template)
+    semantic(template, check_files)
     return template
-
-
-def load(path_or_id: str | Path) -> dict:
-    path = Path(path_or_id)
-    if not path.suffix:
-        path = TEMPLATE_DIR / f"{path_or_id}.json"
-    template = json.loads(path.read_text())
-    try:
-        return validate(template)
-    except TemplateError as exc:
-        raise TemplateError(f"{path.name}: {exc}") from None
 
 
 def template_paths() -> list[Path]:
     return sorted(p for p in TEMPLATE_DIR.glob("*.json") if p.name != SCHEMA_FILE)
 
 
-def main() -> int:
-    paths = template_paths()
-    failures = 0
-    for path in paths:
-        try:
-            template = load(path)
-            need(template["id"] == path.stem, f"{path.name}: id must equal file name")
-            print(f"ok   {path.name}")
-        except TemplateError as exc:
-            failures += 1
-            print(f"FAIL {exc}")
-    print(f"{len(paths) - failures}/{len(paths)} templates valid")
-    return 1 if failures or not paths else 0
+def load(template_id: str, check_files: bool = False) -> dict:
+    if not re.fullmatch(r"[a-z0-9_]{3,64}", template_id):
+        raise TemplateError("Unknown style.")
+    path = TEMPLATE_DIR / f"{template_id}.json"
+    if not path.is_file():
+        raise TemplateError(f"Unknown style: {template_id}")
+    template = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        validate(template, check_files)
+    except TemplateError as exc:
+        raise TemplateError(f"{path.name}: {exc}") from None
+    need(template["id"] == template_id, f"{path.name}: id must equal the file name")
+    return template
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def summaries() -> list[dict]:
+    """What the web app shows when a user picks a style."""
+    items = []
+    for path in template_paths():
+        t = load(path.stem)
+        items.append(
+            {
+                "id": t["id"],
+                "revision": t["revision"],
+                "name": t["display_name"],
+                "description": t["description"],
+                "reference_url": t["reference"]["url"],
+                "orientation": "portrait"
+                if t["output"]["height"] > t["output"]["width"]
+                else "landscape",
+                "duration": {
+                    "min": t["duration"]["min_s"],
+                    "target": t["duration"]["target_s"],
+                    "max": t["duration"]["max_s"],
+                },
+                "voiceover": t["voiceover"]["supported"],
+            }
+        )
+    return items

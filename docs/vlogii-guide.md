@@ -10,7 +10,7 @@ The current implementation is a local MVP. The next product direction is styled 
 
 ## Run locally
 
-Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astral.sh/uv/), and FFmpeg with `drawtext`, `zscale`, `tonemap`, AAC, H.264 and HEVC support.
+Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astral.sh/uv/), and FFmpeg with `drawtext`, `zscale`, `tonemap`, AAC, H.264 and HEVC support. Style films also need the `ass` filter (libass), which `ffmpeg-full` and Ubuntu's `ffmpeg` include.
 
 On macOS:
 
@@ -67,9 +67,32 @@ On macOS the app automatically prefers Homebrew's `ffmpeg-full`, so no manual `b
 
 Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage, and optional target durations of 1–1800 seconds for AI auto/highlights. Warmth edits use SDR output. Re-generating an AI plan uses the original imported clip set; removing a clip is a version edit, not a permanent deletion of source footage.
 
+<a id="styles"></a>
+
+## Styles: background music, beat sync and reference looks
+
+A style is a template learned from a reference reel: shot lengths and opening montage, grade targets, title and stamp layout, and mix rules. The measurements, the finding that the references themselves are not beat-locked, and how each template was derived are in [style templates](style-templates.en.md).
+
+1. In the web app, choose a style and music in *No. 2*. On the command line, add music with `vlogii music` and generate with `vlogii run --style`.
+2. With a Gemini key, cached visual reviews feed a style request: Gemini returns chronological moments, short activity labels and title text, which Python validates (clip IDs, ranges and total length) with one corrected retry. Clip speech is not transcribed because style films mute it. Without a key, every clip is used in import order with the style's default title, and the page says so. Retry reuses the saved choice.
+3. `style/planner.py` detects the music's beats (librosa, corrected for onset latency), starts on a downbeat, rounds the film to whole bars, picks shot lengths near the reference's seconds as beat multiples and spreads them over the moments in order. Every cut is within half a frame of the beat grid. Footage is never repeated to fill time; too little footage or too short music is reported.
+4. `style/render.py` trims each shot and grades it toward the reference (HDR is tone-mapped to SDR), sets titles, clocks and labels with ASS in bundled OFL fonts (Poppins, DM Serif Display, Share Tech Mono), mutes clip audio and masters the music to −14 LUFS with a −1 dBTP true-peak ceiling measured after AAC encoding. The narrated style can also duck music under a voiceover with captions from a transcript (command line only).
+5. The result is a normal version with `style.json`, `style-plan.json`, logs and `verification.json`. Title, warmth and clip edits re-cut on the beat without another AI call; speed and time-range edits are refused because they would break the beat lock. Undo and download work as usual.
+
+Music: MP3, M4A, AAC, WAV, FLAC or OGG, 10 seconds to 15 minutes and up to 200 MB, stored in the project. Use music you are allowed to publish. `GET /api/vlogii/styles` lists styles, `POST /api/vlogii/projects/{name}/music` adds a track and generation accepts `style_id`.
+
+```sh
+uv run vlogii styles
+uv run vlogii music my-day ~/Music/song.mp3
+uv run vlogii run my-day --style ig_city_day_in_life
+uv run vlogii style-preview ig_cozy_night_study --music song.mp3 --clips ~/Movies/day --out work/day.mp4
+```
+
+Limits: style films are SDR/H.264 at the project's size and 30 fps; the three styles are portrait. Beat detection cannot hear: on music without a clear kick the downbeat may be wrong, and the page shows such warnings. Learning new styles uses `tools/style_lab/` after `uv sync --extra style-lab`.
+
 ## Scope and compatibility
 
-This branch implements a **local vlog web MVP** based on the tested VX workflow. It is not a claim that the original team's full competition MVP has been delivered. Background music, beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment, scene-detection heuristics and NLE exports are outside this release.
+This branch implements a **local vlog web MVP** based on the tested VX workflow. It is not a claim that the original team's full competition MVP has been delivered. Background music and beat matching are available through [styles](#styles). Magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment, scene-detection heuristics and NLE exports are outside this release.
 
 The existing [team product plan](product.en.md), [architecture](architecture.en.md), [contracts](contracts.en.md), schemas, examples and development substitutes are preserved as planning material. Vlogii uses an explicit, separate `/api/vlogii` namespace and local models; it does not pretend to implement the older `/api` contract. The live API specification is at `/openapi.json`, with interactive docs at `/docs`; the checked-in snapshot is [vlogii.openapi.json](vlogii.openapi.json).
 
@@ -87,6 +110,7 @@ src/vlogii/
   timeline.py     Deterministic frame timing and caption remapping
   render.py       Text, audio, HDR, encoding and output verification
   pipeline.py     Analysis caching, generation, edits and undo
+  style/          Templates, beat detection, beat-locked planning, style rendering and fonts
   api.py          Uploads, persistent jobs, one worker and media delivery
   cli.py          Web startup and debugging commands
 frontend/         React + TypeScript + Vite editor

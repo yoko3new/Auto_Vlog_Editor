@@ -49,12 +49,23 @@ See [editing semantics](editing-modes.en.md) for changed duration defaults, mode
 
 Private evidence is under `local-evidence/示例回归20261010/`; media and transcripts stay excluded from Git. The full-retention output is 195.521333 seconds (195.5 seconds on the frame timeline), 21 segments and 69 captions. All imported source intervals are preserved. The independent real-Gemini opening montage is 12.021333 seconds (12.0 timeline seconds), eight shots of 1.4–1.6 seconds each. Both 1080×1920/30 fps SDR H.264/AAC films passed complete decoding; sampled full-film captions were visible without clipping. The short montage is not automatically attached to the full film.
 
+## Style films: music mixing and beat-locked cuts (2026-10-10)
+
+`feng-style` was merged and integrated into the app; templates, measurements and the method are in [style templates](style-templates.en.md).
+
+- Python in a Linux container: **114 collected, 113 passed**. The one failure is a caption-layout case that fails identically on the unmodified branch with this container's substitute CJK font (WenQuanYi); CI installs Noto CJK. The 19 new style tests include a real FFmpeg style film: cuts within 50 ms of the true half-beats, −14 LUFS ±1, true peak at most −1 dBTP, title/clip/warmth edits re-cut on the beat, a refused speed edit and undo.
+- The full style self-test on synthetic media (all three templates) and checks with two real music tracks passed; numbers are in the [style validation record](style-templates.en.md#evidence).
+- Real HTTP flow on this branch without a Gemini key: 14 clips and an MP3 uploaded; `ig_city_day_in_life` produced 38.4 seconds at 1080×1920 SDR/H.264/AAC, −14.1 LUFS and 99 BPM. A title/clip/warmth edit made version 2, a speed edit failed with the style message and was not retryable, the download was an attachment, and undo restored version 1. Normal modes still require the key.
+- Chromium in Chinese and English: localized style names, music control, style edit note and film caption; speed and time-range edit controls hidden for style versions; no console errors.
+- Ruff lint and formatting, TypeScript/Vite build, contract fixtures and bilingual documentation checks passed.
+- Not validated: live Gemini style selection, real user footage, macOS with Safari, HDR footage in style films.
+
 ## Limitations
 
 - Live AI runs are small-sample integration checks, not an editorial-quality benchmark. AI transcription and creative choices require human review.
 - Browser-extension file access blocked automated file-picker injection. Real HTTP uploads and browser generation were tested separately; the picker is not claimed as automatically verified.
 - Target duration is a planning preference, not a guarantee.
-- No public deployment, Replit storage, authentication, BGM or magazine rendering was validated.
+- No public deployment, Replit storage, authentication or magazine rendering was validated; BGM is validated only as described under style films.
 - Linux CI is configured but its result must be read separately after publication. Local verification used macOS and FFmpeg-full 9.0.2.
 - Windows project locks are not implemented.
 - Gemini receives proxy videos for visual analysis and separately extracted original audio for speech recognition. The application calls remote deletion after recognition; provider-side retention is outside local verification.

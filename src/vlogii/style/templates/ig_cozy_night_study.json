@@ -1,7 +1,7 @@
 {
   "template_version": 1,
   "id": "ig_cozy_night_study",
-  "revision": 1,
+  "revision": 2,
   "display_name": "Cozy night study",
   "description": "Warm lamp-lit study montage: steady ~0.65 s shots from the first frame, three-tier serif title with a typed kicker, small activity labels, music only.",
   "reference": {
@@ -33,10 +33,10 @@
   "grade": {"target": {"luma": 0.45, "saturation": 0.46, "warmth": 0.22}, "strength": 0.6},
   "text": {
     "roles": {
-      "kicker": {"fonts": ["Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
-      "main": {"fonts": ["Playfair Display", "Caladea", "DejaVu Serif"], "bold": true, "size": 0.062, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
-      "sub": {"fonts": ["Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
-      "label": {"fonts": ["Inter"], "bold": false, "size": 0.02, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
+      "kicker": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "main": {"fonts": ["DM Serif Display", "Playfair Display", "Caladea", "DejaVu Serif"], "bold": false, "size": 0.062, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "label": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.02, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
     },
     "title": {
       "show_until_s": 3.0,

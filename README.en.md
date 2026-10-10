@@ -43,6 +43,7 @@ Open **http://127.0.0.1:8000**. macOS automatically prefers Homebrew's `ffmpeg-f
 - Portrait/landscape, original audio, captions and occasional text. SDR/H.264 is the default; all-HLG footage can preserve 10-bit HEVC.
 - Edit titles, warmth, clip exclusions, film time-range removals and whole-film or local speed; captions and audio follow the timeline.
 - Successful versions, preview, undo and download. Failures preserve old films; Retry reuses saved requests, valid analysis caches and completed render segments.
+- Style films learned from Instagram reference reels: add your music, pick a style and every cut lands on the beat; music is mastered to −14 LUFS / −1 dBTP and clip audio is muted. Gemini chooses moments, labels and title; without a key, clips are used in import order. See [style templates](docs/style-templates.en.md).
 
 | Generation mode | Default behavior |
 | --- | --- |
@@ -64,6 +65,7 @@ uv run vlogii                          # Interactive language selection
 uv run vlogii --language zh init my-day /absolute/path/to/footage --color sdr
 uv run vlogii --language zh run my-day --mode keep_all
 uv run vlogii --language zh run my-day --mode highlights --shot-seconds 0.5 --speed 1
+uv run vlogii --language zh run my-day --style ig_city_day_in_life --music ~/Music/song.mp3
 uv run vlogii --language zh edit my-day --instruction "00:12到00:18加速到2倍"
 uv run vlogii --language zh retry my-day
 ```
@@ -76,16 +78,16 @@ npm --prefix frontend run build
 python3 tools/check_docs.py
 ```
 
-The latest code validation recorded **95 passing Python tests**, including real FFmpeg exports, and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
+The latest code validation recorded **114 Python tests**, including real FFmpeg exports and style films (one caption-layout case depends on the Noto CJK font that CI installs), and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
 
 ## Documentation and ownership
 
 Each document has a Chinese/English language switch at the top; code, field names and commands remain in English.
 
 - [Mac / Safari setup](docs/vlogii-mac-setup.en.md) · [User guide](docs/vlogii-guide.md) · [Feature coverage](docs/mvp-coverage.en.md) · [Current status](docs/status.en.md)
-- [Editing rules](docs/editing-modes.en.md) · [Product definition](docs/product.en.md) · [Architecture](docs/architecture.en.md)
-- [Free font/BGM candidates and licenses](docs/free-resources.en.md): research and downloads are complete; bundled presets, mixing and custom uploads are pending.
+- [Editing rules](docs/editing-modes.en.md) · [Style templates](docs/style-templates.en.md) · [Product definition](docs/product.en.md) · [Architecture](docs/architecture.en.md)
+- [Free font/BGM candidates and licenses](docs/free-resources.en.md): research and downloads are complete; custom music upload and mixing ship with style films, a bundled music library is pending.
 - [Team handoff](docs/collaboration.en.md): Yang Kang owns video, AI, backend, rendering and integration; the teammate owns the frontend.
 - [Current OpenAPI](docs/vlogii.openapi.json): `/api/vlogii`, runtime `/docs`; the [older competition contracts](docs/contracts.en.md) are planning references.
 
-Pending: artistic/sticker covers, automatic opening/body assembly, BGM/beat matching, film styles, arbitrary semantic natural-language edits, authentication, cloud storage and deployment. Full competition acceptance remains incomplete; the current implementation has a separate boundary from the older `/api` contract.
+Pending: artistic/sticker covers, automatic opening/body assembly, a bundled music library, arbitrary semantic natural-language edits, authentication, cloud storage and deployment. Full competition acceptance remains incomplete; the current implementation has a separate boundary from the older `/api` contract.

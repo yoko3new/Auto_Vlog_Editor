@@ -5,7 +5,7 @@ synthetic voiceover; plans and renders every template; then re-measures the MP4:
 cuts on the true beat grid, duration, loudness, muted clip audio and ducking.
 Synthetic media proves the mechanics only, not the look on real footage.
 
-    work/.venv/bin/python tools/style_lab/selftest.py --work work/style_lab/selftest
+    uv run python tools/style_lab/selftest.py --work work/style_lab/selftest
 """
 
 from __future__ import annotations
@@ -14,19 +14,17 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 import soundfile as sf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import analyze_reference  # noqa: E402
-import beats  # noqa: E402
-import media  # noqa: E402
-import plan_edit  # noqa: E402
-import render_preview  # noqa: E402
-import templates  # noqa: E402
+
+from vlogii.style import beats, media, planner, templates  # noqa: E402
+from vlogii.style.render import render  # noqa: E402
 
 BPM, LEAD_S, BARS, SR = 100.0, 0.5, 40, 44100
 BEAT = 60.0 / BPM
@@ -137,18 +135,18 @@ def check_template(template_id: str, work: Path, music: Path, manifest: Path, vo
     template = templates.load(template_id)
     narrated = template["voiceover"]["supported"]
     out_dir = work / template_id
-    args = SimpleNamespace(template=template_id, music=music, manifest=manifest, clips=None,
-                           voiceover=voice if narrated else None, transcript=transcript if narrated else None,
-                           duration=None, music_start=None)
-    plan = plan_edit.plan(args)
-    plan_path = out_dir / "plan.json"
+    inputs, text = planner.load_manifest(manifest)
+    plan = planner.plan(template, music, inputs, text, voiceover=voice if narrated else None,
+                        transcript=json.loads(transcript.read_text()) if narrated else None)
     out_dir.mkdir(parents=True, exist_ok=True)
-    plan_path.write_text(json.dumps(plan, indent=2))
-    report = render_preview.render(plan_path, out_dir / "preview.mp4", keep=False)
+    (out_dir / "plan.json").write_text(json.dumps(plan, indent=2))
+    with tempfile.TemporaryDirectory(prefix="vlogii-style-") as temporary:
+        report = render(plan, template, out_dir / "preview.mp4", Path(temporary), out_dir / "logs",
+                        progress=lambda _: None)
     fps = plan["output"]["fps"]
     result = {"template": template_id, "shots": len(plan["shots"]), "planned_s": report["planned_duration_s"],
-              "rendered_s": report["duration_s"], "loudness": report["loudness"], "audio": report["audio"],
-              "warnings": plan["warnings"]}
+              "rendered_s": round(media.probe(out_dir / "preview.mp4")["duration_s"], 3),
+              "loudness": report["loudness"], "audio": report["audio"], "warnings": plan["warnings"]}
 
     # Cuts in the plan sit on the true beat grid (beat tracker + start choice + frame rounding).
     grid = np.concatenate([true_beats()[:-1, None] + BEAT * np.array([0, 0.25, 0.5, 0.75])[None, :]]).ravel()
@@ -161,7 +159,7 @@ def check_template(template_id: str, work: Path, music: Path, manifest: Path, vo
     # Cuts detected in the rendered MP4 match the plan.
     frames = media.read_frames(out_dir / "preview.mp4", 72, 128)
     detected = np.array(analyze_reference.detect_cuts(analyze_reference.cut_scores(frames), fps)) / fps
-    clip_change = [s["start_frame"] / fps for prev, s in zip(plan["shots"], plan["shots"][1:]) if prev["clip"] != s["clip"]]
+    clip_change = [s["start_frame"] / fps for prev, s in zip(plan["shots"], plan["shots"][1:], strict=False) if prev["clip"] != s["clip"]]
     to_plan = analyze_reference.nearest_offsets(detected, np.sort(planned_cuts))
     result["detected_cuts"] = int(detected.size)
     result["detected_on_planned_cut"] = round(float((np.abs(to_plan) <= 1.01 / fps).mean()), 3) if detected.size else None
@@ -179,7 +177,7 @@ def check_template(template_id: str, work: Path, music: Path, manifest: Path, vo
         for a, b in VOICE_SEGMENTS:
             inside |= (t >= a + 0.5) & (t < b - 0.2)
         outside = np.zeros(audio.size, bool)
-        for (_, b), (a, _) in zip(VOICE_SEGMENTS, VOICE_SEGMENTS[1:]):
+        for (_, b), (a, _) in zip(VOICE_SEGMENTS, VOICE_SEGMENTS[1:], strict=False):
             outside |= (t >= b + 0.7) & (t < a - 0.1)
         result["music_drop_under_voice_db"] = round(
             pad_level_db(audio, 48000, inside) - pad_level_db(audio, 48000, outside), 1)
@@ -188,7 +186,7 @@ def check_template(template_id: str, work: Path, music: Path, manifest: Path, vo
 
     target = template["voiceover"]["target_lufs"] if narrated else template["music"]["target_lufs"]
     checks = {
-        "duration_matches_plan": abs(report["duration_s"] - report["planned_duration_s"]) <= 1.5 / fps,
+        "duration_matches_plan": abs(result["rendered_s"] - report["planned_duration_s"]) <= 1.5 / fps,
         "planned_cuts_on_true_beat_grid": result["max_planned_cut_offset_ms"] <= 1000 / fps / 2 + 15,
         "rendered_cuts_match_plan": (result["detected_on_planned_cut"] or 0) >= 0.95,
         "clip_changes_visible": result["clip_change_cuts_found"] >= 0.95,
@@ -223,8 +221,8 @@ def main() -> int:
     manifest.write_text(json.dumps({"clips": [dict(e, path=f"clips/{e['path']}") for e in entries],
                                     "text": {"subtitle": "synthetic test day", "location": "TEST CITY"}}, indent=2))
 
-    y = media.read_audio(music, plan_edit.AUDIO_SR)
-    detected = np.array(beats.analyze_music(y, plan_edit.AUDIO_SR)["beats_s"])
+    y = media.read_audio(music, planner.AUDIO_SR)
+    detected = np.array(beats.analyze_music(y, planner.AUDIO_SR)["beats_s"])
     truth = true_beats()
     hits = np.abs(analyze_reference.nearest_offsets(truth, detected)) <= 0.07
     precision = np.abs(analyze_reference.nearest_offsets(detected, truth)) <= 0.07

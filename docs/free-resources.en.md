@@ -4,7 +4,7 @@
 
 [Back to Overview](../README.en.md) · [This Round of Fixes](mvp-fixes.en.md) · [Candidate Files and Checksums](../resources/candidates.json)
 
-Researched and pre-downloaded on 2026-10-10. Currently, candidate resources, licensing sources, and basic file validations are completed; BGM mixing, resource selection, or custom uploads have not yet been implemented. Music style effects, BPM, and beat-matching data are pending auditioning/measurement. This round does not modify the existing API contract.
+Researched and pre-downloaded on 2026-10-10. Currently, candidate resources, licensing sources, and basic file validations are completed. Custom music upload, mixing and beat-locked cuts now ship with [style films](style-templates.en.md); a bundled library and resource selection are not implemented, and the candidates’ style effect, BPM and beat behaviour are pending auditioning/measurement. This round does not modify the existing API contract.
 
 ## Resources Recommended to be Built-in First
 

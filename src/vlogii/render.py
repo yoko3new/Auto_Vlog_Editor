@@ -137,6 +137,30 @@ def audio_tempo(speed: float) -> str:
     return ",".join(f"atempo={value:.12g}" for value in steps)
 
 
+def check_sources(project: Project, clip_ids: set[str]) -> None:
+    clips = {c.id: c for c in project.clips}
+    for clip_id in clip_ids:
+        clip = clips[clip_id]
+        if not Path(clip.path).is_file() or sha256(Path(clip.path)) != clip.sha256:
+            raise VlogiiError(f"Source clip {clip_id} is missing or changed. Import it again.")
+
+
+def new_version(project_dir: Path) -> Path:
+    cuts = project_dir / "cuts"
+    cuts.mkdir(exist_ok=True)
+    number = max([int(p.name[4:]) for p in cuts.glob("cut_*") if p.name[4:].isdigit()] + [0]) + 1
+    version = cuts / f"cut_{number:03d}"
+    version.mkdir()
+    return version
+
+
+def publish(project_dir: Path, version: Path) -> None:
+    """Make a verified version current; earlier versions stay available for undo."""
+    latest_path = project_dir / "latest.json"
+    history = read_json(latest_path).get("history", []) if latest_path.exists() else []
+    write_json(latest_path, {"cut": version.name, "history": [*history, version.name]})
+
+
 def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review], progress=print):
     tools = Tools()
     timeline = compile_timeline(project, plan, reviews)
@@ -147,15 +171,8 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
     if color == "sdr" and any(c.color != "sdr" for c in project.clips):
         tools.require_filters({"zscale", "tonemap"})
     clips = {c.id: c for c in project.clips}
-    for clip_id in {s.clip_id for s in timeline.segments}:
-        clip = clips[clip_id]
-        if not Path(clip.path).is_file() or sha256(Path(clip.path)) != clip.sha256:
-            raise VlogiiError(f"Source clip {clip_id} is missing or changed. Import it again.")
-    cuts = project_dir / "cuts"
-    cuts.mkdir(exist_ok=True)
-    number = max([int(p.name[4:]) for p in cuts.glob("cut_*") if p.name[4:].isdigit()] + [0]) + 1
-    version = cuts / f"cut_{number:03d}"
-    version.mkdir()
+    check_sources(project, {s.clip_id for s in timeline.segments})
+    version = new_version(project_dir)
     write_json(version / "project.json", project)
     write_json(version / "plan.json", plan)
     write_json(version / "timeline.json", timeline)
@@ -306,9 +323,7 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
             pending.replace(version / "film.mp4")
         write_json(version / "verification.json", evidence)
         write_json(version / "state.json", {"status": "complete", "color": color, "encoder": codec})
-        latest_path = project_dir / "latest.json"
-        history = read_json(latest_path).get("history", []) if latest_path.exists() else []
-        write_json(latest_path, {"cut": version.name, "history": [*history, version.name]})
+        publish(project_dir, version)
         progress(f"Complete: {version / 'film.mp4'}")
         return version
     except BaseException:

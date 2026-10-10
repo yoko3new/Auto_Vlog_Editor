@@ -43,6 +43,7 @@ uv run vlogii serve
 - 横竖屏、原声字幕与少量文字；默认 SDR/H.264，可选全 HLG 素材的 10-bit HEVC 输出。
 - 修改标题、暖度、排除素材、删除成片时间区间、整片或局部调速；字幕和原声跟随时间线。
 - 成功版本、预览、撤销、下载；失败保留旧片，Retry 复用原请求、有效分析缓存和已完成渲染片段。
+- 从 Instagram 参考片学到的风格成片：加入音乐、选择风格，每一刀都落在节拍上；音乐统一到 −14 LUFS / −1 dBTP，素材原声静音。Gemini 挑选片段、标签和标题，未配置密钥时按导入顺序使用素材。见 [风格模板](docs/style-templates.md)。
 
 | 生成模式 | 默认行为 |
 | --- | --- |
@@ -64,6 +65,7 @@ uv run vlogii                          # Interactive language selection
 uv run vlogii --language zh init my-day /absolute/path/to/footage --color sdr
 uv run vlogii --language zh run my-day --mode keep_all
 uv run vlogii --language zh run my-day --mode highlights --shot-seconds 0.5 --speed 1
+uv run vlogii --language zh run my-day --style ig_city_day_in_life --music ~/Music/song.mp3
 uv run vlogii --language zh edit my-day --instruction "00:12到00:18加速到2倍"
 uv run vlogii --language zh retry my-day
 ```
@@ -76,16 +78,16 @@ npm --prefix frontend run build
 python3 tools/check_docs.py
 ```
 
-最近代码验证记录为 **95 项 Python 测试通过**（含真实 FFmpeg 导出）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
+最近代码验证记录为 **114 项 Python 测试**（含真实 FFmpeg 导出与风格成片；其中一项字幕排版测试依赖 CI 安装的 Noto CJK 字体）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
 
 ## 文档与分工
 
 各文档页首提供中英文切换；代码、字段名与命令保持英文。
 
 - [Mac / Safari 入门](docs/vlogii-mac-setup.md) · [使用指南](docs/vlogii-guide.zh.md) · [功能覆盖](docs/mvp-coverage.md) · [当前进度](docs/status.md)
-- [剪辑规则](docs/editing-modes.md) · [产品定义](docs/product.md) · [架构](docs/architecture.md)
-- [免费字体/BGM 与许可](docs/free-resources.md)：完成调研与预下载，应用内置、混音、自定义上传待实现。
+- [剪辑规则](docs/editing-modes.md) · [风格模板](docs/style-templates.md) · [产品定义](docs/product.md) · [架构](docs/architecture.md)
+- [免费字体/BGM 与许可](docs/free-resources.md)：完成调研与预下载；自定义音乐上传与混音已随风格成片实现，应用内置曲库待实现。
 - [协作交接](docs/collaboration.md)：杨康负责视频、AI、后端、渲染与集成；队友负责前端。
 - [现行 OpenAPI](docs/vlogii.openapi.json)：`/api/vlogii`，运行时 `/docs`；[旧比赛契约](docs/contracts.md)作为规划参考。
 
-待实现：艺术字/贴画封面、自动快剪接正文、BGM/卡点、风格成片、任意语义自然语言修改、认证、云端存储与正式部署。原比赛完整验收尚未完成；现行实现与旧 `/api` 契约有独立边界。
+待实现：艺术字/贴画封面、自动快剪接正文、内置音乐库、任意语义自然语言修改、认证、云端存储与正式部署。原比赛完整验收尚未完成；现行实现与旧 `/api` 契约有独立边界。

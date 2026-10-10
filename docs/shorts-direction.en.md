@@ -23,7 +23,7 @@ Shorts is the default creation format, without forcing all footage to be compres
 | Independent flash cut opening, shot duration, full-video/interval speed adjustment | Implemented locally; see [Records](vlogii-validation.md) for verification |
 | Cover generation and artistic typography/sticker presets | Pending implementation; free font candidates [prepared](free-resources.en.md) |
 | Generating a complete work of "cover + flash cuts + main body" in one pass | Pending implementation; currently quick cuts and main body are exported separately |
-| Time/short word callout widgets, light special effects, BGM, beat syncing | Pending implementation; not claimed as completed due to current basic text capabilities |
+| Time/short word callout widgets, light special effects, BGM, beat syncing | Partly implemented: [style films](style-templates.en.md) add music mixing, beat-locked cuts, clock/label stamps and opening montages; standalone callout widgets and effects are pending |
 | Style documents from natural-language iterations, saving and importing personal styles | Future plan; not implemented |
 
 The next batch takes a complete work of unified style as the delivery unit: first design authentic cover and main body layouts, then connect opening/main body stitching and a few callouts; BGM and beats will be implemented separately when authorized. Timestamp callouts must be provided by reliable footage metadata or the user, not letting AI guess the time of day. Default style and music can spare users lengthy inputs; users only need to provide footage, with optional theme/title/retention preferences, and modify by timestamp after viewing.

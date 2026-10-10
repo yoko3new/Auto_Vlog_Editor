@@ -3,7 +3,8 @@
 Writes a JSON profile with measurements only plus a local contact sheet for visual review.
 Keep the downloaded reel and the contact sheet under work/; they are third-party media.
 
-    python tools/style_lab/analyze_reference.py work/references/REEL.mp4 \
+    uv sync --extra dev --extra style-lab
+    uv run python tools/style_lab/analyze_reference.py work/references/REEL.mp4 \
         --url https://www.instagram.com/reel/REEL/ --out-dir work/style_lab/REEL
 """
 
@@ -11,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import tempfile
 from pathlib import Path
 
@@ -19,9 +19,7 @@ import librosa
 import numpy as np
 from PIL import Image, ImageDraw
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import beats  # noqa: E402
-import media  # noqa: E402
+from vlogii.style import beats, media
 
 SMALL_W, SMALL_H = 72, 128
 AUDIO_SR = 22050
@@ -218,7 +216,7 @@ def contact_sheet(video: Path, shots: list[dict], fps: float, out_path: Path, co
         rows = (len(thumbs) + columns - 1) // columns
         sheet = Image.new("RGB", (columns * tw, rows * (th + label_h)), "white")
         draw = ImageDraw.Draw(sheet)
-        for k, (img, shot) in enumerate(zip(thumbs, shots)):
+        for k, (img, shot) in enumerate(zip(thumbs, shots, strict=False)):
             x, y = (k % columns) * tw, (k // columns) * (th + label_h)
             sheet.paste(img.resize((tw, th)), (x, y + label_h))
             draw.text((x + 3, y + 3), f"#{shot['index']} {shot['start_s']:.2f}s +{shot['duration_s']:.2f}", fill="black")
@@ -293,7 +291,7 @@ def analyze(video: Path, url: str | None, out_dir: Path, start_bpm: float) -> di
         profile["cut_sync"] = sync_report(cut_times, music, info["duration_s"])
         profile["cut_sync"]["accent_alignment"] = accent_alignment(cut_times, y, AUDIO_SR, info["duration_s"])
         profile["shots"]["duration_beats_histogram"] = {
-            f"{v:g}": int(c) for v, c in sorted(zip(values, counts), key=lambda vc: -vc[1])[:10]
+            f"{v:g}": int(c) for v, c in sorted(zip(values, counts, strict=True), key=lambda vc: -vc[1])[:10]
         }
         profile["beat_grid"] = {k: music[k] for k in ("beats_s", "downbeats_s", "strong_accents_s")}
 
