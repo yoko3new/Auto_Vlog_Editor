@@ -2,7 +2,7 @@
 
 [返回项目总览](../README.md)
 
-何时读：开始一个模块、修改服务边界、任务执行或存储时读相关小节。接口字段见 contracts.md。
+何时读：原比赛服务边界、任务执行或存储设计变更时读相关小节。当前 `kang` 实现布局和启动方式见 [Vlogii 指南](vlogii-guide.md)，实际能力见 [MVP 对照](mvp-coverage.md)；现有代码位于 `src/vlogii/`，本页的 `core/`、App Storage 与目录树是规划，不能当作已实现。视频全链路归 A（杨康），前端归 B（队友）。
 
 <a id="s3"></a>
 
@@ -74,7 +74,7 @@ Schema 能拦住错误字段和非法数值，但不能保证故事合理、没�
 | `analyze` | MVP 抽帧、内容描述、基础质量排序；V2-3 才加转录 | `analysis.json`；V2-3 增加 `transcript.json` |
 | `music` | MVP 读取固定曲目和预计算节拍；V2-1 才按情绪选曲 | `beats.json` |
 | `director` | MVP 选片、排序和短标题；V3-3 再加可见章节标签 | `edit_plan.json` |
-| `timeline` | MVP 算硬切切点、时长，调用 B 的标题布局函数；V2/V3 再加字幕和转场 | `timeline.json` |
+| `timeline` | MVP 算硬切切点、时长，调用 A 维护的标题布局函数；V2/V3 再加字幕和转场 | `timeline.json` |
 | `intent` | 将用户文字变成受控操作，或返回待选择/不支持 | `edit_request.json`，契约见[`edit_request.json`：修改是受控操作，不是任意 JSON 补丁](reference/timeline.md#s6-8) |
 | `style` / `settings` | 读取风格、合并项目设置、校验 | 配置对象与版本快照 |
 | `render` | 素材规范化、画面和音频合成 | `final.mp4` |
@@ -120,7 +120,7 @@ auto-vlog-editor/
     style_previews/
     decorations/
   contracts/                 # 已放入契约、HTTP 定义与 collaboration/ 开发替身
-  tools/render_fixture.py     # B 实现的独立渲染 CLI，固定调用方式见[启动、配置与完成定义](collaboration.md#s13-6)
+  tools/render_fixture.py     # A 负责的规划渲染 CLI，固定调用方式见[启动、配置与完成定义](collaboration.md#s13-6)
   fixtures/                  # 实际媒体、手工计划与验收样本
   work/projects/             # 上传、缓存和版本；不提交 Git
   .env.example               # 只列变量名，不含 API key

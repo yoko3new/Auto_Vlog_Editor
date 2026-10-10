@@ -1,12 +1,15 @@
 """Normalize all segments, render real text, and publish only verified exports."""
 
+import hashlib
+import json
 import os
 import shutil
 import tempfile
-import textwrap
 import unicodedata
 from fractions import Fraction
 from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
 
 from .media import Tools, codec_args, color_args, sha256, tone_map
 from .models import Plan, Project, Review, Text
@@ -20,26 +23,37 @@ FONT_CANDIDATES = (
 )
 
 
-def wrapped_text(text: str) -> str:
-    """Keep full-width glyphs within the same safe area as Latin text."""
+def wrapped_text(text: str, font=None, max_width=None) -> str:
+    """Wrap using measured glyph widths; never drop trailing lines."""
     lines = []
-    for line in textwrap.wrap(text, width=32, break_long_words=True):
-        current, cells = "", 0
-        for char in line:
-            width = 2 if unicodedata.east_asian_width(char) in {"W", "F"} else 1
-            if cells + width > 32:
-                lines.append(current)
-                current, cells = "", 0
-            current += char
-            cells += width
-        if current:
-            lines.append(current)
-    return "\n".join(lines[:3])
+    for paragraph in text.split("\n"):
+        current = ""
+        for char in paragraph:
+            candidate = current + char
+            width = (
+                font.getlength(candidate)
+                if font
+                else sum(
+                    2 if unicodedata.east_asian_width(c) in {"W", "F"} else 1 for c in candidate
+                )
+            )
+            if current and width > (max_width if max_width is not None else 32):
+                # Prefer a word boundary for Latin text; split long words only when needed.
+                if font and " " in current and not char.isspace():
+                    left, right = current.rsplit(" ", 1)
+                    if left:
+                        lines.append(left)
+                        current = right + char
+                        continue
+                lines.append(current.rstrip())
+                current = char.lstrip()
+            else:
+                current = candidate
+        lines.append(current.rstrip())
+    return "\n".join(lines)
 
 
-def draw_text(item: Text, path: Path, height: int, caption: bool) -> str:
-    # Content and font paths stay in a safe temporary folder, outside filter syntax from user input.
-    path.write_text(wrapped_text(item.text), encoding="utf-8")
+def font_path(text: str):
     configured = os.environ.get("VLOGII_FONT")
     if configured and not Path(configured).is_file():
         raise VlogiiError("VLOGII_FONT must point to an existing font file.")
@@ -48,23 +62,65 @@ def draw_text(item: Text, path: Path, height: int, caption: bool) -> str:
         if configured
         else next((Path(value) for value in FONT_CANDIDATES if Path(value).is_file()), None)
     )
-    font_filter = ""
-    if font:
-        local_font = path.parent / ("font" + font.suffix)
-        if not local_font.exists():
-            shutil.copyfile(font, local_font)
-        font_filter = f"fontfile='{local_font}':"
-    elif any(unicodedata.east_asian_width(char) in {"W", "F"} for char in item.text):
-        raise VlogiiError(
-            "CJK captions require a suitable font. Install fonts-noto-cjk on Linux "
-            "or set VLOGII_FONT to a font supporting your caption language."
+    if font is None:
+        if any(unicodedata.east_asian_width(char) in {"W", "F"} for char in text):
+            raise VlogiiError(
+                "CJK captions require a suitable font. Install fonts-noto-cjk or set VLOGII_FONT."
+            )
+        font = next(
+            (
+                Path(p)
+                for p in (
+                    "/System/Library/Fonts/Supplemental/Arial.ttf",
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                )
+                if Path(p).is_file()
+            ),
+            None,
         )
-    size = max(18, round(height * (0.026 if caption else 0.034)))
-    y = "h*0.82-th/2" if caption else "h*0.17-th/2"
+    if font is None:
+        raise VlogiiError("Install a text font or set VLOGII_FONT.")
+    return font
+
+
+def text_layout(text: str, width: int, height: int, caption: bool):
+    """Fit complete text within the actual output rectangle in either orientation."""
+    path = font_path(text)
+    margin = max(2, round(width * 0.05))
+    stroke = max(0, round(min(width, height) * 0.001))
+    box_padding = max(1, round(min(width, height) * 0.004))
+    available = max(1, width - 2 * (margin + stroke + box_padding))
+    maximum_height = max(1, round(height * (0.34 if caption else 0.42)))
+    preferred = max(2, round(min(height * (0.026 if caption else 0.034), width * 0.06)))
+    measure = ImageDraw.Draw(Image.new("L", (1, 1)))
+    for size in range(preferred, 1, -1):
+        font = ImageFont.truetype(str(path), size=size)
+        wrapped = wrapped_text(text, font, available)
+        spacing = max(1, round(size * 0.2))
+        bbox = measure.multiline_textbbox(
+            (0, 0), wrapped, font=font, spacing=spacing, stroke_width=stroke
+        )
+        if bbox[2] - bbox[0] <= available and bbox[3] - bbox[1] <= maximum_height:
+            return wrapped, size, spacing, stroke, box_padding, margin, bbox
+    raise VlogiiError("Text cannot fit this output size. Use a larger output or a shorter title.")
+
+
+def draw_text(item: Text, path: Path, height: int, caption: bool, width: int | None = None) -> str:
+    width = width or round(height * 9 / 16)
+    text, size, spacing, stroke, padding, margin, _ = text_layout(item.text, width, height, caption)
+    path.write_text(text, encoding="utf-8")
+    font = font_path(item.text)
+    local_font = path.parent / ("font" + font.suffix)
+    if not local_font.exists():
+        shutil.copyfile(font, local_font)
+    anchor = "h*0.82-th/2" if caption else "h*0.17-th/2"
+    vertical_margin = max(2, round(height * 0.05))
+    y = f"max({vertical_margin},min(h-th-{vertical_margin},{anchor}))"
     return (
-        f"drawtext={font_filter}textfile='{path}':expansion=none:fontcolor=white:fontsize={size}:"
-        f"borderw=2:bordercolor=black:box=1:boxcolor=black@0.45:boxborderw=8:"
-        f"x=(w-tw)/2:y={y}:enable='between(t,{item.start:.6f},{item.end:.6f})'"
+        f"drawtext=fontfile='{local_font}':textfile='{path}':expansion=none:"
+        f"fontcolor=white:fontsize={size}:line_spacing={spacing}:"
+        f"borderw={stroke}:bordercolor=black:box=1:boxcolor=black@0.45:boxborderw={padding}:"
+        f"x=(w-tw)/2:y='{y}':enable='between(t,{item.start:.6f},{item.end:.6f})'"
     )
 
 
@@ -121,9 +177,40 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                                 work / f"text-{index}-{kind}-{item_index}.txt",
                                 fmt.height,
                                 kind == "caption",
+                                width=fmt.width,
                             )
                         )
                 output = work / f"seg-{index:04d}.mp4"
+                font_hashes = [
+                    sha256(font_path(item.text)) for item in segment.overlays + segment.captions
+                ]
+                fingerprint = hashlib.sha256(
+                    json.dumps(
+                        {
+                            "renderer_revision": 2,
+                            "clip": clip.sha256,
+                            "settings": project.settings.model_dump(mode="json"),
+                            "segment": segment.model_dump(mode="json"),
+                            "color": color,
+                            "codec": codec,
+                            "fonts": font_hashes,
+                        },
+                        sort_keys=True,
+                        ensure_ascii=False,
+                    ).encode()
+                ).hexdigest()
+                cache = project_dir / "render-cache" / f"{fingerprint}.mp4"
+                cache_meta = cache.with_suffix(".json")
+                if cache.is_file() and cache_meta.is_file():
+                    try:
+                        if read_json(cache_meta).get("sha256") == sha256(cache):
+                            verify(tools, cache, project, color, duration)
+                            progress(f"Rendering cached {index + 1}/{len(timeline.segments)}")
+                            shutil.copyfile(cache, output)
+                            segment_paths.append(output)
+                            continue
+                    except (VlogiiError, ValueError, OSError):
+                        pass
                 args = ["-ss", str(segment.source_start / fps), "-i", clip.path]
                 if not clip.audio:
                     args += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
@@ -162,6 +249,11 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                 args += [str(output)]
                 tools.run(args, version / "logs" / f"segment-{index:04d}.log")
                 verify(tools, output, project, color, duration)
+                cache.parent.mkdir(parents=True, exist_ok=True)
+                pending_cache = cache.with_suffix(".pending.mp4")
+                shutil.copyfile(output, pending_cache)
+                pending_cache.replace(cache)
+                write_json(cache_meta, {"sha256": sha256(cache)})
                 segment_paths.append(output)
             listing = work / "concat.txt"
             listing.write_text("".join(f"file '{p}'\n" for p in segment_paths))

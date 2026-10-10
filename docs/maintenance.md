@@ -17,10 +17,10 @@
 | 内容 | 为什么保留 | 主要维护者 |
 | --- | --- | --- |
 | [AGENTS.md](../AGENTS.md) | agent 的简短规则与阅读路由 | A |
-| [产品定义](product.md) | MVP/V2/V3 边界与用户价值 | 两人确认，A 维护 |
+| [产品定义](product.md)、[MVP 对照](mvp-coverage.md) | 比赛目标、当前实现与缺口 | 两人确认范围，A 维护 |
 | [架构](architecture.md)、[契约导航](contracts.md)、[技术参考](reference/) | 防止模块和字段各自演化 | A；涉及 B 的边界共同核对 |
 | [contracts/](../contracts/) | 机器可验证 schema、样例、API 和开发替身 | A；公共变更两边同步 |
-| [视觉规范](visual-design.md) | 页面与成片的统一风格 | B |
+| [视觉规范](visual-design.md) | 页面与成片的统一风格 | B 管页面，A 管视频标题/成片；共同核对 |
 | [验收](acceptance.md)、[部署](deployment.md)、[AI 测试](ai-selection.md) | 明确什么才算可演示、真实有效 | 模块负责人提供证据，A更新状态 |
 | [决策记录](decisions.md)、[进度表](status.md) | 跨会话、跨电脑恢复工作 | A 统一维护 |
 | [Demo 准备](demo.md) | 素材许可、录屏、提交和彩排 | A/B |

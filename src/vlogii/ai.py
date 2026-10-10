@@ -5,6 +5,7 @@ import os
 import time
 from pathlib import Path
 
+import httpx
 from pydantic import ValidationError
 
 from .models import Clip, Plan, Project, Review
@@ -62,7 +63,7 @@ class Director:
         key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         if not key:
             raise VlogiiError("Set GEMINI_API_KEY in .env before generating a film.")
-        self.model = os.environ.get("VLOGII_MODEL", "gemini-3-flash-preview")
+        self.model = os.environ.get("VLOGII_MODEL", "gemini-3.8-flash")
         self.client = genai.Client(api_key=key, http_options=types.HttpOptions(timeout=120_000))
         self.evidence = evidence
 
@@ -73,15 +74,34 @@ class Director:
         from google.genai import types
 
         started = time.monotonic()
-        response = self.client.models.generate_content(
-            model=self.model,
-            contents=parts,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_json_schema=provider_schema(schema),
-                temperature=0.2,
-            ),
-        )
+        for attempt in range(3):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=parts,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_json_schema=provider_schema(schema),
+                        thinking_config=types.ThinkingConfig(
+                            thinking_level=os.environ.get("VLOGII_THINKING", "medium")
+                        )
+                        if self.model.startswith("gemini-3")
+                        else None,
+                    ),
+                )
+                break
+            except Exception as exc:
+                code = getattr(exc, "code", None)
+                transient = code in {429, 500, 502, 503, 504} or isinstance(
+                    exc, (TimeoutError, httpx.TransportError)
+                )
+                if transient and attempt < 2:
+                    time.sleep(2**attempt)
+                    continue
+                raise VlogiiError(
+                    f"Gemini request failed ({code or type(exc).__name__}). "
+                    "Check the connection, API key and quota, then retry."
+                ) from exc
         raw = response.text or ""
         write_json(
             self.evidence / f"{label}.json",
@@ -96,7 +116,7 @@ class Director:
         )
         return schema.model_validate_json(raw)
 
-    def review(self, clip: Clip, proxy: Path) -> Review:
+    def review(self, clip: Clip, proxy: Path, transcribe_speech: bool = True) -> Review:
         from google.genai import types
 
         uploaded = self.client.files.upload(file=str(proxy))
@@ -113,9 +133,13 @@ class Director:
                 f"Review this real video. clip_id must be {clip.id}. Its duration is {clip.duration:.3f} seconds. "
                 "Describe only observable activities, not guessed names, places, dates or feelings. "
                 "Return highlights with start/end timestamps in source seconds and factual short descriptions. "
-                "Transcribe only clearly audible speech into speech entries, keeping its original language. "
-                "Use empty speech if no speech is audible; never invent dialogue. "
-                "Every timestamp must be between zero and the stated duration."
+                + (
+                    "Transcribe only clearly audible speech into speech entries, keeping its original language. "
+                    "Use empty speech if no speech is audible; never invent dialogue. "
+                    if transcribe_speech
+                    else "Speech is transcribed separately. Return an empty speech list; do not transcribe or invent dialogue. "
+                )
+                + "Every timestamp must be between zero and the stated duration."
             )
             parts = [types.Part.from_uri(file_uri=uploaded.uri, mime_type="video/mp4"), prompt]
             for attempt in range(2):

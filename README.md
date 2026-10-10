@@ -1,5 +1,9 @@
 # Vlogii
 
+![Vlogii logo](resources/branding/vlogii-logo.png)
+
+The selected brand identity is a mint-green frame/play icon with a chunky lowercase `vlogii` wordmark. See [logo and usage guidelines](docs/visual-design.md#brand-logo).
+
 A local web app that turns real footage into a small, editable vlog.
 
 **Upload → Gemini video analysis → validated plan → FFmpeg export → preview, edit, undo and download.**
@@ -31,7 +35,7 @@ uv run vlogii doctor
 uv run vlogii serve
 ```
 
-Open **http://127.0.0.1:8000**. The app automatically prefers Homebrew's `ffmpeg-full`; no manual linking is needed. Gemini receives low-resolution proxy videos for analysis. Source footage, credentials and private AI records remain local and are ignored by Git.
+Open **http://127.0.0.1:8000**. The app automatically prefers Homebrew's `ffmpeg-full`; no manual linking is needed. Gemini receives low-resolution video copies for visual analysis and separately extracted audio for speech recognition. Credentials, exports and private AI records remain local and are ignored by Git.
 
 Run one server process. This unauthenticated release is bound to localhost and is not ready to expose as a public service.
 
@@ -45,6 +49,10 @@ Run one server process. This unauthenticated release is bound to localhost and i
 - Title changes, controlled warmth and clip exclusion without another AI call.
 - Successful versions, undo, persistent actual progress, restart recovery and download.
 - Full FFmpeg logs and output verification; failures preserve previous successful films.
+- Retry failed generation or edits with their saved request, plan and completed segments.
+- Chinese/English interface switching and a bilingual interactive CLI; creative direction is optional.
+
+Default models: `gemini-3.8-flash` for video/planning and `gemini-3.5-transcribe` for speech. Both use the same Gemini API key and are configurable. New model access passed a one-clip live run; accuracy still needs human-ground-truth evaluation; see [MVP fixes and model choices](docs/mvp-fixes.md).
 
 Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage. Target duration guides the AI; it is not guaranteed or padded with repeated footage. Warmth edits use SDR. HEVC playback depends on the browser and display. AI captions and editorial choices require human review.
 
@@ -61,6 +69,9 @@ Tests include real FFmpeg exports. Provider test doubles verify failure handling
 
 ## Documentation and scope
 
+- [MVP feature coverage and remaining competition gaps](docs/mvp-coverage.md)
+- [Free font/BGM candidates and default/upload design](docs/free-resources.md)
+- [Team ownership and handoff](docs/collaboration.md): Yang Kang owns the video pipeline, AI, backend, renderer and integration; the teammate owns the frontend.
 - [Setup, modules, CLI, supported formats and limitations](docs/vlogii-guide.md)
 - [Local API specification](docs/vlogii.openapi.json); interactive docs at `/docs`
 - [Implementation and validation status](docs/status.md)

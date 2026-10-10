@@ -7,6 +7,7 @@ from .ai import Director
 from .media import Tools, build_proxy, inspect_clip
 from .models import Plan, Project, Review, Settings, Text
 from .render import render
+from .speech import speech_config, transcribe
 from .storage import VlogiiError, locked, read_json, write_json
 
 EXTENSIONS = {".mp4", ".mov", ".m4v", ".mkv"}
@@ -48,31 +49,63 @@ def load_reviews(project_dir: Path) -> list[Review]:
     ]
 
 
+def cached_review(path: Path, fingerprint: dict, force=False):
+    meta = path.with_suffix(".meta.json")
+    if force or not path.is_file() or not meta.is_file():
+        return None
+    try:
+        if read_json(meta) == fingerprint:
+            return Review.model_validate(read_json(path))
+    except (VlogiiError, ValueError):
+        pass
+    return None
+
+
 def analyze(project_dir: Path, project: Project, progress=print, force=False):
     tools = Tools()
+    config = speech_config()
+    model = os.environ.get("VLOGII_MODEL", "gemini-3.8-flash")
     director = None
     try:
         for index, clip in enumerate(project.clips):
-            review_path = project_dir / "reviews" / f"{clip.id}.json"
-            meta_path = review_path.with_suffix(".meta.json")
-            if review_path.exists() and meta_path.exists() and not force:
-                meta = read_json(meta_path)
-                if meta.get("sha256") == clip.sha256 and meta.get("model") == os.environ.get(
-                    "VLOGII_MODEL", "gemini-3-flash-preview"
-                ):
-                    Review.model_validate(read_json(review_path))
-                    progress(f"Analysis cached: {index + 1}/{len(project.clips)}")
-                    continue
-            progress(f"Preparing video {index + 1}/{len(project.clips)}")
-            proxy = project_dir / "proxies" / f"{clip.id}.mp4"
-            if not proxy.exists():
-                build_proxy(tools, clip, proxy)
-            if director is None:
-                director = Director(project_dir / "ai-evidence")
-            progress(f"AI analysis {index + 1}/{len(project.clips)}")
-            review = director.review(clip, proxy)
-            write_json(review_path, review)
-            write_json(meta_path, {"sha256": clip.sha256, "model": director.model})
+            visual_path = project_dir / "visual-reviews" / f"{clip.id}.json"
+            visual_meta = {
+                "sha256": clip.sha256,
+                "model": model,
+                "revision": 2,
+                "thinking": os.environ.get("VLOGII_THINKING", "medium"),
+            }
+            review = cached_review(visual_path, visual_meta, force)
+            if review is None:
+                progress(f"Preparing video {index + 1}/{len(project.clips)}")
+                proxy = project_dir / "proxies" / f"{clip.id}.mp4"
+                if not proxy.exists():
+                    build_proxy(tools, clip, proxy)
+                if director is None:
+                    director = Director(project_dir / "ai-evidence")
+                progress(f"AI analysis {index + 1}/{len(project.clips)}")
+                review = director.review(clip, proxy, transcribe_speech=False)
+                write_json(visual_path, review)
+                write_json(visual_path.with_suffix(".meta.json"), visual_meta)
+            else:
+                progress(f"Analysis cached: {index + 1}/{len(project.clips)}")
+            if clip.audio:
+                speech_path = project_dir / "speech" / f"{clip.id}.json"
+                speech_meta = {"sha256": clip.sha256, **config}
+                speech = cached_review(speech_path, speech_meta, force)
+                if speech is None:
+                    progress(f"Speech recognition {index + 1}/{len(project.clips)}")
+                    speech = Review(
+                        clip_id=clip.id,
+                        summary="Speech recognition",
+                        speech=transcribe(clip, project_dir, config),
+                    )
+                    write_json(speech_path, speech)
+                    write_json(speech_path.with_suffix(".meta.json"), speech_meta)
+                else:
+                    progress(f"Speech cached: {index + 1}/{len(project.clips)}")
+                review = review.model_copy(update={"speech": speech.speech})
+            write_json(project_dir / "reviews" / f"{clip.id}.json", review)
     finally:
         if director:
             director.close()
@@ -92,12 +125,42 @@ def make_plan(project_dir: Path, project: Project, direction: str, target: float
         director.close()
 
 
-def generate(project_dir: Path, direction: str, target: float, progress=print):
+def generate(project_dir: Path, direction: str, target: float, progress=print, resume=False):
     with locked(project_dir):
         project = load_project(project_dir)
+        context = {
+            "direction": direction,
+            "target": target,
+            "project": project.model_dump(mode="json"),
+            "model": os.environ.get("VLOGII_MODEL", "gemini-3.8-flash"),
+            "speech": speech_config(),
+            "thinking": os.environ.get("VLOGII_THINKING", "medium"),
+        }
+        checkpoint_path = project_dir / "generation.json"
+        checkpoint = read_json(checkpoint_path) if resume and checkpoint_path.exists() else {}
+        if checkpoint.get("context") != context:
+            checkpoint = {"context": context, "status": "analyzing"}
+            write_json(checkpoint_path, checkpoint)
+        if checkpoint.get("status") == "complete":
+            output = project_dir / "cuts" / checkpoint["cut"]
+            if (output / "film.mp4").is_file():
+                return output
         analyze(project_dir, project, progress)
-        plan = make_plan(project_dir, project, direction, target, progress)
-        return render(project_dir, project, plan, load_reviews(project_dir), progress)
+        reviews = load_reviews(project_dir)
+        review_data = [r.model_dump(mode="json") for r in reviews]
+        if checkpoint.get("plan") and checkpoint.get("reviews") == review_data:
+            progress("Resuming the saved plan")
+            plan = Plan.model_validate(checkpoint["plan"])
+        else:
+            plan = make_plan(project_dir, project, direction, target, progress)
+            checkpoint.update(
+                plan=plan.model_dump(mode="json"), reviews=review_data, status="rendering"
+            )
+            write_json(checkpoint_path, checkpoint)
+        output = render(project_dir, project, plan, reviews, progress)
+        checkpoint.update(status="complete", cut=output.name)
+        write_json(checkpoint_path, checkpoint)
+        return output
 
 
 def undo(project_dir: Path):
@@ -111,10 +174,25 @@ def undo(project_dir: Path):
 
 
 def edit(
-    project_dir: Path, title: str | None, excluded: list[str], warmth: float | None, progress=print
+    project_dir: Path,
+    title: str | None,
+    excluded: list[str],
+    warmth: float | None,
+    progress=print,
+    resume=False,
 ):
     with locked(project_dir):
         latest = read_json(project_dir / "latest.json")
+        checkpoint_path = project_dir / "edit-checkpoint.json"
+        request = {"title": title, "excluded": excluded, "warmth": warmth}
+        checkpoint = read_json(checkpoint_path) if resume and checkpoint_path.exists() else {}
+        if checkpoint.get("request") == request and checkpoint.get("status") == "complete":
+            if checkpoint.get("cut") == latest["cut"]:
+                return project_dir / "cuts" / latest["cut"]
+        if checkpoint.get("request") == request and checkpoint.get("base") != latest["cut"]:
+            raise VlogiiError("The base version changed. Apply a new edit instead of retrying.")
+        checkpoint = {"request": request, "base": latest["cut"], "status": "rendering"}
+        write_json(checkpoint_path, checkpoint)
         version = project_dir / "cuts" / latest["cut"]
         project = Project.model_validate(read_json(version / "project.json"))
         plan = Plan.model_validate(read_json(version / "plan.json"))
@@ -136,4 +214,7 @@ def edit(
             project.settings.warmth = warmth
             # Applying warmth to HDR inputs uses the supported tone-mapped SDR path.
             project.settings.color = "sdr"
-        return render(project_dir, project, plan, load_reviews(project_dir), progress)
+        output = render(project_dir, project, plan, load_reviews(project_dir), progress)
+        checkpoint.update(status="complete", cut=output.name)
+        write_json(checkpoint_path, checkpoint)
+        return output

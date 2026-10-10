@@ -1,56 +1,50 @@
 # 当前开发进度
 
-[返回总览](../README.md) · [协作手册](collaboration.md) · [验收标准](acceptance.md)
+[返回总览](../README.md) · [协作手册](collaboration.md) · [MVP 功能对照](mvp-coverage.md)
 
-最后更新：2026-10-09（America/New_York）。维护者：集成负责人 A，可委托编码助手；其他成员提交证据，由 A 统一更新。
+最后更新：2026-10-10（America/New_York）。维护者：A（杨康），可委托编码助手；B（队友）提供前端证据。
 
 ## 当前快照
 
-- 当前阶段：开发准备。原团队比赛 MVP 未验收；`kang` 分支现有独立 Vlogii 本地网页实现，见下方英文记录。36 小时比赛计时尚未记录开始时间。
-- 已有：拆分文档、数据/API 契约、开发替身与检查工具；本次检查结果见下方。
-- 尚未完成：真实上传、AI 接入、FFmpeg 出片、网页、Replit 正式部署与恢复测试。
-- 人员：A 待填写；B 待填写。共享仓库：[yoko3new/Auto_Vlog_Editor](https://github.com/yoko3new/Auto_Vlog_Editor)，集成分支 `main`；最新文档提交作为开发准备基线，开工时记录具体 SHA。
-- 首个开发目标：三段真实素材→九秒 MP4；第 4 小时开始真实对接，第 6 小时 Replit A/B/C 验收。时间均相对实际开工。
+- 当前阶段：`kang` 已上传 Vlogii 本地网页 MVP，核对基线 `ec21851`；原比赛 MVP 尚未完整验收，36 小时计时未记录。
+- 已有实现：真实上传/元数据/去重、Gemini 视频理解/转录/选片、帧时间线、FFmpeg、原声字幕、横竖屏/色彩选项、控件编辑、版本/撤销、任务状态、本地恢复、网页预览/下载。
+- 已有证据：基线 [本地验证记录](vlogii-validation.md)记载 29 个 Python 测试、两套真实 Gemini 素材与浏览器操作；本轮体验修复增至 44 项测试，真实素材横竖屏字幕/解码与网页语言切换/编辑 Retry 通过。用户配置密钥后，一段 2.4 秒素材真实跑通两款新 Gemini 模型、规划和导出；准确率未做人工对照。
+- 本轮修改：失败续跑、原请求持久化、中英文 CLI/页面、画面与原音语音分离、字幕按输出尺寸排版、硬件编码可用性检查；详见 [修复与模型记录](mvp-fixes.md)。修改尚未提交或推送。
+- 已完成字体/BGM [资源调研与预下载](free-resources.md)：两款 Noto 字体、三首 CC0 音乐候选及许可/散列；应用内置、混音和自定义上传仍是下一步实现。
+- 主要缺口：BGM/卡点、杂志风成片、自然语言修改、首次 30±1 秒保证、素材缩略图、Replit/App Storage 与正式负载验收。详细边界见 [功能对照](mvp-coverage.md)。
+- 分工：A（杨康）负责视频生成全链路、全部视频模块、后端/契约/集成；B（队友）负责前端。渲染与标题布局归 A。
+- 仓库：[yoko3new/Auto_Vlog_Editor](https://github.com/yoko3new/Auto_Vlog_Editor)；现行 API 为 `/api/vlogii`。`main` 是集成目标，本页不宣称 MVP 已合入 `main` 或正式部署。
 
-## 当前任务
+## 当前任务与覆盖状态
 
-| ID | 任务 | 负责人 | 状态 | 依赖 / 验收证据 |
+| ID | 范围 | 负责人 | 状态 | 证据 / 限制 |
 | --- | --- | --- | --- | --- |
-| DOC-01 | 拆分文档、迁移契约与校验 | 项目准备 | 已验收（文档范围） | [检查与审阅记录](reviews/documentation-2026-10-09.md) |
-| A-01 | API 骨架、真实上传与素材登记 | A | 未开始 | 可先独立做；按 API 契约响应 |
-| B-01 | 九秒独立真实渲染、字体与标题 | B | 未开始 | 需实际媒体/字体；不依赖 A 的 API |
-| B-02 | 前端骨架和 mock API 状态页面 | B | 未开始 | 可用已有 mock；B 优先 B-01 |
-| A-02 | 队列、错误、版本与持久存储 | A | 未开始 | 使用 RenderStub 可先做逻辑 |
-| INT-01 | 真实上传→渲染→播放及 Replit A/B/C | A 集成，B 联调 | 未开始 | 需实际 API、渲染、素材与部署条件 |
+| DOC-01 | 原文档/契约/开发替身 | A 维护 | 已验收（文档范围） | [原检查记录](reviews/documentation-2026-10-09.md)；不代表 Vlogii 使用旧 API |
+| MVP-01 | 上传、素材登记、视频理解和计划 | A | 代码完成；已有本地验证记录 | [验证](vlogii-validation.md)；AI 内容质量基准待验 |
+| MVP-02 | 时间线、渲染、文字/字幕/色彩 | A | 代码完成；已有本地验证记录 | [验证](vlogii-validation.md)；BGM/杂志风/固定时长未实现 |
+| MVP-03 | 编辑/撤销、任务/版本/本地恢复 | A | 代码完成；已有本地验证记录 | 控件编辑已覆盖，非自然语言；无云端存储/旧契约幂等保证 |
+| UI-01 | 当前 React 单页 | B 接手维护 | 基础代码完成；已有构建与操作记录 | [前端](../frontend/src/main.tsx)；选文件控件自动验收、移动端仍待验证 |
+| FIX-01 | Retry、中英文、字幕边界、识别拆分 | A；前端同步本轮需求 | 本地实现与相关验证完成；真实 AI 小样通过 | [修复](mvp-fixes.md)；44 测试，真实横竖屏输出、网页编辑重试；真实新模型小样通过；待人工转录对照 |
+| INT-01 | 正式部署和比赛整体验收 | A 集成，B 联调 | 待验收；部署尚未实现 | [比赛验收](acceptance.md)、[Replit 关卡](deployment.md#s18-2) |
 
-任务状态使用：未开始／进行中／代码完成待审阅／待集成／待验收／已验收／阻塞。写完代码不等于验收完成。
+代码完成、既有记录和完整验收分别记录，不把新增待办当作已授权开工。
 
-## 待落实与下一步
+## 下一步
 
-1. 两人确认 A/B，从共享仓库同步同一版本，记录起始提交。
-2. 备齐共享三段视频、BGM、字体与许可，记录稳定 ID、元数据与散列；输入要求见 [部署小样](deployment.md#s18-2)。
-3. 用一个范围明确的任务分别启动 A-01、B-01；具体可写文件、分支/worktree、验收要求写进派发消息。
-4. 真实应用开发尚未开始；每人可自行选择开发工具。
+1. 本地密钥与新模型真实小样已验证；继续用中英人工逐句标注评估文本和时序，不把小样集成通过当识别准确率证明。
+2. 两人同步本轮变更；队友按现行 OpenAPI 接手中英文/Retry 页面，杨康维护视频与后端模块。
+3. 先复测本轮体验修复；BGM/卡点/风格美化按用户要求留下一步。自然语言增量修改的输入与版本策略已记录，解析器尚未实现。
+4. 需要正式演示时，由 A 准备部署/存储并执行真实验收，B 做页面联调。
 
 ## 验收记录
 
 | 日期 | 基线 / 环境 | 检查 | 实际结果 | 证据 |
 | --- | --- | --- | --- | --- |
-| 2026-10-09 | 文档与契约骨架，本地、无初始代码提交 | 文档路由、数据契约、协作替身 | 通过；原有 93 节迁移、13 份数据样例/19 个反例、11 组协作检查 | [命令、范围与审阅结论](reviews/documentation-2026-10-09.md) |
-
-真实 Replit、AI 选片、视频质量和性能仍为“未验证”。原契约工具此前通过的 mock 检查不能升级为真实产品成功。
+| 2026-10-09 | 原文档与契约骨架，本地 | 文档、数据契约、协作替身 | 文档范围通过 | [原检查与审阅](reviews/documentation-2026-10-09.md) |
+| 2026-10-10 | Vlogii `ec21851`，既有 macOS 本地记录 | Python/FFmpeg、Ruff、前端构建、两套 Gemini 素材、浏览器/恢复 | 记录为通过；未在本轮重跑；不覆盖比赛全部要求或正式部署 | [验证摘要及限制](vlogii-validation.md) |
+| 2026-10-10 | 基于 `ec21851` 的本轮文档调整 | 文档链接、原契约/替身、diff 空白 | 通过；仅文档范围 | [本轮检查与范围](reviews/mvp-documentation-2026-10-10.md) |
+| 2026-10-10 | 基于 `ec21851` 的本地体验修复 | 44 Python 测试、FFmpeg、语言/Retry 浏览器操作、前端构建 | 通过；新模型真实小样通过；准确率和移动端未验 | [修复证据与限制](mvp-fixes.md) |
 
 ## 更新规则
 
-任务开始、完成、失败、移交或发生决定时更新相关行；无新证据时不机械追加。保持本页为短快照；长日志和已结束批次放入独立记录并链接。变更需求/架构写 [decisions.md](decisions.md)，不要在这里复制整份规范。两台电脑只能根据已同步提交和证据汇总，不猜对方尚未推送的进展。
-
-
-## Vlogii implementation on kang — 2026-10-10
-
-The user authorized an independent local web implementation after validating VX.
-The checkout named `vlogii` contains new React/TypeScript, FastAPI and Python video-processing code.
-It uses `/api/vlogii` and separate local models; the original team contracts remain unchanged.
-This scope does not establish acceptance of the original magazine/BGM/Replit competition MVP.
-
-See [Vlogii validation](vlogii-validation.md) for actual evidence and limitations,
-and [the implementation guide](vlogii-guide.md) for startup and debugging.
+A 按已同步提交和实际证据更新。长日志另存，重要决定写 [decisions.md](decisions.md)；无新证据不重复追加，不猜对方未推送进度。私人原始证据保留本地，公开记录注明样本与限制。

@@ -104,7 +104,36 @@ class Tools:
         software = "libx265" if color == "hlg" else "libx264"
         available = self.capability("-encoders")
         hardware = "hevc_videotoolbox" if color == "hlg" else "h264_videotoolbox"
-        codec = hardware if mode == "auto" and hardware in available else software
+        codec = software
+        if mode == "auto" and hardware in available:
+            # Compiled-in VideoToolbox support does not guarantee a usable device/session.
+            try:
+                probe = subprocess.run(
+                    [
+                        self.ffmpeg,
+                        "-hide_banner",
+                        "-nostdin",
+                        "-f",
+                        "lavfi",
+                        "-i",
+                        "color=s=128x128:r=30:d=0.1",
+                        "-frames:v",
+                        "1",
+                        "-c:v",
+                        hardware,
+                        *color_args(color, hardware),
+                        "-f",
+                        "null",
+                        "-",
+                    ],
+                    capture_output=True,
+                    timeout=15,
+                    check=False,
+                )
+                if probe.returncode == 0:
+                    codec = hardware
+            except (subprocess.TimeoutExpired, OSError):
+                pass
         if codec not in available:
             raise VlogiiError(f"FFmpeg lacks the required encoder {codec}.")
         return codec

@@ -2,7 +2,7 @@
 
 [返回项目总览](../README.md)
 
-何时读：交付、review、debug 和阶段放行时读相关案例。证据写入 status.md，详细日志保持独立。
+何时读：原比赛交付、review、debug 和阶段放行时读相关案例。本页保留原比赛门槛；当前 Vlogii 本地实现的既有验证见 [验证记录](vlogii-validation.md)，与本页差距见 [功能对照](mvp-coverage.md)。例如当前保留原声/字幕，与下方静音/BGM 方案不同，不能把本地通过视为比赛整体通过。证据写入 status.md。
 
 <a id="s15"></a>
 

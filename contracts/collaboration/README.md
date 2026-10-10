@@ -4,6 +4,8 @@
 
 本包已经位于应用仓库的 `contracts/`。两人从同一个 Git 提交开始，不各自修改一份契约。
 
+本包针对原比赛 `/api` 规划；当前 Vlogii 使用独立的 `/api/vlogii` 和 [现行 OpenAPI](../../docs/vlogii.openapi.json)，不与本包 mock 直接兼容。新分工为 A（杨康）维护后台及全部视频模块，B（队友）维护前端；原类型文件中的 A/B 注释是历史说明，归属按 [协作手册](../../docs/collaboration.md#s13-1)。
+
 ## 先看哪些文件
 
 | 文件 | 用途 | 主要使用者 |
@@ -11,9 +13,9 @@
 | `api.openapi.json` | HTTP 请求、响应、状态和错误的字段定义 | A 实现 API，B 接页面 |
 | `api.examples.json` | 31 份可直接查看的请求／响应与状态样例 | A、B |
 | `mock_api.py` | 可运行的本地模拟 API | B，无需等待真实后端 |
-| `runtime_contracts.py` | Renderer、标题布局、进度、错误类型；含 RenderStub | A、B |
-| `smoke9.timeline.json` | 三段各三秒的固定时间线 | B，无需等待 AI 或 API |
-| `asset-paths.example.json` | 资源 ID 到本地文件的映射示例 | B 渲染、A 准备文件 |
+| `runtime_contracts.py` | Renderer、标题布局、进度、错误类型；含 RenderStub | A 的视频模块 |
+| `smoke9.timeline.json` | 三段各三秒的固定时间线 | A 的渲染模块，无需等待 AI 或 API |
+| `asset-paths.example.json` | 资源 ID 到本地文件的映射示例 | A 准备并渲染 |
 | `validate_collaboration.py` | 样例一致性和开发替身的检查 | 合并前运行 |
 | `contract_utils.py` | 替身和检查脚本使用的有限 schema 检查器 | 工具内部使用 |
 
@@ -76,17 +78,17 @@ assert result.simulation is True
 
 成功模式只复制指定文件，尺寸和帧数来自请求，未实际测量。重复运行时换新的任务目录，已有输出会被拒绝覆盖。使用 `RenderStub(fail=True)` 检查失败是否释放队列、保留旧成功版本；`is_cancelled` 返回 `True` 可模拟调用前取消。它不实现真实子进程超时或运行中取消。
 
-真实 Renderer 必须采用同一函数签名，测量实际输出并返回 `simulation=False`，在超时／取消时终止 FFmpeg。A 校验结果、写存储和提交版本；B 的渲染器不写项目记录。替身和真实任务使用不同测试目录；正式发布禁止 stub 模式。
+真实 Renderer 必须采用同一函数签名，测量实际输出并返回 `simulation=False`，在超时／取消时终止 FFmpeg。A 维护所有视频模块；流水线校验结果、写存储和提交版本，渲染模块不写项目记录。替身和真实任务使用不同测试目录；正式发布禁止 stub 模式。
 
-## B：直接开发真实渲染
+## A：独立开发真实渲染模块（原合同规划）
 
 1. 读取 `smoke9.timeline.json`，三个镜头都从各自第零秒开始，共 270 帧，30 fps。
 2. 把路径映射示例复制成自己的 `fixtures/local-paths.json`，提供三段至少三秒的真实素材，以及时间线引用的 BGM、字体、装饰文件。路径相对应用仓库根目录解析；A/B 共用资源 ID。
 3. 根据实际视频更新素材清单中的时长、方向等元数据，不能把样例中的假定值当作探测结果。
-4. 实现 `Renderer.render_timeline()` 和[协作手册](../../docs/collaboration.md#s13-6)约定的渲染 CLI。该 CLI **不包含在本包中**，由 B 在开工时创建。
-5. 标题布局独立实现 `TitleLayouter.layout_title()`；A 在生成最终时间线前调用，B 渲染时严格按返回的 Overlay 绘制。
+4. 实现 `Renderer.render_timeline()` 和[协作手册](../../docs/collaboration.md#s13-6)约定的渲染 CLI。该 CLI **不包含在本包中**，由 A 在明确需要适配旧合同的任务中创建；当前 Vlogii 使用自己的 CLI。
+5. 标题布局独立实现 `TitleLayouter.layout_title()`；A 的时间线模块调用，渲染模块严格按返回的 Overlay 绘制。
 
-这条路径无需 A 的 API 或 AI。先交出可在干净环境重现的真实小 MP4、命令和依赖，再打磨页面。
+这条规划路径无需完整 API 或 AI。当前 Vlogii 已有自己的真实渲染模块，不因保留此处待办而重复开发；B 可用明确标记的样片推进前端。
 
 ## 合并前检查
 

@@ -167,6 +167,45 @@
         }
       }
     },
+    "/api/vlogii/projects/{name}/retry": {
+      "post": {
+        "summary": "Retry Job",
+        "operationId": "retry_job_api_vlogii_projects__name__retry_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vlogii/projects/{name}/edit": {
       "post": {
         "summary": "Edit Film",
@@ -381,6 +420,15 @@
               }
             ],
             "title": "Warmth"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "default": "en"
           }
         },
         "additionalProperties": false,
@@ -401,6 +449,15 @@
             "minimum": 5.0,
             "title": "Target Seconds",
             "default": 30
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "default": "en"
           }
         },
         "additionalProperties": false,
@@ -450,6 +507,26 @@
               }
             ],
             "title": "Error"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable",
+            "default": false
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "generate",
+                  "edit"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
           }
         },
         "additionalProperties": false,

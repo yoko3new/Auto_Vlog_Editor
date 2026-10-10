@@ -22,12 +22,14 @@ from .storage import VlogiiError, locked, project_path, read_json, write_json
 class GenerateRequest(Model):
     direction: str = Field(default="A calm chronological diary of my day.", max_length=2000)
     target_seconds: int = Field(default=30, ge=5, le=300)
+    language: Literal["en", "zh"] = "en"
 
 
 class EditRequest(Model):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     exclude_clip_ids: list[str] = Field(default_factory=list, max_length=50)
     warmth: float | None = Field(default=None, ge=0, le=1)
+    language: Literal["en", "zh"] = "en"
 
 
 class WebClip(Model):
@@ -41,6 +43,8 @@ class JobState(Model):
     status: Literal["queued", "running", "complete", "failed"]
     message: str
     error: str | None = None
+    retryable: bool = False
+    kind: Literal["generate", "edit"] | None = None
 
 
 class VersionHistory(Model):
@@ -56,6 +60,10 @@ class ProjectView(Model):
     latest: VersionHistory | None
     video_url: str | None
     duration_seconds: float | None
+
+
+def public_job(job):
+    return {key: value for key, value in job.items() if key in JobState.model_fields}
 
 
 def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAPI:
@@ -79,6 +87,8 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                             **job,
                             "status": "failed",
                             "message": "Interrupted by server restart. Retry generation.",
+                            "error": "Interrupted by server restart. Retry generation.",
+                            "retryable": bool(job.get("request")),
                         },
                     )
             executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="vlogii")
@@ -123,7 +133,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 for c in project.clips
             ],
             "settings": project.settings.model_dump(),
-            "job": job,
+            "job": public_job(job) if job else None,
             "latest": latest,
             "duration_seconds": (
                 read_json(directory / "cuts" / latest["cut"] / "verification.json").get("duration")
@@ -137,10 +147,17 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
 
     @app.get("/api/vlogii/health")
     def health():
+        from .speech import speech_config
+
         return {
             "status": "ok",
             "api_version": "vlogii.local.v1",
             "ai_configured": bool(
+                os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+            ),
+            "video_model": os.environ.get("VLOGII_MODEL", "gemini-3.8-flash"),
+            "speech": speech_config(),
+            "speech_configured": bool(
                 os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
             ),
         }
@@ -224,12 +241,25 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     request.exclude_clip_ids,
                     request.warmth,
                     progress=progress,
+                    resume=job.get("resume", False),
                 )
             else:
-                generate(directory, request.direction, request.target_seconds, progress=progress)
+                generate(
+                    directory,
+                    request.direction,
+                    request.target_seconds,
+                    progress=progress,
+                    resume=job.get("resume", False),
+                )
             write_json(
                 directory / "job.json",
-                {**job, "status": "complete", "message": "Your film is ready.", "error": None},
+                {
+                    **job,
+                    "status": "complete",
+                    "message": "Your film is ready.",
+                    "error": None,
+                    "retryable": False,
+                },
             )
         except Exception as exc:
             # Private logs hold diagnostics; the browser receives an actionable summary.
@@ -239,15 +269,40 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             message = "Generation failed. Previous films are preserved. Check the server terminal or retry."
             if isinstance(exc, VlogiiError) and "GEMINI_API_KEY" in str(exc):
                 message = "Set GEMINI_API_KEY in the server's .env file and restart."
+            elif isinstance(exc, VlogiiError):
+                if "Gemini" in str(exc) and "speech" in str(exc).lower():
+                    message = "Speech recognition failed. Check the Gemini connection, key, quota and speech model, then retry."
+                elif "Gemini" in str(exc):
+                    message = "Video analysis or planning failed. Check the Gemini connection, key and quota, then retry."
+                elif "font" in str(exc).lower():
+                    message = (
+                        "A caption font is missing. Set VLOGII_FONT to a suitable font, then retry."
+                    )
+                elif "Keep at least" in str(exc):
+                    message = (
+                        "Keep at least one selected clip. Change the selection and apply again."
+                    )
             print(f"Vlogii job failed: {exc}", flush=True)
             write_json(
                 directory / "job.json",
-                {**job, "status": "failed", "message": message, "error": message},
+                {
+                    **job,
+                    "status": "failed",
+                    "message": message,
+                    "error": message,
+                    "retryable": "Keep at least" not in str(exc),
+                },
             )
 
-    def enqueue(directory, request):
+    def enqueue(directory, request, retry_job_id=None):
         with gate:
             job_path = directory / "job.json"
+            if retry_job_id is not None and (
+                not job_path.exists()
+                or read_json(job_path).get("id") != retry_job_id
+                or read_json(job_path).get("status") != "failed"
+            ):
+                raise HTTPException(409, "The failed task changed. Refresh the project.")
             if job_path.exists() and read_json(job_path).get("status") in {"queued", "running"}:
                 raise HTTPException(409, "This project is already generating.")
             if executor is None:
@@ -263,10 +318,14 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 "status": "queued",
                 "message": "Waiting to start.",
                 "error": None,
+                "kind": "edit" if isinstance(request, EditRequest) else "generate",
+                "retryable": False,
+                "request": request.model_dump(mode="json"),
+                "resume": retry_job_id is not None,
             }
             write_json(job_path, job)
             executor.submit(worker, directory, request, job)
-        return job
+        return public_job(job)
 
     @app.post("/api/vlogii/projects/{name}/generate", status_code=202, response_model=JobState)
     def start(name: str, request: GenerateRequest):
@@ -274,6 +333,17 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
         if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
             raise HTTPException(400, "Set GEMINI_API_KEY in .env and restart the server.")
         return enqueue(directory, request)
+
+    @app.post("/api/vlogii/projects/{name}/retry", status_code=202, response_model=JobState)
+    def retry_job(name: str):
+        directory = existing(name)
+        job_path = directory / "job.json"
+        job = read_json(job_path) if job_path.exists() else {}
+        if job.get("status") != "failed" or not job.get("retryable") or not job.get("request"):
+            raise HTTPException(409, "No retryable task. Start generation or apply a new edit.")
+        model = EditRequest if job.get("kind") == "edit" else GenerateRequest
+        request = model.model_validate(job["request"])
+        return enqueue(directory, request, retry_job_id=job["id"])
 
     @app.post("/api/vlogii/projects/{name}/edit", status_code=202, response_model=JobState)
     def edit_film(name: str, request: EditRequest):

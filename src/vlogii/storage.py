@@ -15,8 +15,10 @@ class VlogiiError(Exception):
 
 
 def project_path(root: Path, name: str) -> Path:
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", name):
-        raise VlogiiError("Use a project name with 1-64 letters, numbers, '-' or '_'.")
+    if not re.fullmatch(r"[^\W_][\w-]{0,63}", name):
+        raise VlogiiError(
+            "Use a project name with 1-64 Chinese or English letters, numbers, '-' or '_'."
+        )
     return root.resolve() / name
 
 

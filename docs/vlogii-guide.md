@@ -32,7 +32,7 @@ uv sync --frozen --extra dev
 cp .env.example .env
 ```
 
-Add your Gemini API key to `.env`. Keep `.env` local. `VLOGII_MODEL` is configurable because model availability depends on the account and can change. Gemini receives low-resolution proxy videos for analysis; source footage stays on your computer. Remote uploaded proxies are deleted after each review when the provider accepts the deletion.
+Add your Gemini API key to `.env`. Keep `.env` local. The defaults are `VLOGII_MODEL=gemini-3.8-flash` for visual analysis/planning and `VLOGII_SPEECH_MODEL=gemini-3.5-transcribe` for speech. Both use the same key. Models are configurable because account availability can change. Gemini receives low-resolution video copies and separately extracted original audio. Remote uploaded files are deleted after recognition when the provider accepts deletion. New model access passed a one-clip live run; accuracy is not yet benchmarked; see [current fixes and choices](mvp-fixes.md).
 
 Build the frontend and start the server:
 
@@ -52,13 +52,15 @@ On macOS the app automatically prefers Homebrew's `ffmpeg-full`, so no manual `b
 ## What works
 
 - Upload MP4, MOV, M4V or MKV footage, inspect its actual metadata and deduplicate identical files.
-- Give creative direction and a target duration. The target guides the AI; it is not a guaranteed duration. Insufficient footage is not repeated to fill time.
-- Gemini watches proxy videos, describes visible events and transcribes clearly audible speech. Captions retain the source language. The renderer selects Arial Unicode on macOS or Noto CJK on Linux; set `VLOGII_FONT` to override the font for other languages. Speech transcription is AI-generated and needs human review.
+- Creative direction is optional; blank input allows automatic editing. A target duration has a default. The target guides the AI; it is not a guaranteed duration. Insufficient footage is not repeated to fill time.
+- Gemini watches proxy videos and describes visible events. A separate Gemini speech request processes original audio extracted as PCM. Captions retain the source language. `VLOGII_SPEECH_LANGUAGE=auto` supports mixed languages; use a supported BCP-47 code for an explicit hint. The renderer measures complete text against output width and height and selects Arial Unicode on macOS or Noto CJK on Linux; set `VLOGII_FONT` to override the font. Speech transcription needs human review.
 - The AI selects source intervals and occasional factual text. Python validates references, ranges and overlays, then computes all output timing in integer frames.
 - FFmpeg preserves original audio, adds silence to clips without audio, burns text and captions, normalizes segments and joins them.
 - Browser-friendly SDR/H.264 is the web default. All-HLG projects can preserve 10-bit HDR using HEVC; mixed HDR/SDR footage is tone-mapped to SDR. HEVC playback depends on the browser and display.
 - Change the title, apply a controlled warmth adjustment or remove selected source clips. These edits render a new version without another AI call. Undo restores the previous successful version without rendering.
 - Failed work keeps previous successful exports. Progress is based on actual stages, not a simulated percentage. A server restart marks interrupted jobs as retryable failures.
+- Retry preserves the failed task's exact request and kind, including edits. It reuses valid visual/speech caches, the saved plan and completed rendered segments. New generation with different direction replans from the original imported clips.
+- The browser offers Chinese/English switching, saved locally. Unicode project names and creative direction are supported. UI language does not force speech language.
 - Local project records, analysis caches, plans, timelines, full FFmpeg logs and successful versions are stored under `projects/` and ignored by Git.
 
 Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage, and target durations of 5–300 seconds. Warmth edits use SDR output. Re-generating an AI plan uses the original imported clip set; removing a clip is a version edit, not a permanent deletion of source footage.
@@ -77,6 +79,8 @@ src/vlogii/
   storage.py      Atomic JSON writes and OS project locks
   media.py        FFmpeg discovery, probing, hashes and SDR proxies
   ai.py           Gemini video reviews and validated planning
+  speech.py       Independent original-audio Gemini transcription
+  i18n.py         Chinese CLI status messages
   timeline.py     Deterministic frame timing and caption remapping
   render.py       Text, audio, HDR, encoding and output verification
   pipeline.py     Analysis caching, generation, edits and undo
@@ -112,12 +116,18 @@ The web app and CLI use the same modules:
 ```sh
 uv run vlogii init my-day /absolute/path/to/footage --color sdr
 uv run vlogii run my-day --seconds 30 --direction "A quiet chronological diary"
+uv run vlogii retry my-day  # Resume the saved failed generation or edit
+uv run vlogii edit my-day --title "Slow Sunday" --warmth 0.5
 uv run vlogii status my-day
 uv run vlogii render my-day   # Reuse a saved plan; no new AI request
 uv run vlogii undo my-day
 ```
 
 Use `vlogii --projects /another/local/directory ...` to choose a different workspace. This release supports macOS and Linux; Windows project locking is not implemented.
+
+Run `uv run vlogii` in a terminal to choose Chinese/English and stay in an interactive generate/retry/edit/undo session. Commands accept `--language zh` or `--language en`; descriptions can use either language regardless of the interface. For example: `uv run vlogii --language zh run 周末 --direction "保留早餐和散步"`. Failed interactive commands offer retry without exiting; non-interactive use prints an explicit retry command. The 5–300 second constraint applies to target output, not input clip length.
+
+The retry API is `POST /api/vlogii/projects/{name}/retry`, with no body. `JobState` adds `retryable` and `kind`; generation/edit accept optional `language`. Existing requests remain valid. The saved request stays private in local job records. Current retry has no old-contract `request_id` idempotency guarantee; the backend prevents simultaneous work on one project. Frontend controls and [OpenAPI](vlogii.openapi.json) use the same fields.
 
 ## Data and publishing
 
