@@ -1,8 +1,10 @@
 # 本地开发与 Replit 验证
 
+**中文** · [English](deployment.en.md)
+
 [返回项目总览](../README.md)
 
-何时读：处理 Replit 部署或正式环境故障时读；所有真实 Replit 关卡目前仍未验证。当前 Vlogii 本地启动见 [实际指南](vlogii-guide.md)，使用 `src/vlogii/` 和 `/api/vlogii`；下文旧 `api/core` 目录与接口是原比赛规划，部署时需明确适配。A（杨康）负责后端、视频和部署，B（队友）负责前端联调。
+何时读：处理 Replit 部署或正式环境故障时读；所有真实 Replit 关卡目前仍未验证。当前 Vlogii 本地启动见 [实际指南](vlogii-guide.zh.md)，使用 `src/vlogii/` 和 `/api/vlogii`；下文旧 `api/core` 目录与接口是原比赛规划，部署时需明确适配。A（杨康）负责后端、视频和部署，B（队友）负责前端联调。
 
 <a id="s18"></a>
 

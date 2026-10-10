@@ -1,5 +1,7 @@
 # 数据与接口导航
 
+**中文** · [English](contracts.en.md)
+
 [返回总览](../README.md)。先按任务定位，不必读取整个 schema 或所有样例。
 
 ## 当前 Vlogii 接口

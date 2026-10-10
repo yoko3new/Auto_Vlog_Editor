@@ -1,89 +1,89 @@
 # Vlogii
 
+**中文** · [English](README.en.md)
+
 ![Vlogii logo](resources/branding/vlogii-logo.png)
 
-The selected brand identity is a mint-green frame/play icon with a chunky lowercase `vlogii` wordmark. See [logo and usage guidelines](docs/visual-design.md#brand-logo).
+将日常素材剪成可预览、修改和导出的生活类短视频。当前为本地网页 MVP，页面和 CLI 均支持中英文。
 
-A local web app that turns real footage into a small, editable vlog.
+**上传 → Gemini 画面分析与语音转录 → 选片与帧时间线 → FFmpeg 导出 → 预览、修改、重试、撤销、下载。**
 
-**Upload → Gemini video analysis → validated plan → FFmpeg export → preview, edit, undo and download.**
+产品方向是「艺术字/贴画封面 → 开头快剪 → 字幕与少量标注正文」。目前快剪单独导出；封面和自动拼接正文仍待实现，详见 [Shorts 方向](docs/shorts-direction.md)。已确定的薄荷绿标识见 [品牌规范](docs/visual-design.md#brand-logo)。
 
-This is an independent implementation informed by a working VX workflow and its failure cases. It does not copy or import VX. New code, comments and documentation are in English.
+## 本地启动
 
-## Start locally
-
-Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astral.sh/uv/), and FFmpeg with text, H.264 and HEVC support.
+需要 macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/) 和支持文字、音频、H.264/HEVC 的 FFmpeg。Ubuntu 安装见 [使用指南](docs/vlogii-guide.zh.md)。
 
 ```sh
-# macOS; Ubuntu setup is in the guide below.
+# macOS
 brew install ffmpeg-full
-
 git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
 ```
 
-Add your Gemini API key to `.env`, then build and start:
+在本地 `.env` 填写 `GEMINI_API_KEY`，然后构建并启动：
 
 ```sh
-cd frontend
-npm ci
-npm run build
-cd ..
+npm --prefix frontend ci
+npm --prefix frontend run build
 uv run vlogii doctor
 uv run vlogii serve
 ```
 
-Open **http://127.0.0.1:8000**. The app automatically prefers Homebrew's `ffmpeg-full`; no manual linking is needed. Gemini receives low-resolution video copies for visual analysis and separately extracted audio for speech recognition. Credentials, exports and private AI records remain local and are ignored by Git.
+打开 **http://127.0.0.1:8000**。macOS 自动优先使用 Homebrew 的 `ffmpeg-full`。只运行一个服务进程；当前没有认证，适用于本地使用。
 
-Run one server process. This unauthenticated release is bound to localhost and is not ready to expose as a public service.
+## 当前功能
 
-## Included
+- 导入 MP4、MOV、M4V、MKV，读取元数据并去重；Gemini 分别处理画面代理和原声，字幕保留源语言并按输出尺寸排版。
+- 中英文切换、可选创作描述、可点击输入示例；示例填入后由用户确认提交。
+- 横竖屏、原声字幕与少量文字；默认 SDR/H.264，可选全 HLG 素材的 10-bit HEVC 输出。
+- 修改标题、暖度、排除素材、删除成片时间区间、整片或局部调速；字幕和原声跟随时间线。
+- 成功版本、预览、撤销、下载；失败保留旧片，Retry 复用原请求、有效分析缓存和已完成渲染片段。
 
-- Upload real footage, inspect metadata and deduplicate identical files.
-- Gemini video understanding, source-language speech transcription and structured planning.
-- Strict validation and deterministic frame-based timing before rendering.
-- Original audio, speech captions, occasional text, portrait or landscape exports.
-- Browser-friendly SDR/H.264 by default; optional all-HLG 10-bit HEVC preservation.
-- Title changes, controlled warmth and clip exclusion without another AI call.
-- Successful versions, undo, persistent actual progress, restart recovery and download.
-- Full FFmpeg logs and output verification; failures preserve previous successful films.
-- Retry failed generation or edits with their saved request, plan and completed segments.
-- Chinese/English interface switching and a bilingual interactive CLI; creative direction is optional.
-- AI auto, opening highlights, keep most or keep all; optional duration and clickable input examples.
-- Delete precise ranges from the current film with timestamps or supported Chinese/English phrases.
+| 生成模式 | 默认行为 |
+| --- | --- |
+| AI 自动 | 根据素材与描述决定内容和时长，不再默认限制为 30 秒 |
+| 开头快剪 | 约 5 秒的独立合集；默认每镜头最多约 **0.5 秒、1 倍速、静音**，不叠口播字幕 |
+| 保留大部分 | 按导入顺序去黑场、修剪口播长停顿；默认保留无口播风景，可选择删除所有未识别到语音的区间 |
+| 完整保留 | 按导入顺序保留全部已导入素材区间；倍速会改变成片长度 |
 
-Default models: `gemini-3.8-flash` for video/planning and `gemini-3.5-transcribe` for speech. Both use the same Gemini API key and are configurable. New model access passed a one-clip live run; accuracy still needs human-ground-truth evaluation; see [MVP fixes and model choices](docs/mvp-fixes.md).
+AI 自动/快剪可指定 1–1800 秒的近似目标；保留模式按内容决定时长，不重复素材凑时长。网页提供节奏和速度单选栏。时间修改以**当前成功成片**为坐标，如「删掉00:12到00:18」「00:12到00:18加速到2倍」，详见 [剪辑规则](docs/editing-modes.md)。
 
-Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage. Target duration guides the AI; it is not guaranteed or padded with repeated footage. Warmth edits use SDR. HEVC playback depends on the browser and display. AI captions and editorial choices require human review.
+配置默认模型为 `gemini-3.8-flash`（画面/规划）和 `gemini-3.5-transcribe`（语音），共用 Gemini key，可在 `.env` 修改。真实小样已跑通，准确率仍需人工对照，见 [修复记录](docs/mvp-fixes.md)。Gemini 接收画面代理与音频；密钥、素材、转录、缓存、成片不提交 Git。
 
-## Verify
+上传限制：50 段、单段 512 MB、单次 2 GB、原素材总长 30 分钟。暖度修改使用 SDR；HEVC 播放取决于浏览器与设备。
+
+## CLI 与检查
+
+```sh
+uv run vlogii                          # Interactive language selection
+uv run vlogii --language zh init my-day /absolute/path/to/footage --color sdr
+uv run vlogii --language zh run my-day --mode keep_all
+uv run vlogii --language zh run my-day --mode highlights --shot-seconds 0.5 --speed 1
+uv run vlogii --language zh edit my-day --instruction "00:12到00:18加速到2倍"
+uv run vlogii --language zh retry my-day
+```
 
 ```sh
 uv run pytest -q
 uv run ruff check src/vlogii tests
 uv run ruff format --check src/vlogii tests
-cd frontend && npm run build
+npm --prefix frontend run build
+python3 tools/check_docs.py
 ```
 
-Tests include real FFmpeg exports. Provider test doubles verify failure handling, not live AI performance. Actual results and limitations are recorded in [local validation](docs/vlogii-validation.md).
+最近代码验证记录为 **95 项 Python 测试通过**（含真实 FFmpeg 导出）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
 
-## Documentation and scope
+## 文档与分工
 
-- [MVP feature coverage and remaining competition gaps](docs/mvp-coverage.md)
-- [Editing modes, longer films and time-range changes](docs/editing-modes.md)
-- [Free font/BGM candidates and default/upload design](docs/free-resources.md)
-- [Team ownership and handoff](docs/collaboration.md): Yang Kang owns the video pipeline, AI, backend, renderer and integration; the teammate owns the frontend.
-- [Setup, modules, CLI, supported formats and limitations](docs/vlogii-guide.md)
-- [Local API specification](docs/vlogii.openapi.json); interactive docs at `/docs`
-- [Implementation and validation status](docs/status.md)
-- [Existing team product plan](docs/product.md) and [contracts](docs/contracts.md)
+各文档页首提供中英文切换；代码、字段名与命令保持英文。
 
-This branch implements the local vlog web MVP requested after VX validation. Existing team documents, schemas and substitutes are preserved as planning material. The application uses a separate `/api/vlogii` namespace; it does not claim compatibility with the older `/api` contract.
+- [使用指南](docs/vlogii-guide.zh.md) · [功能覆盖](docs/mvp-coverage.md) · [当前进度](docs/status.md)
+- [剪辑规则](docs/editing-modes.md) · [产品定义](docs/product.md) · [架构](docs/architecture.md)
+- [免费字体/BGM 与许可](docs/free-resources.md)：完成调研与预下载，应用内置、混音、自定义上传待实现。
+- [协作交接](docs/collaboration.md)：杨康负责视频、AI、后端、渲染与集成；队友负责前端。
+- [现行 OpenAPI](docs/vlogii.openapi.json)：`/api/vlogii`，运行时 `/docs`；[旧比赛契约](docs/contracts.md)作为规划参考。
 
-BGM, beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment and NLE exports are outside this release. The original competition MVP is not presented as fully delivered.
-
-Only source, dependency locks, English documentation and non-sensitive verification summaries are published. Footage, transcripts, AI caches, generated videos and keys are excluded.
-
-当前产品方向：[生活记录 Shorts](docs/shorts-direction.md)（封面、闪切、正文）；已实现的速度与剪辑选项见[规则](docs/editing-modes.md)。
+待实现：艺术字/贴画封面、自动快剪接正文、BGM/卡点、风格成片、任意语义自然语言修改、认证、云端存储与正式部署。原比赛完整验收尚未完成；现行实现与旧 `/api` 契约有独立边界。

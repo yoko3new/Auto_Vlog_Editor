@@ -1,6 +1,8 @@
 # 保留比例、开头快剪与按时间修改
 
-[返回总览](../README.md) · [现行 API](vlogii.openapi.json) · [Vlogii 指南](vlogii-guide.md)
+**中文** · [English](editing-modes.en.md)
+
+[返回总览](../README.md) · [现行 API](vlogii.openapi.json) · [Vlogii 指南](vlogii-guide.zh.md)
 
 ## 四种生成模式
 
@@ -61,4 +63,4 @@ uv run vlogii edit my-day --speed 1
 
 旧请求仍可显式提交 `target_seconds: 30`，旧成功版本继续播放与撤销。旧计划缺少 `speed/captions` 默认原速且显示字幕；已有成功文件不重写。新计划按素材区间保存速度，时间线增加 `source_frames/speed`。**省略目标时长由默认 30 秒改为 AI 决定**，依赖旧默认的调用方应明确传 30；旧 Retry 保存的 30 不变。生成 checkpoint 增加模式与规则版本，模式变化会重做计划，仍复用识别缓存。每个新成片保留 `selection.json`，项目响应增加可空的 `selection`；旧版本没有该文件时返回 null。
 
-自动检查涵盖模式/时长优先级、完整保留、去黑场与停顿、快剪镜头约束、跨片段删除与字幕/文字时间映射、越界/不支持指令拒绝、失败重试与旧版本保留。真实 FFmpeg 测试验证全保留、黑场删除、按帧删除与撤销；网页操作和真实素材结果见[本地验证](vlogii-validation.md)。
+自动检查涵盖模式/时长优先级、完整保留、去黑场与停顿、快剪镜头约束、跨片段删除与字幕/文字时间映射、越界/不支持指令拒绝、失败重试与旧版本保留。真实 FFmpeg 测试验证全保留、黑场删除、按帧删除与撤销；网页操作和真实素材结果见[本地验证](vlogii-validation.zh.md)。

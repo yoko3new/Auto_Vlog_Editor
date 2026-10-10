@@ -1,8 +1,10 @@
 # MVP 体验修复与模型选择
 
-[返回总览](../README.md) · [功能覆盖](mvp-coverage.md) · [使用指南](vlogii-guide.md)
+**中文** · [English](mvp-fixes.en.md)
 
-基于 `kang/ec21851` 的本地修改，2026-10-10。杨康负责后端和视频模块；本次按已授权需求同步了前端 Retry 与中英文切换。前端后续仍由队友维护。尚未提交或推送。字体/BGM 的资源调研另见 [资源候选](free-resources.md)。
+[返回总览](../README.md) · [功能覆盖](mvp-coverage.md) · [使用指南](vlogii-guide.zh.md)
+
+基于 `kang/ec21851` 的本地修改，2026-10-10。杨康负责后端和视频模块；本次按已授权需求同步了前端 Retry 与中英文切换。前端后续仍由队友维护。体验修复已推送到 `kang`：`6799bda`；剪辑模式/速度更新为 `2e5ff31`。字体/BGM 的资源调研另见 [资源候选](free-resources.md)。
 
 ## 本轮变化
 
@@ -50,4 +52,4 @@
 - 浏览器：中文/English 切换、失败编辑 Retry、成功新版本及旧版本保留已验证。该任务为人为设置的失败编辑，无 AI 调用；不算真实 Gemini 验收。
 - Gemini 转写接口用 HTTP 替身验证请求/时间戳/重试。用户随后配置本地密钥，一段 2.4 秒素材真实完成 Gemini 3.8 Flash 画面分析、3.5 Transcribe 转写、规划与导出，得到 2 条字幕，耗时约 23.55 秒。只有一次小样集成结果，未测人工对照准确率、账单费用或负载性能。
 
-私人日志、素材、导出、字幕和截图保留在忽略的 `local-evidence/mvp-fixes-2026-10-10/`，不提交 Git。最终自动检查摘要见 [验证记录](vlogii-validation.md)。
+私人日志、素材、导出、字幕和截图保留在忽略的 `local-evidence/mvp-fixes-2026-10-10/`，不提交 Git。最终自动检查摘要见 [验证记录](vlogii-validation.zh.md)。

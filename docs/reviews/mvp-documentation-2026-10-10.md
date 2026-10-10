@@ -1,5 +1,7 @@
 # MVP 文档与分工核对记录
 
+**中文** · [English](mvp-documentation-2026-10-10.en.md)
+
 日期：2026-10-10（America/New_York）。核对代码基线：`kang` / `ec21851`。
 
 ## 本次范围
@@ -18,6 +20,6 @@
 | `PYTHONDONTWRITEBYTECODE=1 python3 contracts/collaboration/validate_collaboration.py` | 通过：11 项 | 原合同/开发替身，内存 HTTP，不涉及浏览器/真实后端 |
 | `git diff --check` | 通过 | 本次已跟踪文档的空白检查 |
 
-本轮没有重新调用 Gemini、运行应用测试、构建前端、导出视频或执行 Replit 验收。[既有 Vlogii 记录](../vlogii-validation.md)中的 29 个测试及两套真实素材结果作为已有证据引用，不记为本轮重验。
+本轮没有重新调用 Gemini、运行应用测试、构建前端、导出视频或执行 Replit 验收。[既有 Vlogii 记录](../vlogii-validation.zh.md)中的 29 个测试及两套真实素材结果作为已有证据引用，不记为本轮重验。
 
 下一步：两人复现当前 MVP，再按明确授权的前端/视频任务推进；比赛差距与线上环境仍须实际验收。本记录只证明此次文档核对与修改检查。

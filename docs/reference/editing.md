@@ -1,5 +1,7 @@
 # 风格、编辑与版本规则
 
+**中文** · [English](editing.en.md)
+
 [返回项目总览](../../README.md)
 
 何时读：修改风格、标题、暖度、删除、缓存或撤销时读。网页视觉另见 visual-design.md。

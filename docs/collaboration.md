@@ -1,5 +1,7 @@
 # 两人分工与交接
 
+**中文** · [English](collaboration.en.md)
+
 [返回总览](../README.md) · [当前进度](status.md) · [MVP 功能对照](mvp-coverage.md)
 
 2026-10-10 起采用本页分工；旧文档中“B 负责渲染/标题布局”的安排由本页替代。当前基线是 `kang` 的 Vlogii 本地网页 MVP，不再从空仓库重复搭骨架。
@@ -33,7 +35,7 @@
 
 ### 共同基线和当前 API
 
-两人先同步 `kang` 的同一提交，按 [Vlogii 指南](vlogii-guide.md)复现启动。队友在自己的目录/分支做前端；杨康维护 `kang` 上的视频与后端逻辑。合并到 `main` 和正式发布仍由 A 负责，当前 MVP 上传不等于已合并或部署。
+两人先同步 `kang` 的同一提交，按 [Vlogii 指南](vlogii-guide.zh.md)复现启动。队友在自己的目录/分支做前端；杨康维护 `kang` 上的视频与后端逻辑。合并到 `main` 和正式发布仍由 A 负责，当前 MVP 上传不等于已合并或部署。
 
 - 当前接口为 `/api/vlogii`；字段看 [现行 OpenAPI](vlogii.openapi.json)，运行时看 `/openapi.json` 和 `/docs`。
 - 生成 POST 返回任务状态，前端轮询项目 GET 获取 `job`、`latest`、`video_url`；当前任务状态是 `queued/running/complete/failed`。
@@ -82,7 +84,7 @@
 
 ### 启动、配置与完成定义
 
-当前使用 `src/vlogii/`、`frontend/`、`tests/`；本地项目默认保存在 `projects/`。实际安装要求、命令和限制以 [指南](vlogii-guide.md)为准：
+当前使用 `src/vlogii/`、`frontend/`、`tests/`；本地项目默认保存在 `projects/`。实际安装要求、命令和限制以 [指南](vlogii-guide.zh.md)为准：
 
 ```sh
 uv sync --frozen --extra dev

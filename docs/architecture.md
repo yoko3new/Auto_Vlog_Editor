@@ -1,8 +1,10 @@
 # 架构与实现边界
 
+**中文** · [English](architecture.en.md)
+
 [返回项目总览](../README.md)
 
-何时读：原比赛服务边界、任务执行或存储设计变更时读相关小节。当前 `kang` 实现布局和启动方式见 [Vlogii 指南](vlogii-guide.md)，实际能力见 [MVP 对照](mvp-coverage.md)；现有代码位于 `src/vlogii/`，本页的 `core/`、App Storage 与目录树是规划，不能当作已实现。视频全链路归 A（杨康），前端归 B（队友）。
+何时读：原比赛服务边界、任务执行或存储设计变更时读相关小节。当前 `kang` 实现布局和启动方式见 [Vlogii 指南](vlogii-guide.zh.md)，实际能力见 [MVP 对照](mvp-coverage.md)；现有代码位于 `src/vlogii/`，本页的 `core/`、App Storage 与目录树是规划，不能当作已实现。视频全链路归 A（杨康），前端归 B（队友）。
 
 <a id="s3"></a>
 

@@ -1,8 +1,10 @@
 # HTTP 与模块交接
 
+**中文** · [English](api.en.md)
+
 [返回项目总览](../../README.md)
 
-何时读：修改原比赛接口/状态或视频模块设计时读。当前 `/api/vlogii` 以 [现行 OpenAPI](../vlogii.openapi.json)和 [Vlogii 指南](../vlogii-guide.md)为准；本页是旧 `/api` 规划，不能直接接到当前前端。新分工中 A（杨康）同时负责调度、布局和渲染，B（队友）只负责前端。
+何时读：修改原比赛接口/状态或视频模块设计时读。当前 `/api/vlogii` 以 [现行 OpenAPI](../vlogii.openapi.json)和 [Vlogii 指南](../vlogii-guide.zh.md)为准；本页是旧 `/api` 规划，不能直接接到当前前端。新分工中 A（杨康）同时负责调度、布局和渲染，B（队友）只负责前端。
 
 <a id="s10"></a>
 

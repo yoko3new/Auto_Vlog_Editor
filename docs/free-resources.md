@@ -1,5 +1,7 @@
 # 字体与 BGM 免费资源候选
 
+**中文** · [English](free-resources.en.md)
+
 [返回总览](../README.md) · [本轮修复](mvp-fixes.md) · [候选文件与校验值](../resources/candidates.json)
 
 2026-10-10 调研并预下载。当前完成候选资源、授权来源与基本文件验证；尚未实现 BGM 混音、资源选择或自定义上传。音乐风格效果、BPM 和卡点数据待试听/测量。本轮不改动现行 API 契约。

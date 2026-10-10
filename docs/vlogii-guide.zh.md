@@ -1,0 +1,149 @@
+# Vlogii
+
+**中文** · [English](vlogii-guide.md)
+
+一个适用于日常 Shorts 的本地 Web 应用，带有可编辑的导出功能。
+
+**上传 → Gemini 视频分析 → 经过验证的剪辑计划 → 真实的 FFmpeg 导出 → 预览、编辑、撤销和下载。**
+
+目前的实现是一个本地 MVP。下一个产品方向是风格化封面、开头快剪和带字幕的正文；封面和自动开头/正文拼接仍待实现。参见 [Shorts 产品方向](shorts-direction.md)。
+
+## 本地运行
+
+运行环境要求：macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/)，以及支持 `drawtext`、`zscale`、`tonemap`、AAC、H.264 和 HEVC 的 FFmpeg。
+
+在 macOS 上：
+
+```sh
+brew install ffmpeg-full
+```
+
+在 Ubuntu 上：
+
+```sh
+sudo apt-get update
+sudo apt-get install ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
+```
+
+克隆实现分支并安装锁定的依赖项：
+
+```sh
+git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+cd vlogii
+uv sync --frozen --extra dev
+cp .env.example .env
+```
+
+将你的 Gemini API 密钥添加到 `.env`。保持 `.env` 仅在本地。默认情况下，`VLOGII_MODEL=gemini-3.8-flash` 用于视觉分析/规划，`VLOGII_SPEECH_MODEL=gemini-3.5-transcribe` 用于语音。两者使用相同的密钥。模型是可配置的，因为账户的可用性可能会发生变化。Gemini 接收低分辨率视频副本和单独提取的原始音频。当提供商支持删除时，远程上传的文件在识别后会被删除。新模型访问已通过单片段实测运行；准确性尚未进行基准测试；参见 [修复与模型选择](mvp-fixes.md)。
+
+构建前端并启动服务器：
+
+```sh
+cd frontend
+npm ci
+npm run build
+cd ..
+uv run vlogii doctor
+uv run vlogii serve
+```
+
+打开 **http://127.0.0.1:8000**。服务器特意绑定到 localhost。请运行单个服务器进程。不要使用多个 worker 或将此未认证的 MVP 作为公共服务暴露。
+
+在 macOS 上，应用程序会自动优先使用 Homebrew 的 `ffmpeg-full`，因此不需要手动修改 `brew link` 或 PATH。必要时可使用 `VLOGII_FFMPEG` 和 `VLOGII_FFPROBE` 覆盖可执行文件路径。
+
+## 功能特性
+
+- 上传 MP4、MOV、M4V 或 MKV 素材，检查其实际元数据并对相同文件去重。
+- 创作导向和目标时长为可选项。可选择 AI 自动、开头快剪、保留大部分或保留全部。如果没有目标时长，AI 自动会决定长度，快剪模式目标为 5 秒，而保留模式按保留规则决定时长。可点击示例直接填充输入和模式而无需立即提交。参见 [剪辑模式与时间修改](editing-modes.md)。
+- Gemini 观看代理视频并描述可见事件。单独的 Gemini 语音请求处理提取为 PCM 的原始音频。字幕保留原语言。`VLOGII_SPEECH_LANGUAGE=auto` 支持混合语言；使用受支持的 BCP-47 代码进行明确提示。渲染器根据输出宽度和高度测量完整文本，并在 macOS 上选择 Arial Unicode 或在 Linux 上选择 Noto CJK；设置 `VLOGII_FONT` 可覆盖字体。语音转录需要人工审核。
+- AI 选择源区间和少量事实性文字。Python 验证引用、范围和叠加文字，然后以整数帧计算所有输出时间。
+- FFmpeg 在正常模式下保留原始音频，为无音频的剪辑添加静音，烧录文本和字幕，规范化片段并进行拼接。快剪模式默认对源音频静音并忽略语音字幕。
+- 适合浏览器的 SDR/H.264 是网页默认格式。纯 HLG 项目可以使用 HEVC 保留 10 位 HDR；混合 HDR/SDR 素材会色调映射为 SDR。HEVC 播放取决于浏览器和显示器。
+- 更改标题、应用受控的暖色调调整或移除选定的源剪辑。这些编辑会渲染一个新版本，而无需再次调用 AI。撤销操作会恢复上一个成功的版本且无需渲染。
+- 失败的任务会保留之前成功的导出成果。进度基于实际阶段，而非模拟的百分比。服务器重启会将中断的作业标记为可重试的失败。
+- 重试会保留失败任务的完整请求和类型，包括编辑操作。它会复用有效的视觉/语音缓存、保存的计划和已完成渲染的片段。具有不同导向的新生成将从最初导入的剪辑重新规划。
+- 浏览器提供中英文切换，并在本地保存。支持 Unicode 项目名称和创作导向。界面语言不会强制指定语音语言。
+- 本地项目记录、分析缓存、计划、时间线、完整的 FFmpeg 日志和成功的版本都存储在 `projects/` 下，并被 Git 忽略。
+
+限制：50 个剪辑、每个剪辑 512 MB、每次上传 2 GB、30 分钟源素材，以及 AI 自动/快剪模式可选的 1–1800 秒目标时长。色调编辑使用 SDR 输出。重新生成 AI 计划会使用最初导入的剪辑集；移除剪辑是版本编辑，而不是永久删除源素材。
+
+## 范围与兼容性
+
+此分支基于经过测试的 VX 工作流实现了一个**本地 vlog 网页 MVP**。这并非声称已交付原团队的完整竞赛 MVP。背景音乐、卡点节奏匹配、杂志风装饰、任意自然语言编辑、身份验证、云存储、Replit 部署、场景检测启发式算法和 NLE 导出均不包含在此版本中。
+
+现有的 [团队产品定义](product.md)、[架构](architecture.md)、[契约](contracts.md)、schema、样例和开发替身均作为规划资料保留。Vlogii 使用明确且独立的 `/api/vlogii` 命名空间和本地模型；它并不假装实现了较旧的 `/api` 契约。实时 API 规范位于 `/openapi.json`，交互式文档位于 `/docs`；已签入的快照为 [vlogii.openapi.json](vlogii.openapi.json)。
+
+## 代码结构
+
+```text
+src/vlogii/
+  models.py       Strict local schemas
+  storage.py      Atomic JSON writes and OS project locks
+  media.py        FFmpeg discovery, probing, hashes and SDR proxies
+  ai.py           Gemini video reviews and validated planning
+  speech.py       Independent original-audio Gemini transcription
+  i18n.py         Chinese CLI status messages
+  editorial.py    Retention modes, black detection and time-range changes
+  timeline.py     Deterministic frame timing and caption remapping
+  render.py       Text, audio, HDR, encoding and output verification
+  pipeline.py     Analysis caching, generation, edits and undo
+  api.py          Uploads, persistent jobs, one worker and media delivery
+  cli.py          Web startup and debugging commands
+frontend/         React + TypeScript + Vite editor
+tests/           Validation, failure recovery, API and real-media checks
+```
+
+## 验证
+
+```sh
+uv run pytest -q
+uv run ruff check src/vlogii tests
+uv run ruff format --check src/vlogii tests
+cd frontend && npm run build
+```
+
+真实媒体测试会生成简短的合成片段并需要 FFmpeg。跳过的媒体测试不算作成功的视频验证。API 提供商测试替身仅检查失败行为；它们不能算作实测的 AI 验证。有关实际结果和遗留限制，请参见 [验证记录](vlogii-validation.zh.md)。
+
+保留的团队基架仍可单独检查：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 contracts/validate_examples.py
+PYTHONDONTWRITEBYTECODE=1 python3 contracts/collaboration/validate_collaboration.py
+python3 tools/check_docs.py
+```
+
+## CLI 调试
+
+Web 应用和 CLI 使用相同的模块：
+
+```sh
+uv run vlogii init my-day /absolute/path/to/footage --color sdr
+uv run vlogii run my-day --mode keep_all
+uv run vlogii run my-day --mode highlights --seconds 5 --shot-seconds 0.5 --speed 1
+uv run vlogii run my-day --seconds 120 --direction "A chronological diary"
+uv run vlogii retry my-day  # Resume the saved failed generation or edit
+uv run vlogii edit my-day --title "Slow Sunday" --warmth 0.5
+uv run vlogii status my-day
+uv run vlogii render my-day   # Reuse a saved plan; no new AI request
+uv run vlogii undo my-day
+```
+
+使用 `vlogii --projects /another/local/directory ...` 选择其他工作区。此版本支持 macOS 和 Linux；Windows 项目锁定尚未实现。
+
+在终端中运行 `uv run vlogii` 选择中文/英文并停留在交互式生成/重试/编辑/撤销会话中。命令接受 `--language zh` 或 `--language en`；无论界面为何种语言，描述均可使用任一语言。例如：`uv run vlogii --language zh run 周末 --direction "保留早餐和散步"`。失败的交互命令无需退出即可提供重试；非交互式使用会打印明确的重试命令。1–1800 秒的约束仅适用于 AI 自动/快剪模式中的显式目标；保留模式不设置目标。
+
+重试 API 为 `POST /api/vlogii/projects/{name}/retry`，且无需请求体。`JobState` 添加了 `retryable` 和 `kind`；生成/编辑接受可选的 `language`。现有请求依然有效。保存的请求在本地任务记录中保持私密。当前的重试没有旧契约的 `request_id` 幂等性保证；后端会阻止在同一项目上同时进行作业。前端控件和 [OpenAPI](vlogii.openapi.json) 使用相同的字段。
+
+生成请求添加了 `mode`、`remove_no_speech`、`speed` 和 `shot_seconds`；`target_seconds` 现在是可选的（默认为 null）。编辑请求添加了以当前成片秒数计的 `remove_ranges` 和 `speed_ranges`、可空的 `speed`，以及用于受支持的删除/变速短语的 `instruction`。`ProjectView.selection` 描述了最新版本解析后的模式。这更改了省略目标时的行为；需要旧默认值的调用方必须显式发送 30。参见 [剪辑语义](editing-modes.md) 和更新后的 [OpenAPI](vlogii.openapi.json)。
+
+## 数据与发布
+
+仅源代码、依赖项锁定、双语文档、API schema和非敏感验证摘要归入 Git。API 密钥、素材、私有提示词、转录本、生成的视频、分析缓存或本地绝对路径均不属于已发布项目的一部分。
+
+首个版本适用于本地测试和迭代。成功解码并不代表良好的剪辑选择、正确的转录、在所有输入上的性能表现或具备生产环境可用性。
+
+### 快切与播放速度
+
+`run/plan --speed 1 --shot-seconds 0.5` 更改导出速度以及快剪的单镜头播放上限。`edit --speed 1` 恢复源速度；`edit --instruction "00:12到00:18加速到2倍"` 仅更改当前成片中的该区间。速率是绝对的；字幕和音频遵循帧时间线。Web UI 为节奏和速度提供了单独的单选按钮组。参见 [剪辑规则](editing-modes.md) 和 [Shorts 产品方向](shorts-direction.md)；封面样式设计和自动开头/正文拼接仍待实现。
+
+快剪导出现在默认静音源音频，并在编辑/重试中保留该选择。正常正文/保留模式保留源音频。静音 AAC 音轨使 MP4 适合未来的开头/正文串联；BGM 仍待实现。

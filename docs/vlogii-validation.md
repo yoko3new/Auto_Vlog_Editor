@@ -1,5 +1,7 @@
 # Vlogii local validation
 
+[中文](vlogii-validation.zh.md) · **English**
+
 Implementation branch: `kang`. Validation date: 2026-10-10 (America/New_York).
 
 This record describes the new application. No old VX export is counted as Vlogii evidence.
@@ -25,7 +27,7 @@ Private footage, transcripts, raw AI responses, prompts, screenshots, exports an
 
 ## Published experience fixes (`6799bda`, 2026-10-10)
 
-See [MVP fixes](mvp-fixes.md) for behavior, model choices, request compatibility and iteration rules. The baseline live Gemini results above do not validate the new model configuration.
+See [MVP fixes](mvp-fixes.en.md) for behavior, model choices, request compatibility and iteration rules. The baseline live Gemini results above do not validate the new model configuration.
 
 - Python: **44 passed, 0 skipped**, with the same upstream Starlette/httpx warning. Added checks cover original-request generate/edit retry, restart recovery, plan reuse after render failure, visual-cache preservation after speech failure, Chinese CLI and saved edit retry, HTTP transcription request shape, transient/auth failures, timestamp bounds, complete text layout and hardware fallback.
 - Real FFmpeg: a failed second segment preserves the first rendered segment; retry encodes only the unfinished segment. A 1.2-second source builds a proxy and renders, disproving a five-second input gate.
@@ -38,7 +40,7 @@ Full logs, source metadata, exports, caption frames and browser screenshots are 
 
 ## Local editing modes and examples (2026-10-10)
 
-See [editing semantics](editing-modes.md) for changed duration defaults, modes, controlled natural language and current-film time coordinates.
+See [editing semantics](editing-modes.en.md) for changed duration defaults, modes, controlled natural language and current-film time coordinates.
 
 - Python: **71 passed, 0 skipped**. New checks cover retention/duration precedence, full retention, silent scenery versus explicit no-speech removal, highlights shot bounds, cross-cut range mapping, overlapping/out-of-bounds removal, unsupported instruction rejection and retry preservation. Real FFmpeg integration checks full retention, black detection, frame-accurate removal and undo.
 - Ruff, formatting and TypeScript/Vite build passed. OpenAPI is regenerated from the same API used by the frontend; original competition contracts remain separate.
@@ -64,7 +66,7 @@ Private evidence is under `local-evidence/示例回归20261010/`; media and tran
 - Browser: real local API with 24-second synthetic footage. Whole-film 2x → 12 seconds; undo → 24 seconds. Clicked “00:12到00:18加速到2倍”, reviewed, applied → 21 seconds. Set absolute 1x → 24 seconds, undo → 21 seconds. Chinese/English labels, cadence and speed radio selection passed. Evidence: private `local-evidence/示例回归20261010/speed-controls-full.png`.
 - Real user footage: reused the 21-clip analysis cache; Gemini selected 14 varied shots for a 5-second target at 2x. Final export `projects/示例快剪20261010/cuts/cut_003/film.mp4`: **4.667-second frame timeline / 4.688-second container**, 14 shots each **0.333 seconds**, 1080×1920, 30 fps, SDR H.264/AAC; full video/audio decode verified. Final code disabled flash-montage captions/overlays and re-rendered the validated AI plan without another AI request. Source content intervals and old successful versions remain preserved.
 - Updated TypeScript/Vite build, Ruff, current OpenAPI snapshot, documentation links and both original contract checks pass. Logs stay private under `local-evidence/示例回归20261010/` (`speed-tests.log`, `speed-frontend.log`, `flash-run.log`, `flash-final-render.log`, `flash-summary.json`).
-- Product direction documented as [life Shorts](shorts-direction.md). Cover art/stickers, automatic opening/body assembly, time/keyword controls, effects and BGM/beat alignment are pending. YouTube reference page opened and played; no frame-by-frame reference timing was measured. Code, current API snapshot, caller and evidence summary ship together in this batch; private media stays local.
+- Product direction documented as [life Shorts](shorts-direction.en.md). Cover art/stickers, automatic opening/body assembly, time/keyword controls, effects and BGM/beat alignment are pending. YouTube reference page opened and played; no frame-by-frame reference timing was measured. Code, current API snapshot, caller and evidence summary ship together in this batch; private media stays local.
 
 ### Default mute for opening highlights
 

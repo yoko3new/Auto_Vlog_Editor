@@ -1,5 +1,7 @@
 # 产品与交付范围
 
+**中文** · [English](product.en.md)
+
 [返回项目总览](../README.md)
 
 何时读：原比赛定位、MVP/V2/V3 边界或需求变更时读。当前 `kang` 的 Vlogii 本地网页 MVP 有独立实现范围，见 [覆盖与差距](mvp-coverage.md)；本页是比赛目标，不是完成清单。原声字幕、竖屏和更大输入限制等当前能力不自动改变比赛范围。分工见 [协作手册](collaboration.md)。

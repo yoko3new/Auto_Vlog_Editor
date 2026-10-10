@@ -1,5 +1,7 @@
 # 项目 JSON 与时间线语义
 
+**中文** · [English](timeline.en.md)
+
 [返回项目总览](../../README.md)
 
 何时读：修改 JSON、编译时间线或渲染时读相关小节；机器结构以 contracts/contracts.schema.json 为准。

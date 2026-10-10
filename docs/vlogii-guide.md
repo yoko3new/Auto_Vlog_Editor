@@ -1,10 +1,12 @@
 # Vlogii
 
-A local web app that turns real footage into a small, editable vlog.
+[中文](vlogii-guide.zh.md) · **English**
+
+A local web app for everyday Shorts, with editable exports.
 
 **Upload → Gemini video analysis → validated edit plan → real FFmpeg export → preview, edit, undo and download.**
 
-This is an independent implementation informed by a successful VX workflow and its failure cases. It does not import VX, copy its code, or depend on a checkout of that repository. New code, comments and documentation are in English.
+The current implementation is a local MVP. The next product direction is styled covers, opening highlights and a captioned body; covers and automatic opening/body assembly are pending. See [Shorts direction](shorts-direction.en.md).
 
 ## Run locally
 
@@ -32,7 +34,7 @@ uv sync --frozen --extra dev
 cp .env.example .env
 ```
 
-Add your Gemini API key to `.env`. Keep `.env` local. The defaults are `VLOGII_MODEL=gemini-3.8-flash` for visual analysis/planning and `VLOGII_SPEECH_MODEL=gemini-3.5-transcribe` for speech. Both use the same key. Models are configurable because account availability can change. Gemini receives low-resolution video copies and separately extracted original audio. Remote uploaded files are deleted after recognition when the provider accepts deletion. New model access passed a one-clip live run; accuracy is not yet benchmarked; see [current fixes and choices](mvp-fixes.md).
+Add your Gemini API key to `.env`. Keep `.env` local. The defaults are `VLOGII_MODEL=gemini-3.8-flash` for visual analysis/planning and `VLOGII_SPEECH_MODEL=gemini-3.5-transcribe` for speech. Both use the same key. Models are configurable because account availability can change. Gemini receives low-resolution video copies and separately extracted original audio. Remote uploaded files are deleted after recognition when the provider accepts deletion. New model access passed a one-clip live run; accuracy is not yet benchmarked; see [current fixes and choices](mvp-fixes.en.md).
 
 Build the frontend and start the server:
 
@@ -52,10 +54,10 @@ On macOS the app automatically prefers Homebrew's `ffmpeg-full`, so no manual `b
 ## What works
 
 - Upload MP4, MOV, M4V or MKV footage, inspect its actual metadata and deduplicate identical files.
-- Creative direction and target duration are optional. Choose AI auto, opening highlights, keep most or keep all. Without a target, AI auto decides the length, highlights aims for 12 seconds and retention modes preserve content. Clickable examples populate the input and mode without submitting. See [editing modes and time changes](editing-modes.md).
+- Creative direction and target duration are optional. Choose AI auto, opening highlights, keep most or keep all. Without a target, AI auto decides the length, highlights aims for 5 seconds and retention modes preserve content. Clickable examples populate the input and mode without submitting. See [editing modes and time changes](editing-modes.en.md).
 - Gemini watches proxy videos and describes visible events. A separate Gemini speech request processes original audio extracted as PCM. Captions retain the source language. `VLOGII_SPEECH_LANGUAGE=auto` supports mixed languages; use a supported BCP-47 code for an explicit hint. The renderer measures complete text against output width and height and selects Arial Unicode on macOS or Noto CJK on Linux; set `VLOGII_FONT` to override the font. Speech transcription needs human review.
 - The AI selects source intervals and occasional factual text. Python validates references, ranges and overlays, then computes all output timing in integer frames.
-- FFmpeg preserves original audio, adds silence to clips without audio, burns text and captions, normalizes segments and joins them.
+- FFmpeg preserves original audio in normal modes, adds silence to clips without audio, burns text and captions, normalizes segments and joins them. Highlights mute source audio and omit speech captions by default.
 - Browser-friendly SDR/H.264 is the web default. All-HLG projects can preserve 10-bit HDR using HEVC; mixed HDR/SDR footage is tone-mapped to SDR. HEVC playback depends on the browser and display.
 - Change the title, apply a controlled warmth adjustment or remove selected source clips. These edits render a new version without another AI call. Undo restores the previous successful version without rendering.
 - Failed work keeps previous successful exports. Progress is based on actual stages, not a simulated percentage. A server restart marks interrupted jobs as retryable failures.
@@ -69,7 +71,7 @@ Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage
 
 This branch implements a **local vlog web MVP** based on the tested VX workflow. It is not a claim that the original team's full competition MVP has been delivered. Background music, beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment, scene-detection heuristics and NLE exports are outside this release.
 
-The existing [team product plan](product.md), [architecture](architecture.md), [contracts](contracts.md), schemas, examples and development substitutes are preserved as planning material. Vlogii uses an explicit, separate `/api/vlogii` namespace and local models; it does not pretend to implement the older `/api` contract. The live API specification is at `/openapi.json`, with interactive docs at `/docs`; the checked-in snapshot is [vlogii.openapi.json](vlogii.openapi.json).
+The existing [team product plan](product.en.md), [architecture](architecture.en.md), [contracts](contracts.en.md), schemas, examples and development substitutes are preserved as planning material. Vlogii uses an explicit, separate `/api/vlogii` namespace and local models; it does not pretend to implement the older `/api` contract. The live API specification is at `/openapi.json`, with interactive docs at `/docs`; the checked-in snapshot is [vlogii.openapi.json](vlogii.openapi.json).
 
 ## Code layout
 
@@ -117,7 +119,7 @@ The web app and CLI use the same modules:
 ```sh
 uv run vlogii init my-day /absolute/path/to/footage --color sdr
 uv run vlogii run my-day --mode keep_all
-uv run vlogii run my-day --mode highlights --seconds 12
+uv run vlogii run my-day --mode highlights --seconds 5 --shot-seconds 0.5 --speed 1
 uv run vlogii run my-day --seconds 120 --direction "A chronological diary"
 uv run vlogii retry my-day  # Resume the saved failed generation or edit
 uv run vlogii edit my-day --title "Slow Sunday" --warmth 0.5
@@ -132,16 +134,16 @@ Run `uv run vlogii` in a terminal to choose Chinese/English and stay in an inter
 
 The retry API is `POST /api/vlogii/projects/{name}/retry`, with no body. `JobState` adds `retryable` and `kind`; generation/edit accept optional `language`. Existing requests remain valid. The saved request stays private in local job records. Current retry has no old-contract `request_id` idempotency guarantee; the backend prevents simultaneous work on one project. Frontend controls and [OpenAPI](vlogii.openapi.json) use the same fields.
 
-Generate requests add `mode` and `remove_no_speech`; `target_seconds` is now optional (default null). Edit requests add `remove_ranges` in current-film seconds and `instruction` for supported time deletion phrases. `ProjectView.selection` describes the latest version’s resolved mode. This changes the omitted-target behavior; callers requiring the old default must send 30 explicitly. See [editing semantics](editing-modes.md) and the updated [OpenAPI](vlogii.openapi.json).
+Generate requests add `mode`, `remove_no_speech`, `speed` and `shot_seconds`; `target_seconds` is now optional (default null). Edit requests add `remove_ranges` and `speed_ranges` in current-film seconds, nullable `speed`, and `instruction` for supported deletion/speed phrases. `ProjectView.selection` describes the latest version’s resolved mode. This changes the omitted-target behavior; callers requiring the old default must send 30 explicitly. See [editing semantics](editing-modes.en.md) and the updated [OpenAPI](vlogii.openapi.json).
 
 ## Data and publishing
 
-Only source code, dependency locks, English documentation, API schema and non-sensitive verification summaries belong in Git. No API keys, footage, private prompts, transcripts, generated videos, analysis caches or local absolute paths are part of the published project.
+Only source code, dependency locks, bilingual documentation, API schema and non-sensitive verification summaries belong in Git. No API keys, footage, private prompts, transcripts, generated videos, analysis caches or local absolute paths are part of the published project.
 
 This first release is suitable for local testing and iteration. Successful decoding is not proof of good editorial choices, correct transcription, performance on every input or production readiness.
 
 ### Flash cuts and playback speed
 
-`run/plan --speed 1 --shot-seconds 0.5` changes export speed and the maximum output shot length for highlights. `edit --speed 1` restores source speed; `edit --instruction "00:12到00:18加速到2倍"` changes only that interval in the current film. Rates are absolute; subtitles and audio follow the frame timeline. The web UI offers separate radio groups for cadence and speed. See [editing rules](editing-modes.md) and the [Shorts direction](shorts-direction.md); cover styling and automatic opening/body assembly are still pending.
+`run/plan --speed 1 --shot-seconds 0.5` changes export speed and the maximum output shot length for highlights. `edit --speed 1` restores source speed; `edit --instruction "00:12到00:18加速到2倍"` changes only that interval in the current film. Rates are absolute; subtitles and audio follow the frame timeline. The web UI offers separate radio groups for cadence and speed. See [editing rules](editing-modes.en.md) and the [Shorts direction](shorts-direction.en.md); cover styling and automatic opening/body assembly are still pending.
 
 Highlights exports now mute source audio by default, preserving that choice through edits/retries. Normal body/retention modes keep source audio. A silent AAC track keeps the MP4 suitable for future opening/body concatenation; BGM is still pending.
