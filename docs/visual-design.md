@@ -53,6 +53,8 @@ Turn everyday clips into a film worth keeping.
 
 ### 一套可以直接采用的设计参数
 
+> 2026-10-10 更新：Vlogii 网页界面已改用用户确认的 vlogii 清新配色（底色 #F8FBF7、薄荷绿 #8CCFB8 为主、浅蓝 #C7DFF0 与浅绿 #DDEBD5 辅助、浅黄 #F7EDB8 少量点缀、文字 #355A50）、定稿 logo 与 Emergence 式单栏长文布局，以 [Vlogii 指南的 Web design](vlogii-guide.md#web-design) 为准。下表的陶土色、Inter 与双栏布局仅作原比赛方案参考；导出 MP4 的标题与字幕样式不变。
+
 | 项目 | 建议 |
 | --- | --- |
 | 页面背景 | `#F6F3EE` 暖白 |

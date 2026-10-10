@@ -26,16 +26,24 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 function Film({ src, onError }: { src: string; onError: () => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  // Keep keyboard focus on the player once the overlay button disappears.
+  useEffect(() => { if (started) video.current?.focus({ preventScroll: true }); }, [started]);
 
   function play() {
     setStarted(true);
-    video.current?.play().catch(() => undefined);
+    const element = video.current;
+    if (!element) return;
+    element.currentTime = 0;
+    element.play().catch(() => undefined);
   }
 
   // The media fragment asks Safari to paint the first frame as a poster; the request itself is unchanged.
   return <div className={'film' + (started ? ' is-playing' : '')}>
-    <video ref={video} src={src + '#t=0.1'} preload="metadata" playsInline controls={started} onError={onError}/>
-    {!started && <button className="play" onClick={play} aria-label="Play your film">
+    <video ref={video} src={src + '#t=0.1'} preload="metadata" playsInline controls={started || failed} aria-label="Your film"
+      onError={() => { setFailed(true); onError(); }}/>
+    {!started && !failed && <button className="play" onClick={play} aria-label="Play your film">
       <span className="play-ring" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6.5v11l8.5-5.5z"/></svg></span>
       <span className="play-label">Play</span>
     </button>}
@@ -59,6 +67,7 @@ function App() {
   const [dragging, setDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const progress = useRef<HTMLSpanElement>(null);
+  const alertBox = useRef<HTMLDivElement>(null);
   const active = project?.job?.status === 'queued' || project?.job?.status === 'running';
 
   useEffect(() => {
@@ -81,6 +90,9 @@ function App() {
     }, 1500);
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [project?.name, active]);
+
+  // Actions sit far below the status area in the single-column layout, so show a new error where it is.
+  useEffect(() => { if (error) alertBox.current?.scrollIntoView({ block: 'center' }); }, [error]);
 
   // Reading progress, as in the masthead of a long-form feature.
   useEffect(() => {
@@ -139,17 +151,20 @@ function App() {
 
   const footage = project ? Math.round(project.clips.reduce((sum, clip) => sum + clip.duration, 0)) : 0;
   const version = project?.latest?.cut.replace('cut_', 'Version ') || null;
-  const state = active ? 'Working' : project?.job?.status === 'failed' ? 'Needs attention' : project?.latest ? 'Film ready' : project ? 'Clips imported' : 'Ready';
+  const failed = !!error || project?.job?.status === 'failed';
+  const state = active ? 'Working' : failed ? 'Needs attention' : project?.latest ? 'Film ready' : project ? 'Clips imported' : 'Ready';
 
   return <>
     <header className="masthead">
-      <a className="brand" href="/" aria-label="Vlogii home"><img src="/brand/vlogii-logo.png" alt="vlogii" width="118" height="32"/></a>
       <nav className="sections" aria-label="Sections">
         <a href="#film">Film</a><a href="#moments">Moments</a><a href="#direction">Direction</a>
         {project?.latest && <><span className="divider" aria-hidden="true"/><a href="#edit">Make it yours</a></>}
       </nav>
-      <p className="feature">{project ? <><span className="kicker">Project</span><b>{project.name}</b>{version && <span className="feature-version"> | {version}</span>}</> : <span className="kicker">Local studio</span>}</p>
-      <p className={'state' + (active ? ' working' : '') + (project?.job?.status === 'failed' ? ' failed' : '')}><span className="state-dot" aria-hidden="true"/>{state}</p>
+      <p className="feature">{project ? <><span className="kicker">Project</span>{' '}<b>{project.name}</b>{version && <span className="feature-version"> | {version}</span>}</> : <span className="kicker">Local studio</span>}</p>
+      <div className="mast-end">
+        <p className={'state' + (active ? ' working' : '') + (failed ? ' failed' : '')}><span className="state-dot" aria-hidden="true"/>{state}</p>
+        <a className="brand" href="/" aria-label="Vlogii home"><img src="/brand/vlogii-logo.png" alt="vlogii" width="118" height="32"/></a>
+      </div>
       <span className="read" ref={progress} aria-hidden="true"/>
     </header>
 
@@ -171,13 +186,13 @@ function App() {
           </div>}
       </section>
       <div className="caption">
-        <p><span className="kicker">{version || 'A clean slate'}</span>{project?.latest ? `${project.duration_seconds?.toFixed(1) || '—'} seconds · Ready for a closer look.` : 'A few moments. A little meaning.'}</p>
+        <p><span className="kicker">{version || 'A clean slate'}</span>{' '}{project?.latest ? `${project.duration_seconds?.toFixed(1) || '—'} seconds · Ready for a closer look.` : 'A few moments. A little meaning.'}</p>
         {project?.video_url && <a className="caps-link" href={project.video_url + '?download=true'}>Download MP4 ↓</a>}
       </div>
 
       <div className="column">
         <p aria-live="polite" className={'status' + (active ? ' working' : '')}><span className="state-dot" aria-hidden="true"/>{project?.job?.message || 'Import your clips to begin.'}</p>
-        {(error || project?.job?.error) && <div role="alert" className="alert"><span className="kicker">Needs attention</span>{error || project?.job?.error}</div>}
+        {(error || project?.job?.error) && <div role="alert" ref={alertBox} className="alert"><span className="kicker">Needs attention</span>{error || project?.job?.error}</div>}
 
         <p className="lede"><span className="lead-in">Turn the clips</span> on your phone into a small story. Your moments, your words, your rhythm.</p>
 
