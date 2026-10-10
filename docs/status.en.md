@@ -19,6 +19,8 @@ Last updated: 2026-10-10 (America/New_York). Maintainer: A (Yang Kang), coding a
 - Division of work: A (Yang Kang) is responsible for the entire video generation pipeline, all video modules, backend/contracts/integration; B (teammate) is responsible for the frontend. Rendering and title layout belong to A.
 - Repository: [yoko3new/Auto_Vlog_Editor](https://github.com/yoko3new/Auto_Vlog_Editor); current active API is `/api/vlogii`. `main` is the integration target, this page makes no claim that MVP has been merged into `main` or formally deployed.
 
+- Frontend integration: create `codex/integrate-feng-ui` from `kang` at `46acdf4`, merge `feng-emergence` at `4db8163` and retain current editing interactions. 95 tests, build, real upload/playback/speed/undo/Retry and narrow-viewport checks passed; see [integration verification](reviews/frontend-integration-2026-10-10.en.md).
+
 ## Current Tasks and Coverage Status
 
 | ID | Scope | Owner | Status | Evidence / Limitations |
@@ -27,7 +29,7 @@ Last updated: 2026-10-10 (America/New_York). Maintainer: A (Yang Kang), coding a
 | MVP-01 | Upload, footage registration, video understanding, and planning | A | Code complete; existing local verification record | [Verification](vlogii-validation.md); AI content quality baseline pending verification |
 | MVP-02 | Timeline, rendering, text/subtitles/color | A | Code complete; existing local verification record | [Verification](vlogii-validation.md); BGM/magazine style/fixed duration not implemented |
 | MVP-03 | Editing/undo, tasks/versions/local recovery | A | Code complete; existing local verification record | Control editing and controlled Chinese/English time deletion covered; no cloud storage/legacy contract idempotency guarantee |
-| UI-01 | Current React single-page app | Maintained by B | Base code complete; existing build and operation records | [Frontend](../frontend/src/main.tsx); file picker control automated acceptance, mobile end still pending verification |
+| UI-01 | React editorial single page | B owns frontend; A integrates | Integration branch complete; local checks passed | [Integration verification](reviews/frontend-integration-2026-10-10.en.md); real file upload, playback/speed/undo/Retry and narrow viewport; native Safari/physical phones pending |
 | FIX-01 | Retry, Chinese/English, subtitle boundaries, recognition splitting | A; frontend synced with current round requirements | Local implementation and related verification complete; real AI sample passed | [Fixes](mvp-fixes.en.md); 44 tests, real horizontal/vertical screen output, web editing retry; real new model sample passed; manual transcription comparison pending |
 | EDIT-01 | Retention/quick-cut/duration, input examples, final video time deletion/speed adjustment | A; sync frontend for B takeover | Pushed `2e5ff31`; local inspection complete | [Mode Rules](editing-modes.en.md); 95 tests, web examples/generation/deletion/speed adjustment/restore original speed/undo; real full retention 195.5s/21 segments, approved muted flash-cut 7s/14 shots, 0.5s per shot/1x speed passed; serves as default rhythm |
 | INT-01 | Formal deployment and overall competition acceptance | A integrates, B co-debugs | Pending acceptance; deployment not yet implemented | [Competition Acceptance](acceptance.en.md), [Replit Checkpoints](deployment.en.md#s18-2) |
@@ -37,7 +39,7 @@ Code completion, existing records, and complete acceptance are recorded separate
 ## Next Steps
 
 1. Real samples using local keys and new models have been verified; continue evaluating text and timing using manual sentence-by-sentence Chinese and English annotations, and do not treat sample integration success as proof of recognition accuracy.
-2. Both parties synchronize current round changes; teammate takes over Chinese/English/Retry pages according to current OpenAPI, Yang Kang maintains video and backend modules.
+2. Review the integration branch together. The teammate continues frontend work; Yang Kang maintains video and backend modules. Merge into the main branch after joint review.
 3. Re-test this round of experience fixes first; BGM/beat-matching/style polishing are left for the next step per user requirements. Generation modes/numerical duration, flash-cut, and whole-video/time-range speed adjustment are already supported; arbitrary semantic incremental modification remains unimplemented.
 4. When a formal demonstration is needed, A prepares deployment/storage and executes real acceptance, while B performs page joint debugging.
 

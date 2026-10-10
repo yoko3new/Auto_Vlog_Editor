@@ -10,6 +10,8 @@
 
 产品方向是「艺术字/贴画封面 → 开头快剪 → 字幕与少量标注正文」。目前快剪单独导出；封面和自动拼接正文仍待实现，详见 [Shorts 方向](docs/shorts-direction.md)。已确定的薄荷绿标识见 [品牌规范](docs/visual-design.md#brand-logo)。
 
+集成分支 `codex/integrate-feng-ui` 将队友的杂志式前端与 `kang` 的生成、重试和编辑能力结合：薄荷绿页面、章节导航、宽幅播放器和内置网页字体。
+
 ## 本地启动
 
 需要 macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/) 和支持文字、音频、H.264/HEVC 的 FFmpeg。Ubuntu 安装见 [使用指南](docs/vlogii-guide.zh.md)。
@@ -17,7 +19,7 @@
 ```sh
 # macOS
 brew install ffmpeg-full
-git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+git clone --branch codex/integrate-feng-ui https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
@@ -80,7 +82,7 @@ python3 tools/check_docs.py
 
 各文档页首提供中英文切换；代码、字段名与命令保持英文。
 
-- [使用指南](docs/vlogii-guide.zh.md) · [功能覆盖](docs/mvp-coverage.md) · [当前进度](docs/status.md)
+- [Mac / Safari 入门](docs/vlogii-mac-setup.md) · [使用指南](docs/vlogii-guide.zh.md) · [功能覆盖](docs/mvp-coverage.md) · [当前进度](docs/status.md)
 - [剪辑规则](docs/editing-modes.md) · [产品定义](docs/product.md) · [架构](docs/architecture.md)
 - [免费字体/BGM 与许可](docs/free-resources.md)：完成调研与预下载，应用内置、混音、自定义上传待实现。
 - [协作交接](docs/collaboration.md)：杨康负责视频、AI、后端、渲染与集成；队友负责前端。

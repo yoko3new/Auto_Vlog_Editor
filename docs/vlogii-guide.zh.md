@@ -28,7 +28,7 @@ sudo apt-get install ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
 克隆实现分支并安装锁定的依赖项：
 
 ```sh
-git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+git clone --branch codex/integrate-feng-ui https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
@@ -147,3 +147,15 @@ uv run vlogii undo my-day
 `run/plan --speed 1 --shot-seconds 0.5` 更改导出速度以及快剪的单镜头播放上限。`edit --speed 1` 恢复源速度；`edit --instruction "00:12到00:18加速到2倍"` 仅更改当前成片中的该区间。速率是绝对的；字幕和音频遵循帧时间线。Web UI 为节奏和速度提供了单独的单选按钮组。参见 [剪辑规则](editing-modes.md) 和 [Shorts 产品方向](shorts-direction.md)；封面样式设计和自动开头/正文拼接仍待实现。
 
 快剪导出现在默认静音源音频，并在编辑/重试中保留该选择。正常正文/保留模式保留源音频。静音 AAC 音轨使 MP4 适合未来的开头/正文串联；BGM 仍待实现。
+
+<a id="web-design"></a>
+
+## 集成后的网页编辑器
+
+`codex/integrate-feng-ui` 分支将 `feng-emergence` 的前端设计与当前 `kang` 功能结合。页面使用带阅读进度的白色细顶栏、单列阅读布局、宽幅视频区域、圆形播放按钮和三个编号章节。中英文切换、重试、生成模式、示例、镜头节奏、速度、时间区间编辑与撤销均保留。
+
+清新配色以浅色背景和薄荷绿重点色为主。Newsreader、Libre Franklin 和 Courier Prime 通过 Fontsource 按 OFL 许可随应用打包，不需要外部字体请求；中文采用本机系统字体回退。网页字体仅改变编辑器，MP4 字幕字体和排版沿用现有渲染规则。品牌资源位于 `frontend/public/brand`。
+
+首次在 macOS 和 Safari 上使用，见 [Mac 入门指南](vlogii-mac-setup.md)。
+
+许可全文保留在 `frontend/public/fonts`，随前端一起提供。

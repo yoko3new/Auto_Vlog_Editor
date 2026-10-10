@@ -28,7 +28,7 @@ sudo apt-get install ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
 Clone the implementation branch and install the locked dependencies:
 
 ```sh
-git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+git clone --branch codex/integrate-feng-ui https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
@@ -147,3 +147,15 @@ This first release is suitable for local testing and iteration. Successful decod
 `run/plan --speed 1 --shot-seconds 0.5` changes export speed and the maximum output shot length for highlights. `edit --speed 1` restores source speed; `edit --instruction "00:12到00:18加速到2倍"` changes only that interval in the current film. Rates are absolute; subtitles and audio follow the frame timeline. The web UI offers separate radio groups for cadence and speed. See [editing rules](editing-modes.en.md) and the [Shorts direction](shorts-direction.en.md); cover styling and automatic opening/body assembly are still pending.
 
 Highlights exports now mute source audio by default, preserving that choice through edits/retries. Normal body/retention modes keep source audio. A silent AAC track keeps the MP4 suitable for future opening/body concatenation; BGM is still pending.
+
+<a id="web-design"></a>
+
+## Integrated web editor
+
+The `codex/integrate-feng-ui` branch combines the frontend from `feng-emergence` with current `kang` behavior. The page uses a thin white masthead with reading progress, one reading column, a wide film band, a round Play control and three numbered chapters. Chinese/English switching, retry, generation modes, examples, cadence, speed, time-range edits and undo remain available.
+
+The fresh palette uses mint emphasis on a light background. Newsreader, Libre Franklin and Courier Prime are bundled through Fontsource under OFL; no external font requests are required. Chinese uses local system fallbacks. Browser typography changes the editor only; MP4 caption fonts and layouts retain their existing rendering rules. Brand assets are in `frontend/public/brand`.
+
+For first-time macOS and Safari setup, see the [Mac guide](vlogii-mac-setup.en.md).
+
+License notices are included in `frontend/public/fonts` and served with the frontend.

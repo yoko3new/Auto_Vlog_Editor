@@ -10,6 +10,8 @@ Turn everyday footage into a short vlog you can preview, edit and export. The cu
 
 The product direction is an artistic/sticker cover, opening highlights and a captioned body with occasional annotations. Highlights currently export separately; covers and automatic opening/body assembly are pending. See the [Shorts direction](docs/shorts-direction.en.md) and the selected mint-green [brand identity](docs/visual-design.en.md#brand-logo).
 
+Integration branch `codex/integrate-feng-ui` combines the teammate’s editorial frontend with generation, retry and editing from `kang`: a mint palette, chapter navigation, full-width player and bundled web fonts.
+
 ## Start locally
 
 Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astral.sh/uv/), and FFmpeg with text, audio, H.264/HEVC support. Ubuntu setup is in the [guide](docs/vlogii-guide.md).
@@ -17,7 +19,7 @@ Requirements: macOS or Linux, Python 3.11+, Node.js 20+, [uv](https://docs.astra
 ```sh
 # macOS
 brew install ffmpeg-full
-git clone --branch kang https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
+git clone --branch codex/integrate-feng-ui https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
 cd vlogii
 uv sync --frozen --extra dev
 cp .env.example .env
@@ -80,7 +82,7 @@ The latest code validation recorded **95 passing Python tests**, including real 
 
 Each document has a Chinese/English language switch at the top; code, field names and commands remain in English.
 
-- [User guide](docs/vlogii-guide.md) · [Feature coverage](docs/mvp-coverage.en.md) · [Current status](docs/status.en.md)
+- [Mac / Safari setup](docs/vlogii-mac-setup.en.md) · [User guide](docs/vlogii-guide.md) · [Feature coverage](docs/mvp-coverage.en.md) · [Current status](docs/status.en.md)
 - [Editing rules](docs/editing-modes.en.md) · [Product definition](docs/product.en.md) · [Architecture](docs/architecture.en.md)
 - [Free font/BGM candidates and licenses](docs/free-resources.en.md): research and downloads are complete; bundled presets, mixing and custom uploads are pending.
 - [Team handoff](docs/collaboration.en.md): Yang Kang owns video, AI, backend, rendering and integration; the teammate owns the frontend.

@@ -1,5 +1,11 @@
 export type Language = 'en' | 'zh';
 const en = {
+  sections: 'Editor sections', project: 'Project', localStudio: 'Your local studio', home: 'Vlogii home',
+  byline: 'A little film of your day.', startMoments: 'Start with your moments ↗',
+  pullQuote: 'The ordinary moments are the ones worth keeping.', play: 'Play',
+  stateWorking: 'Working', stateAttention: 'Needs attention', stateFilmReady: 'Film ready',
+  stateImported: 'Imported', stateReady: 'Ready',
+
   tagline: 'A little film of your day.', edition: 'LOCAL STUDIO · 01', eyebrow: 'THE EVERYDAY, KEPT.',
   heading1: 'Your day.', heading2: 'Worth keeping.', intro: 'Turn the clips on your phone into a small story.',
   intro2: 'Your moments, your words, your rhythm.', moments: 'Your moments', open: 'Open a saved project',
@@ -43,6 +49,12 @@ const en = {
   selected: 'clips selected', footage: 'seconds of footage', ready: 'seconds · Ready for a closer look.', version: 'VERSION',
 };
 const zh: typeof en = {
+  sections: '编辑章节', project: '项目', localStudio: '你的本地创作室', home: 'Vlogii 首页',
+  byline: '把日常剪成一支小影片。', startMoments: '从你的素材开始 ↗',
+  pullQuote: '平凡的日常，也有值得留下的瞬间。', play: '播放',
+  stateWorking: '处理中', stateAttention: '需要处理', stateFilmReady: '影片已完成',
+  stateImported: '已导入', stateReady: '准备好了',
+
   tagline: '把日常剪成一支小影片。', edition: '本地创作室 · 01', eyebrow: '留住日常的小瞬间。',
   heading1: '你的日常。', heading2: '值得记住。', intro: '把手机里的生活片段，剪成一段小故事。',
   intro2: '你的瞬间，你的声音，你的节奏。', moments: '你的素材', open: '打开已有项目',
