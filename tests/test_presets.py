@@ -258,3 +258,68 @@ def test_api_retry_preserves_appearance_and_old_clients_keep_music_off(tmp_path,
             ).status_code
             == 422
         )
+
+
+def test_cli_presets_and_style_music_paths_share_one_option(tmp_path, monkeypatch):
+    from vlogii import cli
+
+    directory = tmp_path / "day"
+    directory.mkdir()
+    write_json(directory / "project.json", {"settings": Settings().model_dump()})
+    calls = []
+    monkeypatch.setattr(cli, "generate", lambda *args, **kwargs: calls.append(kwargs))
+    assert cli.main(["--projects", str(tmp_path), "run", "day", "--music", "holizna-dreams"]) == 0
+    assert calls[-1]["appearance"].music == "holizna-dreams"
+    from vlogii.style import film
+
+    monkeypatch.setattr(film, "generate_style", lambda *args, **kwargs: calls.append(kwargs))
+    imported = []
+    monkeypatch.setattr(film, "import_music", lambda *args: imported.append(args))
+    assert (
+        cli.main(
+            [
+                "--projects",
+                str(tmp_path),
+                "run",
+                "day",
+                "--style",
+                "ig_cozy_night_study",
+                "--music",
+                "song.mp3",
+            ]
+        )
+        == 0
+    )
+    assert calls[-1]["appearance"].music == "uploaded"
+    assert calls[-1]["appearance"].music_volume == 1
+    assert len(imported) == 1
+
+
+def test_style_ass_uses_selected_font_and_chinese_fallback(tmp_path, monkeypatch):
+    from vlogii.style import templates
+    from vlogii.style.render import write_ass
+
+    monkeypatch.delenv("VLOGII_FONT", raising=False)
+    template = templates.load("ig_cozy_night_study")
+    role = next(iter(template["text"]["roles"]))
+    plan = {
+        "output": {"width": 180, "height": 320, "fps": 30},
+        "overlays": [
+            {
+                "role": role,
+                "text": "我的一天",
+                "x": 0.5,
+                "y": 0.5,
+                "start_frame": 0,
+                "end_frame": 30,
+                "reveal": "static",
+            }
+        ],
+    }
+    path = tmp_path / "text.ass"
+    fonts = write_ass(plan, template, path, "caveat")
+    assert "Noto Sans CJK SC" in fonts.values()
+    assert r"\fnNoto Sans CJK SC" in path.read_text()
+    fonts = write_ass(plan, template, path, "ma-shan-zheng")
+    assert "Ma Shan Zheng" in fonts.values()
+    assert r"\fnMa Shan Zheng" in path.read_text()

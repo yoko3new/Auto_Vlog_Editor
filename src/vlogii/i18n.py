@@ -24,6 +24,15 @@ MESSAGES = {
     "Use an ordered time range and a speed between 0.25 and 8.": "请使用结束大于开始的时间区间，速度范围为 0.25–8 倍。",
     "Time ranges need nonnegative start and end greater than start.": "时间区间须非负，且结束须大于开始。",
     "Choose a target between 1 and 1800 seconds.": "目标时长须在 1–1800 秒内。",
+    "Choosing moments for the style": "正在为风格挑选片段",
+    "No Gemini key: using every clip in import order": "未配置 Gemini 密钥：按导入顺序使用全部素材",
+    "Finding the beat": "正在分析音乐节拍",
+    "Setting the titles": "正在排版标题",
+    "Mixing the music": "正在混音",
+    "Finishing the film": "正在合成成片",
+    "Add a music track before making a style film.": "请先添加音乐，再制作风格成片。",
+    "Could not find a steady beat in the music.": "这首音乐找不到稳定的节拍，请换一首。",
+    "Style films keep every cut on the beat: change the title, warmth or clips, or make a new version. Time-range and speed edits are not available.": "风格成片的每一刀都卡在节拍上：可以改标题、调暖、去掉素材或重新生成，不支持按时间段删除或调速。",
 }
 
 
@@ -43,6 +52,15 @@ def translate(message: str, language: str) -> str:
         (
             r"Time ranges must be within the current film \(0–([\d.]+)s\) and span at least one frame\.",
             "时间区间须在当前成片 0–{0} 秒内，且至少包含一帧。",
+        ),
+        (r"Rendering (\d+)/(\d+): style shot", "正在渲染风格镜头 {0}/{1}"),
+        (
+            r"Not enough footage: this style needs ([\d.]+)s, the selected clips give ([\d.]+)s\.",
+            "素材不够：这个风格需要 {0} 秒，所选片段只有 {1} 秒。",
+        ),
+        (
+            r"The music is ([\d.]+)s; this style needs at least ([\d.]+)s after the first downbeat\.",
+            "音乐长 {0} 秒，这个风格从第一个强拍起至少需要 {1} 秒。",
         ),
         (r"Rendering (\d+)/(\d+): (.*)", "正在渲染 {0}/{1}：{2}"),
         (r"Rendering cached (\d+)/(\d+)", "使用已渲染片段 {0}/{1}"),

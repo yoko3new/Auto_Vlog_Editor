@@ -42,7 +42,7 @@ VLOGII_MODEL=gemini-3.8-flash
 VLOGII_SPEECH_MODEL=gemini-3.5-transcribe
 ```
 
-Visual/planning and speech models are configured separately and share a key; use compatible models your account can access if necessary. `.env` is ignored by Git; never commit keys. Restart the server after configuration changes. Without a key, you can browse the editor, play and edit existing successful films; new footage analysis, transcription and AI selection need a key. See the [guide](vlogii-guide.md) for the handwritten-plan CLI path.
+Visual/planning and speech models are configured separately and share a key; use compatible models your account can access if necessary. `.env` is ignored by Git; never commit keys. Restart the server after configuration changes. Without a key, you can browse the editor, play and edit existing successful films, and make style films in import order (step 6); new footage analysis, transcription and AI selection need a key. See the [guide](vlogii-guide.md) for the handwritten-plan CLI path.
 
 ## 4. Start the server
 
@@ -64,7 +64,18 @@ Open **http://127.0.0.1:8000** and keep Terminal running; press `Ctrl+C` to stop
 
 Time edits use the current film as their coordinate system; see [editing rules](editing-modes.en.md) for constraints. Check captions manually before publishing.
 
-## 6. Update and local data
+## 6. Style films: music mixing and beat-locked cuts
+
+A style is a template learned from an Instagram reference reel: pacing, opening montage, grade, title and clock layout, and mix rules. All three styles are portrait, so import as portrait.
+
+1. In the direction chapter, pick a reference style: cozy night study (about 15 seconds), city day in my life (fast opening, about 38 seconds) or narrated college day (strobe opening and black end card, about 60 seconds). Mode, target and speed controls are then hidden because the style decides them.
+2. Click Choose music and pick a song you have the rights to use (MP3, M4A, AAC, WAV, FLAC or OGG, 10 seconds to 15 minutes). It is uploaded when you generate.
+3. Every cut lands on the music's beat, the music is mixed to −14 LUFS and clip sound is muted. With a key, AI picks moments, labels and title; without one, every clip is used in import order with the style's default title, as the caption under the film says.
+4. Style films accept title, warmth and clip changes and re-cut them on the beat; speed and time-range edits are not available. Undo and download work as usual.
+
+The first music analysis takes about ten extra seconds. Clocks only use iPhone capture times with a time zone; without a reliable time no clock is shown. `uv run vlogii doctor` should report libass as available; if it is missing, reinstall `ffmpeg-full`. How the styles were learned and measured is in [style templates](style-templates.en.md).
+
+## 7. Update and local data
 
 Stop the server first, then run:
 
@@ -77,4 +88,4 @@ npm --prefix frontend run build
 uv run vlogii serve
 ```
 
-Footage, caches, plans and films are stored in `projects/` and excluded from Git. Analysis sends visual proxies and original audio to Google Gemini; originals and exports remain local. Web fonts are bundled and need no remote font requests. If Safari shows old styling, press Option+Command+R to refresh its cache.
+Footage, music, caches, plans and films are stored in `projects/` and excluded from Git. Analysis sends visual proxies and original audio to Google Gemini; originals and exports remain local. Web fonts are bundled and need no remote font requests. If Safari shows old styling, press Option+Command+R to refresh its cache.

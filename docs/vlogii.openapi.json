@@ -21,6 +21,28 @@
         }
       }
     },
+    "/api/vlogii/styles": {
+      "get": {
+        "summary": "Styles",
+        "operationId": "styles_api_vlogii_styles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StyleOption"
+                  },
+                  "type": "array",
+                  "title": "Response Styles Api Vlogii Styles Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vlogii/projects": {
       "get": {
         "summary": "Projects",
@@ -158,6 +180,55 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vlogii/projects/{name}/music": {
+      "post": {
+        "summary": "Add Music",
+        "operationId": "add_music_api_vlogii_projects__name__music_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_music_api_vlogii_projects__name__music_post"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -436,6 +507,7 @@
           "music": {
             "type": "string",
             "enum": [
+              "uploaded",
               "none",
               "auto",
               "holizna-dreams",
@@ -464,6 +536,20 @@
         "additionalProperties": false,
         "type": "object",
         "title": "Appearance"
+      },
+      "Body_add_music_api_vlogii_projects__name__music_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_music_api_vlogii_projects__name__music_post"
       },
       "Body_upload_api_vlogii_projects_post": {
         "properties": {
@@ -661,6 +747,18 @@
             ],
             "title": "Language",
             "default": "en"
+          },
+          "style_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9_]{3,64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style Id"
           }
         },
         "additionalProperties": false,
@@ -740,6 +838,25 @@
           "message"
         ],
         "title": "JobState"
+      },
+      "MusicView": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "duration": {
+            "type": "number",
+            "title": "Duration"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "duration"
+        ],
+        "title": "MusicView"
       },
       "PresetEntry": {
         "properties": {
@@ -900,6 +1017,26 @@
               }
             ]
           },
+          "music": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MusicView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "appearance": {
             "$ref": "#/components/schemas/Appearance"
           }
@@ -1051,6 +1188,143 @@
           "speed"
         ],
         "title": "SpeedRange"
+      },
+      "StyleDuration": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "target": {
+            "type": "number",
+            "title": "Target"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "min",
+          "target",
+          "max"
+        ],
+        "title": "StyleDuration"
+      },
+      "StyleOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "reference_url": {
+            "type": "string",
+            "title": "Reference Url"
+          },
+          "orientation": {
+            "type": "string",
+            "enum": [
+              "portrait",
+              "landscape"
+            ],
+            "title": "Orientation"
+          },
+          "duration": {
+            "$ref": "#/components/schemas/StyleDuration"
+          },
+          "voiceover": {
+            "type": "boolean",
+            "title": "Voiceover"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "name",
+          "description",
+          "reference_url",
+          "orientation",
+          "duration",
+          "voiceover"
+        ],
+        "title": "StyleOption"
+      },
+      "StyleVersion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "ai_selected": {
+            "type": "boolean",
+            "title": "Ai Selected"
+          },
+          "music": {
+            "type": "string",
+            "title": "Music"
+          },
+          "tempo_bpm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tempo Bpm"
+          },
+          "loudness_lufs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loudness Lufs"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "ai_selected",
+          "music",
+          "tempo_bpm",
+          "loudness_lufs",
+          "warnings"
+        ],
+        "title": "StyleVersion"
       },
       "TimeRange": {
         "properties": {

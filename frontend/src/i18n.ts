@@ -1,6 +1,6 @@
 export type Language = 'en' | 'zh';
 const en = {
-  appearance: 'Fonts & music', captionFont: 'Video title and caption font', fontDefault: 'Default · Noto Sans (or your configured font)',
+  styleMusicAuto: 'Style default: Dancing. Source audio stays muted and cuts follow the detected beats.', styleMusicLength: 'Style music is trimmed to the beat-locked film. At 100% volume the target is −14 LUFS; lower volume produces a quieter film.', musicUploaded: 'Uploaded track', styleFontDefault: 'Default · Keep the style’s fonts', appearance: 'Fonts & music', captionFont: 'Video title and caption font', fontDefault: 'Default · Noto Sans (or your configured font)',
   fontNames: { 'noto-sans': 'Noto Sans · Clear', 'noto-serif': 'Noto Serif · Bookish', 'ma-shan-zheng': 'Ma Shan Zheng · Brush lettering', 'zcool-xiaowei': 'ZCOOL XiaoWei · Literary', caveat: 'Caveat · English handwriting', 'playfair-display': 'Playfair Display · English editorial' },
   fontPreview: 'Font preview', fontFallback: 'Missing glyphs use Noto Sans for the whole text entry. English-only fonts use this fallback for Chinese. The preview of Default uses Noto Sans; a server font override may differ.',
   backgroundMusic: 'Background music', musicAuto: 'Automatic · Use a bundled default', musicNone: 'No background music',
@@ -65,9 +65,17 @@ const en = {
   generic: 'Something went wrong. Retry or check your settings.',
   playbackError: 'This browser may not support the export. Download it to play locally, or create an SDR project.',
   selected: 'clips selected', footage: 'seconds of footage', ready: 'seconds · Ready for a closer look.', version: 'VERSION',
+  style: 'Style learned from a reference reel (optional)', styleNone: 'No style · use the options below', styleReference: 'Reference reel ↗',
+  styleLength: 'The length follows the style: about {seconds} seconds.', styleOrientation: '{orientation} projects only',
+  music: 'Music', musicChoose: 'Choose music', musicChange: 'Choose different music',
+  uploadMusicNone: 'Optional: upload your own track, or use a bundled track below (MP3, M4A, AAC, WAV, FLAC or OGG).',
+  musicPending: '{name} · uploaded when you make the film', musicCurrent: '{name} · {seconds} seconds', musicFirst: 'Choose music first',
+  styleAudioHint: 'Every cut lands on the music’s beat and the music is mixed to streaming loudness (−14 LUFS at 100% volume); clip sound is muted. Gemini picks the moments, labels and title; without a key, every clip is used in import order with the style’s default title.',
+  styleFilm: '{style} · cut to {music}', styleTempo: ' at {bpm} BPM', styleNoAi: ' · clips in import order (no AI)',
+  styleEditHint: 'Style films keep every cut on the beat: title, warmth and clip changes re-cut the film on the beat. Speed and time-range edits are not available.',
 };
 const zh: typeof en = {
-  appearance: '字体与配乐', captionFont: '视频标题与字幕字体', fontDefault: '默认 · 思源黑体（或本地已配置字体）',
+  styleMusicAuto: '风格默认使用 Dancing，素材原声保持静音，镜头跟随检测到的节拍。', styleMusicLength: '风格配乐随卡点成片裁切；100% 音量对应 −14 LUFS，降低音量会使成片更轻。', musicUploaded: '自定义上传音乐', styleFontDefault: '默认 · 保留风格模板字体', appearance: '字体与配乐', captionFont: '视频标题与字幕字体', fontDefault: '默认 · 思源黑体（或本地已配置字体）',
   fontNames: { 'noto-sans': '思源黑体 · 清晰字幕', 'noto-serif': '思源宋体 · 书页风', 'ma-shan-zheng': '马善政 · 毛笔手写', 'zcool-xiaowei': '站酷小薇 · 文艺标题', caveat: 'Caveat · 英文手写', 'playfair-display': 'Playfair Display · 英文杂志标题' },
   fontPreview: '字体预览', fontFallback: '遇到缺字时整条文字使用思源黑体；英文专用字体显示中文时也会回退。默认预览为思源黑体，本地配置字体可能不同。',
   backgroundMusic: '背景音乐', musicAuto: '自动 · 使用内置默认曲', musicNone: '不添加背景音乐',
@@ -132,6 +140,20 @@ const zh: typeof en = {
   generic: '操作失败，可重试或检查设置。',
   playbackError: '浏览器可能不支持此导出格式。可以下载后本地播放，或创建 SDR 项目。',
   selected: '段素材已选择', footage: '秒原素材', ready: '秒 · 可以播放了。', version: '版本',
+  style: '参考片风格（可选）', styleNone: '不用风格 · 使用下面的选项', styleReference: '参考片 ↗',
+  styleLength: '时长跟随风格：约 {seconds} 秒。', styleOrientation: '仅限{orientation}项目',
+  music: '音乐', musicChoose: '选择音乐', musicChange: '换一首音乐',
+  uploadMusicNone: '可选：上传自己的音乐，或直接使用下方内置曲目（支持 MP3、M4A、AAC、WAV、FLAC 或 OGG）。',
+  musicPending: '{name} · 生成时上传', musicCurrent: '{name} · {seconds} 秒', musicFirst: '请先选择音乐',
+  styleAudioHint: '每一刀都落在音乐节拍上，音乐统一到流媒体响度（100% 音量时 −14 LUFS），素材原声静音。Gemini 挑选片段、标签和标题；未配置密钥时按导入顺序使用全部素材和风格默认标题。',
+  styleFilm: '{style} · 配乐 {music}', styleTempo: '，{bpm} BPM', styleNoAi: ' · 按导入顺序（未用 AI）',
+  styleEditHint: '风格成片的每一刀都卡在节拍上：改标题、调暖、去掉素材会按节拍重新剪。不支持调速和按时间段修改。',
+};
+// Style names and descriptions come from the API in English; these are their Chinese versions.
+export const styleTextZh: Record<string, { name: string; description: string }> = {
+  ig_cozy_night_study: { name: '深夜学习', description: '暖色台灯下的学习蒙太奇：从第一帧起约 0.65 秒一刀，三层衬线标题配打字效果，小号活动标签，纯音乐。' },
+  ig_city_day_in_life: { name: '城市的一天', description: '明亮的城市一天：开头约 3.8 秒、每镜约 0.3 秒的快剪，配粗体 “day in my life” 标题；之后 0.5–1.3 秒一刀并带数字时钟，纯音乐。' },
+  ig_narrated_college_day: { name: '有旁白的大学日常', description: '雨天校园加旁白：开头约 2.9 秒、每镜约 0.13 秒的闪剪配深红标题，正文按语句长度剪，数字时钟，有旁白时音乐自动压低，结尾黑场。' },
 };
 export function translations(language: Language) { return language === 'zh' ? zh : en; }
 const errors: Record<string, string> = {
@@ -163,6 +185,20 @@ const errors: Record<string, string> = {
   'Speed edits need one time range and a rate, e.g. 00:12到00:18加速到2倍.': '请填写一个时间段和倍速，例如 00:12到00:18加速到2倍。',
   'Time edits support deletion ranges or explicit speeds only. Other requests need generation controls.': '当前时间修改支持删除或指定倍速，其他需求请使用生成控件。',
   'Use valid timestamps such as 01:12 or 1分12秒.': '请使用合法时间，例如 01:12 或 1分12秒。',
+  'Choosing moments for the style': '正在为风格挑选片段', 'Finding the beat': '正在分析音乐节拍',
+  'No Gemini key: using every clip in import order': '未配置 Gemini 密钥：按导入顺序使用全部素材',
+  'Setting the titles': '正在排版标题', 'Mixing the music': '正在混音', 'Finishing the film': '正在合成成片',
+  'Add a music track before making a style film.': '请先添加音乐，再制作风格成片。',
+  'Wait for the current film to finish.': '请等当前影片完成后再操作。',
+  'Use an MP3, M4A, AAC, WAV, FLAC or OGG music file.': '请使用 MP3、M4A、AAC、WAV、FLAC 或 OGG 音乐文件。',
+  'Music files are limited to 200 MB.': '音乐文件不能超过 200 MB。', 'That file has no audio track.': '这个文件没有音轨。',
+  'Use music between 10 seconds and 15 minutes long.': '请使用 10 秒到 15 分钟之间的音乐。',
+  'This style is portrait. Create a portrait project.': '这个风格是竖屏的，请新建竖屏项目。',
+  'Could not find a steady beat in the music.': '这首音乐找不到稳定的节拍，请换一首。',
+  'Style films keep every cut on the beat: change the title, warmth or clips, or make a new version. Time-range and speed edits are not available.': '风格成片的每一刀都卡在节拍上：可以改标题、调暖、去掉素材或重新生成，不支持按时间段删除或调速。',
+  'Weak downbeat estimate; sections may change on beat 2 or 3, not beat 1.': '强拍估计不稳定，段落可能落在第 2 或第 3 拍。',
+  'The beat grid is irregular; listen to the cuts.': '节拍不规则，请试听确认卡点。',
+  'No captions: this style captions a voiceover with its transcript.': '没有字幕：这个风格的字幕来自旁白及其转写稿。',
 };
 export function localizeMessage(message: string, language: Language): string {
   if (language === 'en') return message;
@@ -179,7 +215,16 @@ export function localizeMessage(message: string, language: Language): string {
     [/^Analysis cached: (\d+)\/(\d+)$/, '使用画面分析缓存 $1/$2'],
     [/^Speech recognition (\d+)\/(\d+)$/, '正在识别语音 $1/$2'],
     [/^Speech cached: (\d+)\/(\d+)$/, '使用语音识别缓存 $1/$2'],
+    [/^Rendering (\d+)\/(\d+): style shot$/, '正在渲染风格镜头 $1/$2'],
     [/^Rendering (\d+)\/(\d+): .+$/, '正在渲染 $1/$2'],
+    [/^Not enough footage: this style needs ([\d.]+)s, the selected clips give ([\d.]+)s\.$/, '素材不够：这个风格需要 $1 秒，所选片段只有 $2 秒。'],
+    [/^The music is ([\d.]+)s; this style needs at least ([\d.]+)s after the first downbeat\.$/, '音乐长 $1 秒，这个风格从第一个强拍起至少需要 $2 秒。'],
+    [/^Shortened to ([\d.]+)s to fit the music\.$/, '为配合音乐缩短到 $1 秒。'],
+    [/^Shortened to ([\d.]+)s because the footage runs out\.$/, '素材不够，缩短到 $1 秒。'],
+    [/^Shortened to ([\d.]+)s so every shot fits its clip\.$/, '为让每个镜头都放得进所选片段，缩短到 $1 秒。'],
+    [/^Length raised from ([\d.]+)s to ([\d.]+)s so every clip gets a shot\.$/, '为让每段素材都出现，时长从 $1 秒增加到 $2 秒。'],
+    [/^Not enough time for every clip; skipped (.+)\.$/, '时长不够放下全部素材，跳过了：$1。'],
+    [/^No stamps: the clips have no .+\.$/, '没有时间戳：素材缺少拍摄时间或标签。'],
     [/^Rendering cached (\d+)\/(\d+)$/, '使用已渲染片段 $1/$2'],
     [/^Complete: .+$/, '影片已完成。'],
     [/^Request failed \((\d+)\)\.$/, '请求失败（$1），请检查设置后重试。'],

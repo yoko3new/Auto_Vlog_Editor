@@ -68,7 +68,9 @@ def cached_review(path: Path, fingerprint: dict, force=False):
     return None
 
 
-def analyze(project_dir: Path, project: Project, progress=print, force=False, visual=True):
+def analyze(
+    project_dir: Path, project: Project, progress=print, force=False, visual=True, with_speech=True
+):
     tools = Tools()
     config = speech_config()
     model = os.environ.get("VLOGII_MODEL", "gemini-3.8-flash")
@@ -98,7 +100,7 @@ def analyze(project_dir: Path, project: Project, progress=print, force=False, vi
                 write_json(visual_path.with_suffix(".meta.json"), visual_meta)
             else:
                 progress(f"Analysis cached: {index + 1}/{len(project.clips)}")
-            if clip.audio:
+            if clip.audio and with_speech:
                 speech_path = project_dir / "speech" / f"{clip.id}.json"
                 speech_meta = {"sha256": clip.sha256, **config}
                 speech = cached_review(speech_path, speech_meta, force)
@@ -278,6 +280,20 @@ def edit(
         checkpoint = {"request": request, "base": latest["cut"], "status": "rendering"}
         write_json(checkpoint_path, checkpoint)
         version = project_dir / "cuts" / latest["cut"]
+        if (version / "style.json").exists():
+            if ranges or sped or speed is not None:
+                raise VlogiiError(
+                    "Style films keep every cut on the beat: change the title, warmth or clips, "
+                    "or make a new version. Time-range and speed edits are not available."
+                )
+            from .style.film import edit_style
+
+            output = edit_style(
+                project_dir, version, title, excluded, warmth, progress, appearance=appearance
+            )
+            checkpoint.update(status="complete", cut=output.name)
+            write_json(checkpoint_path, checkpoint)
+            return output
         project = Project.model_validate(read_json(version / "project.json"))
         if appearance is not None:
             project.settings.appearance = Appearance.model_validate(appearance)

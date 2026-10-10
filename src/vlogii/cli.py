@@ -44,6 +44,22 @@ def choose_language(argv):
 
 def selected_appearance(args, directory):
     values = {key: getattr(args, key, None) for key in ("font", "music", "music_volume")}
+    if (
+        args.command == "run"
+        and hasattr(args, "music")
+        and not getattr(args, "style", None)
+        and values["music"] is None
+    ):
+        values["music"] = "auto"
+    if values["music"] is not None:
+        from typing import get_args
+
+        from .models import MusicPreset
+
+        if str(values["music"]) not in get_args(MusicPreset):
+            values["music"] = "uploaded"
+    if args.command == "run" and getattr(args, "style", None) and values["music"] is None:
+        values["music"] = "uploaded" if (directory / "music.json").exists() else "auto"
     if all(value is None for value in values.values()):
         return None
     path = directory / "project.json"
@@ -88,6 +104,34 @@ def execute(args, resume=False):
                 args.language,
                 f"Imported {len(project.clips)} clips.",
                 f"已导入 {len(project.clips)} 段素材。",
+            )
+        )
+    elif command == "run" and getattr(args, "style", None):
+        from typing import get_args
+
+        from .models import MusicPreset
+        from .style import film
+
+        if args.music and args.music not in get_args(MusicPreset) and not resume:
+            with locked(directory):
+                film.import_music(directory, Path(args.music).expanduser().resolve())
+        appearance = selected_appearance(args, directory)
+        if appearance and args.music_volume is None:
+            appearance.music_volume = 1
+        film.generate_style(
+            directory, args.style, args.direction, progress, resume=resume, appearance=appearance
+        )
+    elif command == "music":
+        from .style import film
+
+        with locked(directory):
+            load_project(directory)
+            track = film.import_music(directory, Path(args.path).expanduser().resolve())
+        print(
+            say(
+                args.language,
+                f"Music added: {track.name} ({track.duration:.1f}s)",
+                f"已添加音乐：{track.name}（{track.duration:.1f} 秒）",
             )
         )
     elif command == "run":
@@ -442,7 +486,32 @@ def main(argv=None):
     subs.add_parser("doctor", help=say(language, "Check configuration", "检查环境与模型配置"))
     serve = subs.add_parser("serve", help=say(language, "Start the web app", "启动网页应用"))
     serve.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8000")))
-    for command in ("init", "analyze", "plan", "render", "run", "edit", "retry", "status", "undo"):
+    subs.add_parser("styles", help=say(language, "List reference styles", "列出参考风格"))
+    preview = subs.add_parser(
+        "style-preview",
+        help=say(language, "Render a style film without a project", "不建项目直接试做风格成片"),
+    )
+    preview.add_argument("style")
+    preview.add_argument("--music", type=Path, required=True)
+    source = preview.add_mutually_exclusive_group(required=True)
+    source.add_argument("--clips", type=Path)
+    source.add_argument("--manifest", type=Path)
+    preview.add_argument("--voiceover", type=Path)
+    preview.add_argument("--transcript", type=Path)
+    preview.add_argument("--seconds", type=float)
+    preview.add_argument("--out", type=Path, required=True)
+    for command in (
+        "init",
+        "analyze",
+        "plan",
+        "render",
+        "run",
+        "edit",
+        "retry",
+        "status",
+        "undo",
+        "music",
+    ):
         sub = subs.add_parser(command)
         sub.add_argument("name")
         sub.add_argument("--language", choices=["en", "zh"], default=argparse.SUPPRESS)
@@ -461,18 +530,21 @@ def main(argv=None):
             sub.add_argument(
                 "--seconds", type=int, default=None, choices=range(1, 1801), metavar="1-1800"
             )
+        if command == "run":
+            sub.add_argument("--style", help=say(language, "Style film", "风格成片"))
+        if command == "music":
+            sub.add_argument("path", type=Path)
         if command == "analyze":
             sub.add_argument("--force", action="store_true")
         if command in {"run", "edit"}:
             from typing import get_args
 
-            from .models import FontPreset, MusicPreset
+            from .models import FontPreset
 
             sub.add_argument("--font", choices=get_args(FontPreset))
             sub.add_argument(
                 "--music",
-                choices=get_args(MusicPreset),
-                default="auto" if command == "run" else None,
+                help="Bundled preset ID (or a local music file with --style)",
             )
             sub.add_argument("--music-volume", type=float)
         if command == "edit":
@@ -503,6 +575,15 @@ def main(argv=None):
             tools = Tools()
             tools.require_filters({"drawtext", "zscale", "tonemap"})
             print(f"FFmpeg: {tools.ffmpeg}\nFFprobe: {tools.ffprobe}")
+            styles = "ass" in tools.capability("-filters")
+            print(
+                say(args.language, "Style titles (libass): ", "风格标题（libass）：")
+                + (
+                    say(args.language, "available", "可用")
+                    if styles
+                    else say(args.language, "missing", "缺失")
+                )
+            )
             print(f"Gemini: {os.environ.get('VLOGII_MODEL', 'gemini-3.8-flash')}")
             print(
                 say(args.language, "Speech recognition: ", "语音识别：")
@@ -518,6 +599,24 @@ def main(argv=None):
             )
 
         return 0 if run_with_retry(doctor, args.language, False) else 1
+    if args.command == "styles":
+        from .style import templates
+
+        for item in templates.summaries():
+            span = item["duration"]
+            print(
+                f"{item['id']}: {item['name']} ({item['orientation']}, "
+                f"{span['min']:g}-{span['max']:g}s) - {item['description']}"
+            )
+        return 0
+    if args.command == "style-preview":
+        from .style.preview import render_preview
+
+        def preview_action(_):
+            report = render_preview(args)
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+
+        return 0 if run_with_retry(preview_action, args.language, False) else 1
     success = run_with_retry(
         lambda resume: execute(args, resume), args.language, sys.stdin.isatty()
     )

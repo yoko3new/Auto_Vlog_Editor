@@ -1,0 +1,65 @@
+{
+  "template_version": 1,
+  "id": "ig_city_day_in_life",
+  "revision": 2,
+  "display_name": "City day in my life",
+  "description": "Bright city day: a 3.8 s hook of ~0.3 s shots under a bold 'day in my life' title, then 0.5-1.3 s shots with a digital clock stamp, music only.",
+  "reference": {
+    "url": "https://www.instagram.com/reel/DYui5l2x141/",
+    "profile": "style/references/DYui5l2x141.profile.json",
+    "learned": [
+      "measured: 59 shots in 37.9 s; hook of 13 shots ending at 3.77 s with median 0.30 s, body median 0.70 s, p90 1.09 s",
+      "measured: cuts are not locked to detected beats or accents (beat hit rate 0.31 vs chance 0.25; accent test not significant); this template keeps the shot lengths and locks them to the user's beat grid",
+      "measured: soundtrack -15.6 LUFS integrated, LRA 8.2 LU, true peak +3.0 dBTP (clipping), no voice detected; the template targets -14 LUFS with a -1 dBTP ceiling instead of copying the clipping",
+      "measured: natural daylight grade, saturation 0.30, warmth 0.11, luma 0.46",
+      "observed: white bold rounded sans 'day in / my life' over the hook with a small time range above, a one-line subtitle and a boxed location tag below; body shots carry a digital clock such as '12:20' with a small caption"
+    ]
+  },
+  "output": {"width": 720, "height": 1280, "fps": 30},
+  "duration": {"target_s": 38, "min_s": 20, "max_s": 60},
+  "sections": [
+    {
+      "role": "hook",
+      "length_s": 3.8,
+      "shot": {"target_s": 0.3, "min_s": 0.22, "max_s": 0.4},
+      "variation": 0.05,
+      "beat_multiples": [0.25, 0.5, 1]
+    },
+    {
+      "role": "body",
+      "length_s": null,
+      "shot": {"target_s": 0.75, "min_s": 0.45, "max_s": 1.3},
+      "variation": 0.3,
+      "beat_multiples": [0.5, 1, 1.5, 2, 3]
+    }
+  ],
+  "end_card": null,
+  "music": {"start": "most_energetic", "fade_in_s": 0, "fade_out_s": 0, "target_lufs": -14, "true_peak_dbtp": -1},
+  "source_audio": "mute",
+  "voiceover": {"supported": false, "target_lufs": -14, "music_duck_db": -12},
+  "grade": {"target": {"luma": 0.46, "saturation": 0.3, "warmth": 0.11}, "strength": 0.4},
+  "text": {
+    "roles": {
+      "range": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 1, "uppercase": true, "box": null},
+      "main": {"fonts": ["Poppins", "Inter Display", "Inter"], "bold": true, "size": 0.06, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": -1, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.017, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "tag": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.015, "color": "#1E1E1E", "outline": 4, "shadow": 0, "spacing": 1, "uppercase": true, "box": "#FFFFFF"},
+      "clock": {"fonts": ["Share Tech Mono", "DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.032, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
+      "clock_caption": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
+    },
+    "title": {
+      "show_until_s": "hook_end",
+      "lines": [
+        {"field": "time_range", "role": "range", "y": 0.405, "reveal": "cut"},
+        {"field": "title", "role": "main", "y": 0.47, "reveal": "cut"},
+        {"field": "subtitle", "role": "sub", "y": 0.535, "reveal": "cut"},
+        {"field": "location", "role": "tag", "y": 0.572, "reveal": "cut"}
+      ],
+      "decorations": []
+    },
+    "stamps": {"mode": "clock", "y": 0.575, "role": "clock", "caption_role": "clock_caption", "suffix": ""},
+    "captions": {"mode": "none", "y": 0.62, "role": "sub", "max_words": 4},
+    "defaults": {"title": "day in\nmy life"}
+  },
+  "transitions": "hard_cut"
+}

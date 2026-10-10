@@ -1,0 +1,72 @@
+{
+  "template_version": 1,
+  "id": "ig_narrated_college_day",
+  "revision": 2,
+  "display_name": "Narrated college day",
+  "description": "Rainy campus day with narration: a 2.9 s strobe hook of ~0.13 s shots under a crimson title, phrase-length body shots, digital clock, music ducked under the voiceover, black end card.",
+  "reference": {
+    "url": "https://www.instagram.com/reel/DWxtN9tCoc2/",
+    "profile": "style/references/DWxtN9tCoc2.profile.json",
+    "learned": [
+      "measured: 95 shots in 64.9 s; hook of 21 shots ending at 2.87 s with median 0.133 s (8 frames at 60 fps), body median 0.67 s with a wide p10-p90 of 0.13-1.3 s, 3.55 s black end card",
+      "measured: voice-like audio for 99% of the runtime with word-by-word captions on screen, so it is narrated; cuts are not locked to detected beats or accents (beat hit rate 0.29 vs chance 0.27; accent test not significant)",
+      "measured: soundtrack -14.1 LUFS integrated, LRA 1.8 LU, true peak -2.6 dBTP, 0.6 s fade out; the music level under the voice could not be separated, so music_duck_db is a common default, not a measurement",
+      "measured: overcast cool grade, saturation 0.27, warmth 0.06, luma 0.39",
+      "observed: heavy crimson 'day in / my life.' with a crimson time range, small white kicker and white stars over the hook; body shots show a digital clock at mid height and lowercase captions near 62% height"
+    ]
+  },
+  "output": {"width": 720, "height": 1280, "fps": 30},
+  "duration": {"target_s": 60, "min_s": 25, "max_s": 70},
+  "sections": [
+    {
+      "role": "hook",
+      "length_s": 2.9,
+      "shot": {"target_s": 0.133, "min_s": 0.1, "max_s": 0.2},
+      "variation": 0,
+      "beat_multiples": [0.25, 0.5]
+    },
+    {
+      "role": "body",
+      "length_s": null,
+      "shot": {"target_s": 0.8, "min_s": 0.35, "max_s": 2.0},
+      "variation": 0.5,
+      "beat_multiples": [0.5, 1, 1.5, 2, 3, 4]
+    }
+  ],
+  "end_card": {"length_s": 3.5, "background": "#000000", "text_role": "end"},
+  "music": {"start": "first_downbeat", "fade_in_s": 0, "fade_out_s": 0.6, "target_lufs": -14, "true_peak_dbtp": -1},
+  "source_audio": "mute",
+  "voiceover": {"supported": true, "target_lufs": -14, "music_duck_db": -12},
+  "grade": {"target": {"luma": 0.39, "saturation": 0.27, "warmth": 0.06}, "strength": 0.4},
+  "text": {
+    "roles": {
+      "range": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.022, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": 1, "uppercase": true, "box": null},
+      "kicker": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "main": {"fonts": ["Poppins Black", "Inter Display Black", "Inter"], "bold": false, "size": 0.085, "color": "#B0153A", "outline": 0, "shadow": 0, "spacing": -2, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "star": {"fonts": ["DejaVu Sans"], "bold": false, "size": 0.035, "color": "#FFFFFF", "outline": 0, "shadow": 0, "spacing": 0, "uppercase": false, "box": null},
+      "clock": {"fonts": ["Share Tech Mono", "DSEG7 Classic", "DejaVu Sans Mono"], "bold": false, "size": 0.03, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 2, "uppercase": false, "box": null},
+      "clock_caption": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.016, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "caption": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
+      "end": {"fonts": ["Poppins", "Inter"], "bold": true, "size": 0.018, "color": "#FFFFFF", "outline": 0, "shadow": 0, "spacing": 0, "uppercase": false, "box": null}
+    },
+    "title": {
+      "show_until_s": "hook_end",
+      "lines": [
+        {"field": "time_range", "role": "range", "y": 0.366, "reveal": "cut"},
+        {"field": "kicker", "role": "kicker", "y": 0.398, "reveal": "cut"},
+        {"field": "title", "role": "main", "y": 0.49, "reveal": "cut"},
+        {"field": "subtitle", "role": "sub", "y": 0.624, "reveal": "typewriter"}
+      ],
+      "decorations": [
+        {"glyph": "★", "x": 0.23, "y": 0.366, "role": "star"},
+        {"glyph": "★", "x": 0.78, "y": 0.5, "role": "star"},
+        {"glyph": "★", "x": 0.145, "y": 0.6, "role": "star"}
+      ]
+    },
+    "stamps": {"mode": "clock", "y": 0.5, "role": "clock", "caption_role": "clock_caption", "suffix": ""},
+    "captions": {"mode": "transcript", "y": 0.625, "role": "caption", "max_words": 4},
+    "defaults": {"kicker": "another typical", "title": "day in\nmy life.", "end_card": "i hope you enjoyed this day with me"}
+  },
+  "transitions": "hard_cut"
+}

@@ -1,0 +1,55 @@
+{
+  "template_version": 1,
+  "id": "ig_cozy_night_study",
+  "revision": 2,
+  "display_name": "Cozy night study",
+  "description": "Warm lamp-lit study montage: steady ~0.65 s shots from the first frame, three-tier serif title with a typed kicker, small activity labels, music only.",
+  "reference": {
+    "url": "https://www.instagram.com/reel/DNvYfcx5EBk/",
+    "profile": "style/references/DNvYfcx5EBk.profile.json",
+    "learned": [
+      "measured: 24 shots in 15.3 s, median 0.667 s, p10-p90 0.47-0.82 s, no fast hook; pacing is even from start to end",
+      "measured: cuts are not locked to detected beats or accents (beat hit rate 0.13 vs chance 0.29; accent test not significant); the steady rhythm is visual, so this template locks the same shot lengths to the user's beat grid",
+      "measured: soundtrack -14.0 LUFS integrated, LRA 1.7 LU, true peak -1.2 dBTP, no voice detected, no fade in or out",
+      "measured: warm grade, mean warmth (R-B) 0.22, saturation 0.46, luma 0.45",
+      "observed: title 'cozy night / study / with me' centred around 47-54% height, kicker typed with a cursor, bold serif main word, white small sans labels such as 'making coffee' with a sparkle suffix"
+    ]
+  },
+  "output": {"width": 720, "height": 1280, "fps": 30},
+  "duration": {"target_s": 15, "min_s": 10, "max_s": 24},
+  "sections": [
+    {
+      "role": "body",
+      "length_s": null,
+      "shot": {"target_s": 0.65, "min_s": 0.45, "max_s": 0.9},
+      "variation": 0.15,
+      "beat_multiples": [0.5, 1, 1.5, 2]
+    }
+  ],
+  "end_card": null,
+  "music": {"start": "first_downbeat", "fade_in_s": 0, "fade_out_s": 0, "target_lufs": -14, "true_peak_dbtp": -1},
+  "source_audio": "mute",
+  "voiceover": {"supported": false, "target_lufs": -14, "music_duck_db": -12},
+  "grade": {"target": {"luma": 0.45, "saturation": 0.46, "warmth": 0.22}, "strength": 0.6},
+  "text": {
+    "roles": {
+      "kicker": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "main": {"fonts": ["DM Serif Display", "Playfair Display", "Caladea", "DejaVu Serif"], "bold": false, "size": 0.062, "color": "#FFFFFF", "outline": 0, "shadow": 1.5, "spacing": 0, "uppercase": false, "box": null},
+      "sub": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.022, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null},
+      "label": {"fonts": ["Poppins", "Inter"], "bold": false, "size": 0.02, "color": "#FFFFFF", "outline": 0, "shadow": 1, "spacing": 0, "uppercase": false, "box": null}
+    },
+    "title": {
+      "show_until_s": 3.0,
+      "lines": [
+        {"field": "kicker", "role": "kicker", "y": 0.462, "reveal": "typewriter"},
+        {"field": "title", "role": "main", "y": 0.5, "reveal": "cut"},
+        {"field": "subtitle", "role": "sub", "y": 0.541, "reveal": "cut"}
+      ],
+      "decorations": []
+    },
+    "stamps": {"mode": "label", "y": 0.5, "role": "label", "caption_role": "label", "suffix": " ✧"},
+    "captions": {"mode": "none", "y": 0.62, "role": "label", "max_words": 4},
+    "defaults": {"kicker": "cozy night", "title": "study", "subtitle": "with me"}
+  },
+  "transitions": "hard_cut"
+}

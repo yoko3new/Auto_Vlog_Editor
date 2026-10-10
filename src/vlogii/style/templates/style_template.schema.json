@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "style_template.schema.json",
+  "title": "Style template learned from a reference reel",
+  "description": "Pacing, beat-sync, mix, grade and text rules that tools/style_lab/plan_edit.py turns into a beat-locked plan. Every field here is implemented by the style lab planner and preview renderer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["template_version", "id", "revision", "display_name", "description", "reference", "output", "duration", "sections", "end_card", "music", "source_audio", "voiceover", "grade", "text", "transitions"],
+  "properties": {
+    "template_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9_]+$", "minLength": 3, "maxLength": 64},
+    "revision": {"type": "integer", "minimum": 1},
+    "display_name": {"type": "string", "minLength": 1, "maxLength": 60},
+    "description": {"type": "string", "minLength": 1, "maxLength": 400},
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "profile", "learned"],
+      "properties": {
+        "url": {"type": "string", "minLength": 1},
+        "profile": {"type": "string", "minLength": 1},
+        "learned": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "fps"],
+      "properties": {
+        "width": {"enum": [720, 1280]},
+        "height": {"enum": [720, 1280]},
+        "fps": {"const": 30}
+      }
+    },
+    "duration": {"$ref": "#/$defs/range"},
+    "sections": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/section"}},
+    "end_card": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["length_s", "background", "text_role"],
+          "properties": {
+            "length_s": {"type": "number", "minimum": 0.5, "maximum": 6},
+            "background": {"$ref": "#/$defs/color"},
+            "text_role": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "music": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "fade_in_s", "fade_out_s", "target_lufs", "true_peak_dbtp"],
+      "properties": {
+        "start": {"enum": ["first_downbeat", "most_energetic"]},
+        "fade_in_s": {"type": "number", "minimum": 0, "maximum": 3},
+        "fade_out_s": {"type": "number", "minimum": 0, "maximum": 5},
+        "target_lufs": {"type": "number", "minimum": -24, "maximum": -9},
+        "true_peak_dbtp": {"type": "number", "minimum": -6, "maximum": -0.5}
+      }
+    },
+    "source_audio": {"const": "mute"},
+    "voiceover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported", "target_lufs", "music_duck_db"],
+      "properties": {
+        "supported": {"type": "boolean"},
+        "target_lufs": {"type": "number", "minimum": -24, "maximum": -9},
+        "music_duck_db": {"type": "number", "minimum": -24, "maximum": 0}
+      }
+    },
+    "grade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "strength"],
+      "properties": {
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["luma", "saturation", "warmth"],
+          "properties": {
+            "luma": {"type": "number", "minimum": 0.1, "maximum": 0.9},
+            "saturation": {"type": "number", "minimum": 0, "maximum": 1},
+            "warmth": {"type": "number", "minimum": -0.3, "maximum": 0.4}
+          }
+        },
+        "strength": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "text": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roles", "title", "stamps", "captions", "defaults"],
+      "properties": {
+        "roles": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/text_role"}},
+        "title": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["show_until_s", "lines", "decorations"],
+          "properties": {
+            "show_until_s": {"oneOf": [{"const": "hook_end"}, {"type": "number", "minimum": 0.5, "maximum": 10}]},
+            "lines": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/title_line"}},
+            "decorations": {"type": "array", "items": {"$ref": "#/$defs/decoration"}}
+          }
+        },
+        "stamps": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "y", "role", "caption_role", "suffix"],
+          "properties": {
+            "mode": {"enum": ["none", "label", "clock"]},
+            "y": {"$ref": "#/$defs/unit"},
+            "role": {"type": "string", "minLength": 1},
+            "caption_role": {"type": "string", "minLength": 1},
+            "suffix": {"type": "string", "maxLength": 4}
+          }
+        },
+        "captions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "y", "role", "max_words"],
+          "properties": {
+            "mode": {"enum": ["none", "transcript"]},
+            "y": {"$ref": "#/$defs/unit"},
+            "role": {"type": "string", "minLength": 1},
+            "max_words": {"type": "integer", "minimum": 1, "maximum": 8}
+          }
+        },
+        "defaults": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "kicker": {"type": "string", "maxLength": 40},
+            "title": {"type": "string", "maxLength": 40},
+            "subtitle": {"type": "string", "maxLength": 60},
+            "time_range": {"type": "string", "maxLength": 30},
+            "location": {"type": "string", "maxLength": 30},
+            "end_card": {"type": "string", "maxLength": 80}
+          }
+        }
+      }
+    },
+    "transitions": {"const": "hard_cut"}
+  },
+  "$defs": {
+    "unit": {"type": "number", "minimum": 0, "maximum": 1},
+    "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_s", "min_s", "max_s"],
+      "properties": {
+        "target_s": {"type": "number", "minimum": 0.05, "maximum": 90},
+        "min_s": {"type": "number", "minimum": 0.05, "maximum": 90},
+        "max_s": {"type": "number", "minimum": 0.05, "maximum": 90}
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "length_s", "shot", "variation", "beat_multiples"],
+      "properties": {
+        "role": {"enum": ["hook", "body"]},
+        "length_s": {"oneOf": [{"type": "null"}, {"type": "number", "minimum": 0.5, "maximum": 15}]},
+        "shot": {"$ref": "#/$defs/range"},
+        "variation": {"type": "number", "minimum": 0, "maximum": 1},
+        "beat_multiples": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8]}}
+      }
+    },
+    "text_role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fonts", "bold", "size", "color", "outline", "shadow", "spacing", "uppercase", "box"],
+      "properties": {
+        "fonts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "bold": {"type": "boolean"},
+        "size": {"type": "number", "minimum": 0.01, "maximum": 0.2},
+        "color": {"$ref": "#/$defs/color"},
+        "outline": {"type": "number", "minimum": 0, "maximum": 6},
+        "shadow": {"type": "number", "minimum": 0, "maximum": 6},
+        "spacing": {"type": "number", "minimum": -5, "maximum": 10},
+        "uppercase": {"type": "boolean"},
+        "box": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/color"}]}
+      }
+    },
+    "title_line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "role", "y", "reveal"],
+      "properties": {
+        "field": {"enum": ["kicker", "title", "subtitle", "time_range", "location"]},
+        "role": {"type": "string", "minLength": 1},
+        "y": {"$ref": "#/$defs/unit"},
+        "reveal": {"enum": ["cut", "typewriter"]}
+      }
+    },
+    "decoration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["glyph", "x", "y", "role"],
+      "properties": {
+        "glyph": {"type": "string", "minLength": 1, "maxLength": 2},
+        "x": {"$ref": "#/$defs/unit"},
+        "y": {"$ref": "#/$defs/unit"},
+        "role": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -13,6 +13,7 @@ This document is a team-shared specification, applicable to the coding assistant
 - For modifying service boundaries/storage, read [Architecture](docs/architecture.en.md); for modifying interfaces/timelines, follow [Contract Navigation](docs/contracts.en.md) to locate sections and specific schemas.
 - For frontend/rendering visuals, read [Visual Specifications](docs/visual-design.en.md); for acceptance, read [Acceptance Criteria](docs/acceptance.en.md).
 - For deployment, read [Replit Verification](docs/deployment.en.md); for AI integration/clip selection, read [AI Testing](docs/ai-selection.en.md).
+- For reference-reel style templates and the style lab tools, read [Style Templates](docs/style-templates.en.md).
 - Do not recursively read all links; reuse valid, previously read information, and supplement reading only when tasks change.
 
 ## Scope and ownership

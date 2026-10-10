@@ -10,7 +10,7 @@
 
 ## 本地运行
 
-运行环境要求：macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/)，以及支持 `drawtext`、`zscale`、`tonemap`、AAC、H.264 和 HEVC 的 FFmpeg。
+运行环境要求：macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/)，以及支持 `drawtext`、`zscale`、`tonemap`、AAC、H.264 和 HEVC 的 FFmpeg。风格成片还需要 `ass` 滤镜（libass），`ffmpeg-full` 和 Ubuntu 的 `ffmpeg` 都已包含。
 
 在 macOS 上：
 
@@ -55,7 +55,7 @@ uv run vlogii serve
 
 - 上传 MP4、MOV、M4V 或 MKV 素材，检查其实际元数据并对相同文件去重。
 - 创作导向和目标时长为可选项。可选择 AI 自动、开头快剪、保留大部分或保留全部。如果没有目标时长，AI 自动会决定长度，快剪模式目标为 5 秒，而保留模式按保留规则决定时长。可点击示例直接填充输入和模式而无需立即提交。参见 [剪辑模式与时间修改](editing-modes.md)。
-- Gemini 观看代理视频并描述可见事件。单独的 Gemini 语音请求处理提取为 PCM 的原始音频。字幕保留原语言。`VLOGII_SPEECH_LANGUAGE=auto` 支持混合语言；使用受支持的 BCP-47 代码进行明确提示。渲染器根据输出宽度和高度测量完整文本，并在 macOS 上选择 Arial Unicode 或在 Linux 上选择 Noto CJK；设置 `VLOGII_FONT` 可覆盖字体。语音转录需要人工审核。
+- Gemini 观看代理视频并描述可见事件。单独的 Gemini 语音请求处理提取为 PCM 的原始音频。字幕保留原语言。`VLOGII_SPEECH_LANGUAGE=auto` 支持混合语言；使用受支持的 BCP-47 代码进行明确提示。渲染器根据输出宽度和高度测量完整文本，并默认使用随程序附带的 Noto CJK；设置 `VLOGII_FONT` 可覆盖字体。语音转录需要人工审核。
 - AI 选择源区间和少量事实性文字。Python 验证引用、范围和叠加文字，然后以整数帧计算所有输出时间。
 - FFmpeg 在正常模式下保留原始音频，为无音频的剪辑添加静音，烧录文本和字幕，规范化片段并进行拼接。快剪模式默认对源音频静音并忽略语音字幕。
 - 适合浏览器的 SDR/H.264 是网页默认格式。纯 HLG 项目可以使用 HEVC 保留 10 位 HDR；混合 HDR/SDR 素材会色调映射为 SDR。HEVC 播放取决于浏览器和显示器。
@@ -67,9 +67,32 @@ uv run vlogii serve
 
 限制：50 个剪辑、每个剪辑 512 MB、每次上传 2 GB、30 分钟源素材，以及 AI 自动/快剪模式可选的 1–1800 秒目标时长。色调编辑使用 SDR 输出。重新生成 AI 计划会使用最初导入的剪辑集；移除剪辑是版本编辑，而不是永久删除源素材。
 
+<a id="styles"></a>
+
+## 风格：背景音乐、节拍卡点与参考片风格
+
+风格是从参考片学到的模板：镜头长度与开头快剪、调色目标、标题与时间戳排版，以及混音规则。测量结果、参考片本身并未锁拍的发现，以及每个模板的由来见 [风格模板](style-templates.md)。
+
+1. 网页里在 *No. 2* 选择风格、内置曲或上传音乐；命令行用 `vlogii music` 添加音乐，用 `vlogii run --style` 生成。
+2. 有 Gemini 密钥时，已缓存的画面分析用于风格请求：Gemini 按时间顺序返回片段、简短活动标签和标题文字，Python 校验片段 ID、区间和总时长，不合格时带反馈重试一次。风格成片会静音原声，所以不做语音转写。没有密钥时按导入顺序使用全部素材和风格默认标题，页面会注明。重试复用已保存的选择。
+3. `style/planner.py` 检测音乐节拍（librosa，修正起音延迟），从强拍开始，把成片取整到整小节，按参考片的镜头秒数选拍数倍数，并按顺序分配到各片段。每一刀与节拍网格的偏差都在半帧以内。不会重复画面凑时长；素材不足或音乐太短会明确提示。
+4. `style/render.py` 修剪每个镜头并向参考片调色（HDR 转为 SDR），用随程序附带的 OFL 字体（Poppins、DM Serif Display、Share Tech Mono）通过 ASS 排版标题、时钟和标签，静音素材原声，并把音乐处理到 −14 LUFS、真峰值上限 −1 dBTP（在 AAC 编码后实测）。旁白风格还可以在旁白下压低音乐，并按转写稿出字幕（仅命令行）。
+5. 结果是一个普通版本，包含 `style.json`、`style-plan.json`、日志和 `verification.json`。改标题、调暖和去掉素材会按节拍重新剪，不再调用 AI；调速和按时间段修改会破坏卡点，因此会被拒绝。撤销和下载照常可用。
+
+音乐：MP3、M4A、AAC、WAV、FLAC 或 OGG，10 秒到 15 分钟，最大 200 MB，保存在项目中。请使用你有权发布的音乐。`GET /api/vlogii/styles` 列出风格，`POST /api/vlogii/projects/{name}/music` 添加音乐，生成请求接受 `style_id`。
+
+```sh
+uv run vlogii styles
+uv run vlogii music my-day ~/Music/song.mp3
+uv run vlogii run my-day --style ig_city_day_in_life
+uv run vlogii style-preview ig_cozy_night_study --music song.mp3 --clips ~/Movies/day --out work/day.mp4
+```
+
+限制：风格成片为 SDR/H.264，按项目尺寸、30 fps 输出；三个风格都是竖屏。节拍检测听不见声音：没有清晰底鼓的音乐可能估错强拍，页面会显示这类警告。学习新风格使用 `tools/style_lab/`，需先运行 `uv sync --extra style-lab`。
+
 ## 范围与兼容性
 
-此分支基于经过测试的 VX 工作流实现了一个**本地 vlog 网页 MVP**。这并非声称已交付原团队的完整竞赛 MVP。卡点节奏匹配、杂志风装饰、任意自然语言编辑、身份验证、云存储、Replit 部署、场景检测启发式算法和 NLE 导出均不包含在此版本中。
+此分支基于经过测试的 VX 工作流实现了一个**本地 vlog 网页 MVP**。这并非声称已交付原团队的完整竞赛 MVP。背景音乐和卡点通过[风格](#styles)提供。杂志风装饰、任意自然语言编辑、身份验证、云存储、Replit 部署、场景检测启发式算法和 NLE 导出均不包含在此版本中。
 
 现有的 [团队产品定义](product.md)、[架构](architecture.md)、[契约](contracts.md)、schema、样例和开发替身均作为规划资料保留。Vlogii 使用明确且独立的 `/api/vlogii` 命名空间和本地模型；它并不假装实现了较旧的 `/api` 契约。实时 API 规范位于 `/openapi.json`，交互式文档位于 `/docs`；已签入的快照为 [vlogii.openapi.json](vlogii.openapi.json)。
 
@@ -87,6 +110,7 @@ src/vlogii/
   timeline.py     Deterministic frame timing and caption remapping
   render.py       Text, audio, HDR, encoding and output verification
   pipeline.py     Analysis caching, generation, edits and undo
+  style/          Templates, beat detection, beat-locked planning, style rendering and fonts
   api.py          Uploads, persistent jobs, one worker and media delivery
   cli.py          Web startup and debugging commands
 frontend/         React + TypeScript + Vite editor
@@ -164,4 +188,4 @@ uv run vlogii undo my-day
 
 顶栏不再显示完成标识。任务进行时显示视频解析、语音识别、画面分析、剪辑规划、视频制作及真实任务信息和片段计数。进度条反映当前批次，不估算整片百分比或剩余时间；分析阶段会按素材交替。没有计数的排队、规划、合并和校验阶段使用不定进度条。处理期间滚动页面仍可见，成功后收起。
 
-字体与配乐：生成章节默认使用内置思源黑体和自动配乐；可预览字体、试听六首纯音乐、选“不添加”、调音量及口播压低。已有成片在修改章节更换后点击“应用修改”，保留旧版可撤销。资源随应用自动加载，详见[内置资源与许可](free-resources.md)。自定义上传和自动卡点仍待实现。
+字体与配乐：生成章节默认使用内置思源黑体和自动配乐；可预览字体、试听六首纯音乐、选“不添加”、调音量及口播压低。已有成片在修改章节更换后点击“应用修改”，保留旧版可撤销。资源随应用自动加载，详见[内置资源与许可](free-resources.md)。风格模式支持音乐上传和自动卡点；自定义字体上传仍待实现。

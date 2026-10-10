@@ -6,6 +6,7 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 
 from .media import sha256
+from .models import Music
 from .storage import VlogiiError, read_json
 
 ASSETS = Path(__file__).parent / "assets"
@@ -77,3 +78,31 @@ def supports_text(path: Path, text: str) -> bool:
     stat = path.stat()
     supported = glyphs(str(path), stat.st_mtime_ns, stat.st_size)
     return all(char.isspace() or ord(char) in supported for char in text)
+
+
+def music_source(project_dir: Path, choice: str, muted: bool):
+    if choice == "uploaded":
+        metadata = project_dir / "music.json"
+        if not metadata.exists():
+            raise VlogiiError("Add a music track before making a style film.")
+        track = Music.model_validate(read_json(metadata))
+        path = project_dir / "music" / track.file
+        if not path.is_file() or sha256(path) != track.sha256:
+            raise VlogiiError(
+                "The music file for this version is missing or changed. Add the music again."
+            )
+        return choice, path, track
+    identifier = music_id(choice, muted)
+    if identifier is None:
+        return None, None, None
+    entry = asset("music", identifier)
+    return (
+        identifier,
+        asset_path("music", identifier),
+        Music(
+            file=entry["sha256"][:32] + ".mp3",
+            name=entry["name"],
+            sha256=entry["sha256"],
+            duration=entry["duration_seconds"],
+        ),
+    )
