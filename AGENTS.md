@@ -11,6 +11,7 @@
 - 改服务边界/存储读 [架构](docs/architecture.md)；改接口/时间线按 [契约导航](docs/contracts.md) 定位小节与具体 schema。
 - 前端/渲染视觉读 [视觉规范](docs/visual-design.md)；验收读 [验收标准](docs/acceptance.md)。
 - 部署读 [Replit 验证](docs/deployment.md)；AI 接入/选片读 [AI 测试](docs/ai-selection.md)。
+- 参考 reel 风格模板与 style lab 工具读 [风格模板](docs/style-templates.md)。
 - 不递归读取全部链接；复用仍有效的已读信息，任务变化时再补读。
 
 ## Scope and ownership

@@ -44,6 +44,7 @@ AI 生成剪辑计划 → 程序计算最终时间线 → 渲染器严格执行�
 | 验收与排查失败 | [验收标准](docs/acceptance.md) |
 | 验证 Replit 或处理部署问题 | [部署与平台验证](docs/deployment.md) |
 | 选择模型、检查选片表现 | [模型与 AI 测试](docs/ai-selection.md) |
+| 从参考 reel 学剪辑节奏/混音/风格，套用到自己的素材（实验） | [参考 reel 风格模板](docs/style-templates.md) |
 | 确认已经作出的取舍 | [决策记录](docs/decisions.md) |
 | 准备素材、录屏和比赛演示 | [准备与 Demo](docs/demo.md) |
 | 知道什么必须保留、由谁维护 | [文档保留与维护](docs/maintenance.md) |
