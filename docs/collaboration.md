@@ -17,7 +17,7 @@
 | 当前文件 / 范围 | 主负责人 | 交接边界 |
 | --- | --- | --- |
 | `src/vlogii/ai.py`、`speech.py` | A | Gemini 视频理解、独立语音转录、选片、排序、提示词和计划校验 |
-| `src/vlogii/media.py`、`timeline.py` | A | 元数据、代理、编码/色彩、帧时间线、字幕映射；B 不在浏览器重算剪辑结果 |
+| `src/vlogii/media.py`、`timeline.py`、`editorial.py` | A | 元数据、代理、编码/色彩、保留/快剪模式、时间范围删除/调速、帧时间线、字幕映射；B 不在浏览器重算剪辑结果 |
 | `src/vlogii/render.py` | A | FFmpeg、原声/字幕、标题布局、暖度、输出校验；新增 BGM/卡点/成片风格也归 A |
 | `src/vlogii/pipeline.py`、`storage.py` | A | 分析缓存、生成/编辑/撤销、版本、锁、保存与恢复 |
 | `src/vlogii/api.py`、`models.py`、`cli.py` | A | HTTP、任务队列、上传、媒体路由、数据模型、调试入口 |
@@ -39,6 +39,8 @@
 - 生成 POST 返回任务状态，前端轮询项目 GET 获取 `job`、`latest`、`video_url`；当前任务状态是 `queued/running/complete/failed`。
 - 编辑提交 `title`、`warmth`、`exclude_clip_ids`；撤销走 `/undo`。前端从响应使用媒体 URL，不拼磁盘路径。
 - 本轮体验修复增加 `/retry`（无请求体）、`job.retryable/kind` 与可选 `language`；模型默认及真实验收限制见 [修复记录](mvp-fixes.md)。已同步前端切换中英文与重试按钮，后续由 B 维护。
+- 新增生成 `mode`、可空 `target_seconds`、`remove_no_speech`，编辑 `remove_ranges/instruction`，以及版本 `selection`；页面已同步模式和可点击示例。省略时长由默认 30 秒改为 AI 决定，旧调用方可显式传 30；见[剪辑模式](editing-modes.md)。
+- 生成新增 `speed/shot_seconds`，编辑新增可空 `speed` 和 `speed_ranges`；时间指令支持删除/倍速，时间坐标取同一当前成片。页面单选栏与现行 OpenAPI 同步；[Shorts 作品结构](shorts-direction.md)是下一批方向，封面/贴画/开头正文拼接仍待实现。
 - 旧 `/api` OpenAPI、`simulation`、`request_id`、`base_version_id` 与 mock 是原比赛设计；当前 Vlogii 没有这些兼容保证。不能把旧 mock 换成 Vlogii 后端就假设前端字段不变。
 
 <a id="s13-3"></a>

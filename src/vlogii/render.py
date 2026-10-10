@@ -124,6 +124,19 @@ def draw_text(item: Text, path: Path, height: int, caption: bool, width: int | N
     )
 
 
+def audio_tempo(speed: float) -> str:
+    """Chain 0.5–2x steps so extreme speeds preserve pitch without sample skipping."""
+    steps = []
+    while speed > 2:
+        steps.append(2)
+        speed /= 2
+    while speed < 0.5:
+        steps.append(0.5)
+        speed /= 0.5
+    steps.append(speed)
+    return ",".join(f"atempo={value:.12g}" for value in steps)
+
+
 def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review], progress=print):
     tools = Tools()
     timeline = compile_timeline(project, plan, reviews)
@@ -157,9 +170,15 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
             for index, segment in enumerate(timeline.segments):
                 progress(f"Rendering {index + 1}/{len(timeline.segments)}: {segment.purpose}")
                 clip = clips[segment.clip_id]
+                source_audio = clip.audio and not plan.mute_source_audio
                 duration = segment.frames / fps
+                source_duration = segment.source_frames / fps
+                effective_speed = segment.source_frames / segment.frames
                 filters = tone_map(clip, color) + [
+                    f"trim=duration={source_duration:.12g}",
+                    f"setpts=(PTS-STARTPTS)/{effective_speed:.12g}",
                     f"fps={fps}",
+                    f"tpad=stop_mode=clone:stop_duration={1 / fps:.12g}",
                     f"trim=end_frame={segment.frames}",
                     "setpts=PTS-STARTPTS",
                     f"scale={fmt.width}:{fmt.height}:force_original_aspect_ratio=decrease:force_divisible_by=2",
@@ -187,7 +206,8 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                 fingerprint = hashlib.sha256(
                     json.dumps(
                         {
-                            "renderer_revision": 2,
+                            "renderer_revision": 5,
+                            "mute_source_audio": plan.mute_source_audio,
                             "clip": clip.sha256,
                             "settings": project.settings.model_dump(mode="json"),
                             "segment": segment.model_dump(mode="json"),
@@ -212,17 +232,19 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                     except (VlogiiError, ValueError, OSError):
                         pass
                 args = ["-ss", str(segment.source_start / fps), "-i", clip.path]
-                if not clip.audio:
+                if not source_audio:
                     args += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
                 args += [
                     "-map",
                     "0:v:0",
                     "-map",
-                    "0:a:0" if clip.audio else "1:a:0",
+                    "0:a:0" if source_audio else "1:a:0",
                     "-vf",
                     ",".join(filters),
                     "-af",
-                    f"aresample=48000:async=1:first_pts=0,apad,atrim=duration={duration},asetpts=PTS-STARTPTS",
+                    f"aresample=48000:async=1:first_pts=0,atrim=duration={source_duration:.12g},asetpts=PTS-STARTPTS,"
+                    + (audio_tempo(effective_speed) if source_audio else "anull")
+                    + f",apad,atrim=duration={duration:.12g},asetpts=PTS-STARTPTS",
                     *codec_args(codec),
                     *color_args(color, codec),
                     "-threads",

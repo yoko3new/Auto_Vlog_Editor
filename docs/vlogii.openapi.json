@@ -421,6 +421,41 @@
             ],
             "title": "Warmth"
           },
+          "remove_ranges": {
+            "items": {
+              "$ref": "#/components/schemas/TimeRange"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Remove Ranges"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "default": ""
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 8.0,
+                "minimum": 0.25
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "speed_ranges": {
+            "items": {
+              "$ref": "#/components/schemas/SpeedRange"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Speed Ranges"
+          },
           "language": {
             "type": "string",
             "enum": [
@@ -437,18 +472,54 @@
       },
       "GenerateRequest": {
         "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "highlights",
+              "keep_most",
+              "keep_all"
+            ],
+            "title": "Mode",
+            "default": "auto"
+          },
+          "target_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1800.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Seconds"
+          },
+          "remove_no_speech": {
+            "type": "boolean",
+            "title": "Remove No Speech",
+            "default": false
+          },
+          "speed": {
+            "type": "number",
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed",
+            "default": 1
+          },
+          "shot_seconds": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.15,
+            "title": "Shot Seconds",
+            "default": 0.5
+          },
           "direction": {
             "type": "string",
             "maxLength": 2000,
             "title": "Direction",
-            "default": "A calm chronological diary of my day."
-          },
-          "target_seconds": {
-            "type": "integer",
-            "maximum": 300.0,
-            "minimum": 5.0,
-            "title": "Target Seconds",
-            "default": 30
+            "default": ""
           },
           "language": {
             "type": "string",
@@ -595,6 +666,16 @@
               }
             ],
             "title": "Duration Seconds"
+          },
+          "selection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Selection"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -609,6 +690,56 @@
           "duration_seconds"
         ],
         "title": "ProjectView"
+      },
+      "Selection": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "highlights",
+              "keep_most",
+              "keep_all"
+            ],
+            "title": "Mode",
+            "default": "auto"
+          },
+          "target_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1800.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Seconds"
+          },
+          "remove_no_speech": {
+            "type": "boolean",
+            "title": "Remove No Speech",
+            "default": false
+          },
+          "speed": {
+            "type": "number",
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed",
+            "default": 1
+          },
+          "shot_seconds": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.15,
+            "title": "Shot Seconds",
+            "default": 0.5
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Selection"
       },
       "Settings": {
         "properties": {
@@ -663,6 +794,55 @@
         "additionalProperties": false,
         "type": "object",
         "title": "Settings"
+      },
+      "SpeedRange": {
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "End"
+          },
+          "speed": {
+            "type": "number",
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "speed"
+        ],
+        "title": "SpeedRange"
+      },
+      "TimeRange": {
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "End"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "TimeRange"
       },
       "ValidationError": {
         "properties": {

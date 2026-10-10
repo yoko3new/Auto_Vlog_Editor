@@ -1,7 +1,8 @@
 import pytest
 
+from vlogii.editorial import black_ranges, retention_plan
 from vlogii.media import Tools, build_proxy, inspect_clip
-from vlogii.models import Plan, Project, Review, Segment, Settings, Text
+from vlogii.models import Plan, Project, Review, Segment, Selection, Settings, Text, TimeRange
 from vlogii.pipeline import edit, undo
 from vlogii.render import render
 from vlogii.storage import VlogiiError, read_json, write_json
@@ -14,6 +15,51 @@ def tools():
     except VlogiiError:
         pytest.skip("FFmpeg must be installed to run media integration tests.")
     return result
+
+
+@pytest.mark.media
+def test_real_black_detection_full_retention_and_frame_range_edit(tmp_path, tools):
+    path = tmp_path / "black-then-blue.mp4"
+    tools.run(
+        [
+            "-f",
+            "lavfi",
+            "-i",
+            "color=black:s=96x64:r=30:d=0.6",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=blue:s=96x64:r=30:d=0.6",
+            "-filter_complex",
+            "[0:v][1:v]concat=n=2:v=1:a=0[v]",
+            "-map",
+            "[v]",
+            "-c:v",
+            "libx264",
+            str(path),
+        ],
+        tmp_path / "source.log",
+    )
+    clip = inspect_clip(tools, path)
+    p = Project(
+        name="range",
+        clips=[clip],
+        settings=Settings(width=96, height=128, encoder="software", color="sdr"),
+    )
+    directory = tmp_path / "project"
+    write_json(directory / "project.json", p)
+    reviews = [Review(clip_id=clip.id, summary="fixture")]
+    found = black_ranges(directory, clip)
+    assert len(found) == 1 and found[0] == pytest.approx((0, 0.6), abs=1 / 30)
+    full_plan = retention_plan(p, reviews, Selection(mode="keep_all"), {clip.id: found})
+    full = render(directory, p, full_plan, reviews)
+    assert read_json(full / "timeline.json")["total_frames"] == 36
+    cut = edit(directory, None, [], None, remove_ranges=[TimeRange(start=0.2, end=0.4)])
+    assert read_json(cut / "timeline.json")["total_frames"] == 30
+    assert undo(directory) == full.name
+    most_plan = retention_plan(p, reviews, Selection(mode="keep_most"), {clip.id: found})
+    most = render(directory, p, most_plan, reviews)
+    assert read_json(most / "timeline.json")["total_frames"] == 18
 
 
 @pytest.fixture
@@ -205,3 +251,52 @@ def test_auto_encoder_falls_back_when_hardware_session_is_unusable(monkeypatch):
         "vlogii.media.subprocess.run", lambda *a, **k: SimpleNamespace(returncode=1)
     )
     assert tools.encoder("sdr", "auto") == "libx264"
+
+
+@pytest.mark.media
+def test_highlight_mute_persists_through_edits_and_avoids_audio_cache(tmp_path, tools, source):
+    import array
+
+    clip = inspect_clip(tools, source)
+    p = Project(
+        name="mute",
+        clips=[clip],
+        settings=Settings(width=96, height=128, color="sdr", encoder="software"),
+    )
+    plan = Plan(
+        title="Test",
+        reasoning="fixture",
+        captions=False,
+        segments=[Segment(clip_id=clip.id, in_sec=0, out_sec=1)],
+    )
+    directory = tmp_path / "project"
+    write_json(directory / "project.json", p)
+    audible = render(directory, p, plan, [])
+    plan.mute_source_audio = True
+    muted = render(directory, p, plan, [])
+    write_json(muted / "selection.json", Selection(mode="highlights"))
+    edited = edit(directory, None, [], None, instruction="0.2-0.6 to 2x")
+    assert read_json(edited / "plan.json")["mute_source_audio"] is True
+    assert read_json(edited / "timeline.json")["total_frames"] == 24
+    for cut, expect_silence in [(audible, False), (muted, True), (edited, True)]:
+        path = tmp_path / f"{cut.name}.raw"
+        tools.run(
+            [
+                "-i",
+                str(cut / "film.mp4"),
+                "-vn",
+                "-ac",
+                "1",
+                "-ar",
+                "48000",
+                "-f",
+                "f32le",
+                str(path),
+            ],
+            tmp_path / f"{cut.name}-audio.log",
+        )
+        samples = array.array("f")
+        samples.frombytes(path.read_bytes())
+        peak = max(abs(sample) for sample in samples)
+        assert peak < 1e-6 if expect_silence else peak > 0.01
+    assert (audible / "film.mp4").exists() and undo(directory) == muted.name

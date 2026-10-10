@@ -4,8 +4,10 @@ import './style.css';
 import { Language, translations, localizeMessage } from './i18n';
 
 type Job = { status: 'queued' | 'running' | 'complete' | 'failed'; message: string; error: string | null; retryable: boolean; kind: 'generate' | 'edit' | null };
+type EditMode = 'auto' | 'highlights' | 'keep_most' | 'keep_all';
 type Project = { name: string; clips: { id: string; name: string; duration: number }[]; job: Job | null;
-  latest: { cut: string; history: string[] } | null; video_url: string | null; duration_seconds: number | null };
+  latest: { cut: string; history: string[] } | null; video_url: string | null; duration_seconds: number | null;
+  selection: { mode: EditMode; target_seconds: number | null; remove_no_speech: boolean; speed: number; shot_seconds: number } | null };
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const result = await fetch('/api/vlogii' + url, options);
@@ -25,7 +27,12 @@ function App() {
   const [files, setFiles] = useState<File[]>([]);
   const [name, setName] = useState('my-day');
   const [direction, setDirection] = useState('');
-  const [seconds, setSeconds] = useState(30);
+  const [seconds, setSeconds] = useState('');
+  const [speed, setSpeed] = useState(1);
+  const [editSpeed, setEditSpeed] = useState<number | null>(null);
+  const [shotSeconds, setShotSeconds] = useState(0.5);
+  const [mode, setMode] = useState<EditMode>('auto');
+  const [removeNoSpeech, setRemoveNoSpeech] = useState(false);
   const [orientation, setOrientation] = useState('portrait');
   const [color, setColor] = useState('sdr');
   const [busy, setBusy] = useState(false);
@@ -33,8 +40,30 @@ function App() {
   const [title, setTitle] = useState('');
   const [excluded, setExcluded] = useState<string[]>([]);
   const [warmer, setWarmer] = useState(false);
+  const [instruction, setInstruction] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const active = project?.job?.status === 'queued' || project?.job?.status === 'running';
+  const retention = mode === 'keep_all' || mode === 'keep_most';
+  const validSeconds = !seconds.trim() || (Number.isFinite(Number(seconds)) && Number(seconds) >= 1 && Number(seconds) <= 1800);
+  const examples: { text: string; mode: EditMode; removeNoSpeech?: boolean }[] = [
+    { text: t.exampleAll, mode: 'keep_all' },
+    { text: t.exampleMost, mode: 'keep_most' },
+    { text: t.exampleNoSpeech, mode: 'keep_most', removeNoSpeech: true },
+    { text: t.exampleHighlights, mode: 'highlights' },
+    { text: t.exampleLong, mode: 'auto' },
+  ];
+  function addExample(example: typeof examples[number]) {
+    const presetLines = (['en', 'zh'] as Language[]).flatMap(locale => {
+      const labels = translations(locale);
+      return [labels.exampleAll, labels.exampleMost, labels.exampleNoSpeech, labels.exampleHighlights, labels.exampleLong];
+    });
+    setDirection(value => {
+      const ownText = value.split('\n').filter(line => !presetLines.includes(line.trim())).join('\n').trim();
+      return ownText ? ownText + '\n' + example.text : example.text;
+    });
+    setMode(example.mode); setSeconds(''); setRemoveNoSpeech(example.removeNoSpeech || false);
+  }
+  useEffect(() => { setInstruction(''); setExcluded([]); setTitle(''); setWarmer(false); setEditSpeed(null); }, [project?.name]);
 
   useEffect(() => {
     request<Project[]>('/projects').then(items => {
@@ -82,7 +111,7 @@ function App() {
     if (!project) return;
     await perform(async () => {
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/generate`, { method: 'POST',
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, target_seconds: seconds, language }) });
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, mode, target_seconds: retention || !seconds.trim() ? null : Number(seconds), speed, shot_seconds: shotSeconds, remove_no_speech: mode === 'keep_most' && removeNoSpeech, language }) });
       setProject({ ...project, job });
     });
   }
@@ -92,8 +121,8 @@ function App() {
     await perform(async () => {
       const job = await request<Job>(`/projects/${encodeURIComponent(project.name)}/edit`, { method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim() || null, exclude_clip_ids: excluded, warmth: warmer ? 0.5 : null, language }) });
-      setProject({ ...project, job }); setExcluded([]);
+        body: JSON.stringify({ title: title.trim() || null, exclude_clip_ids: excluded, warmth: warmer ? 0.5 : null, instruction, speed: editSpeed, language }) });
+      setProject({ ...project, job }); setExcluded([]); setInstruction(''); setEditSpeed(null);
     });
   }
 
@@ -123,11 +152,17 @@ function App() {
           </>}
         </section>
         <section className="panel"><div className="section-heading"><span>02</span><h2>{t.directionHeading}</h2></div>
+          <label>{t.mode}<select value={mode} onChange={event => {setMode(event.target.value as EditMode);setSeconds('');}} disabled={busy || active}><option value="auto">{t.modeAuto}</option><option value="highlights">{t.modeHighlights}</option><option value="keep_most">{t.modeMost}</option><option value="keep_all">{t.modeAll}</option></select></label>
+          <p className="hint">{mode === 'keep_all' ? t.allHint : mode === 'keep_most' ? t.mostHint : mode === 'highlights' ? t.highlightsHint : t.autoHint}</p>
+          {mode === 'keep_most' && <label className="check"><input type="checkbox" checked={removeNoSpeech} onChange={event => setRemoveNoSpeech(event.target.checked)} disabled={busy || active}/>{t.removeNoSpeech}</label>}
           <label>{t.direction}<textarea placeholder={t.directionPlaceholder} value={direction} onChange={event => setDirection(event.target.value)} maxLength={2000} disabled={active}/></label>
-          <label>{t.target}<select value={seconds} onChange={event => setSeconds(Number(event.target.value))} disabled={active}><option value={30}>{t.sec30}</option><option value={60}>{t.sec60}</option><option value={150}>{t.sec150}</option></select></label>
-          <p className="hint">{t.targetHint}</p><p className="hint">{t.audioHint}</p>
+          <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{examples.map(example => <button type="button" key={example.text} disabled={busy || active || (direction.length + example.text.length + 1 > 2000)} onClick={() => addExample(example)}>{example.text}</button>)}</div>
+          {!retention && <><label>{t.target}<input type="number" min={1} max={1800} step="any" placeholder={t.targetPlaceholder} value={seconds} onChange={event => setSeconds(event.target.value)} disabled={busy || active}/></label><p className="hint">{t.targetHint}</p></>}
+          {mode === 'highlights' && <fieldset className="radio-bar" disabled={busy || active}><legend>{t.cadence}</legend>{[0.25, 0.35, 0.5, 0.8].map(value => <label key={value}><input type="radio" name="cadence" value={value} checked={shotSeconds === value} onChange={() => setShotSeconds(value)}/>{value}s</label>)}</fieldset>}
+          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.speed}</legend>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="generate-speed" value={value} checked={speed === value} onChange={() => setSpeed(value)}/>{value}×</label>)}</fieldset><p className="hint">{t.speedHint}</p>
+          <p className="hint">{mode === 'highlights' ? t.highlightsAudioHint : t.audioHint}</p>
           <p className="hint">{t.privacy}</p>
-          <button className="primary" onClick={generateFilm} disabled={!project || busy || active}>{active ? t.making : project?.latest ? t.newVersion : t.generate}</button>
+          <button className="primary" onClick={generateFilm} disabled={!project || busy || active || (!retention && !validSeconds)}>{active ? t.making : project?.latest ? t.newVersion : t.generate}</button>
         </section>
       </aside>
       <div className="workspace">
@@ -145,10 +180,13 @@ function App() {
           setProject({ ...project, job });
         })}>{t.retry}</button><p className="hint">{t.retryHint}</p></div>}
         {project?.latest && <section className="panel edits"><div className="section-heading"><span>03</span><h2>{t.edits}</h2></div>
+          <fieldset className="radio-bar" disabled={busy || active}><legend>{t.editSpeed}</legend><label><input type="radio" name="edit-speed" checked={editSpeed === null} onChange={() => setEditSpeed(null)}/>{t.unchanged}</label>{[0.5, 1, 1.5, 2, 4, 8].map(value => <label key={value}><input type="radio" name="edit-speed" value={value} checked={editSpeed === value} onChange={() => setEditSpeed(value)}/>{value}×</label>)}</fieldset><p className="hint">{t.editSpeedHint}</p>
+          <label>{t.timeEdits}<textarea placeholder={t.timeEditsPlaceholder} value={instruction} onChange={event => setInstruction(event.target.value)} maxLength={1000} disabled={busy || active}/></label><p className="hint">{t.timeEditsHint}</p>
+          <div className="input-examples" aria-label={t.examples}><span>{t.examples}</span>{[t.exampleRemove, t.exampleSpeed].map(example => <button type="button" key={example} disabled={busy || active || instruction.length + example.length + 2 > 1000} onClick={() => setInstruction(value => value.trim() ? value.trim() + '; ' + example : example)}>{example}</button>)}</div>
           <label>{t.title}<input placeholder={t.titlePlaceholder} value={title} onChange={event => setTitle(event.target.value)} maxLength={100} disabled={active}/></label>
           <label className="check"><input type="checkbox" checked={warmer} onChange={event => setWarmer(event.target.checked)} disabled={active}/>{t.warmer}</label>
           <details><summary>{t.exclude}</summary>{project.clips.map(clip => <label className="check" key={clip.id}><input type="checkbox" disabled={active} checked={excluded.includes(clip.id)} onChange={event => setExcluded(items => event.target.checked ? [...items,clip.id] : items.filter(id=>id!==clip.id))}/>{clip.name}</label>)}</details>
-          <div className="edit-actions"><button className="primary" disabled={busy || active || (!title.trim() && !excluded.length && !warmer)} onClick={applyEdit}>{t.apply}</button>
+          <div className="edit-actions"><button className="primary" disabled={busy || active || (!title.trim() && !excluded.length && !warmer && !instruction.trim() && editSpeed === null)} onClick={applyEdit}>{t.apply}</button>
           <button className="secondary" disabled={busy || active || project.latest.history.length < 2} onClick={() => perform(async () => { setProject(await request<Project>(`/projects/${encodeURIComponent(project.name)}/undo`, { method: 'POST' })); })}>{t.undo}</button></div>
           <p className="hint">{t.editHint}</p>
         </section>}

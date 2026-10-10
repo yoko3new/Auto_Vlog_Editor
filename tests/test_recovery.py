@@ -105,7 +105,7 @@ def test_generation_retry_reuses_plan_but_new_direction_replans(tmp_path, monkey
     calls = {"plan": 0, "render": 0}
     monkeypatch.setattr(pipeline, "analyze", lambda *a, **k: None)
 
-    def make_plan(*args):
+    def make_plan(*args, **kwargs):
         calls["plan"] += 1
         return Plan(
             title="周末",

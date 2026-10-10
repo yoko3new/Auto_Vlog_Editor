@@ -77,7 +77,17 @@ def execute(args, resume=False):
             )
         )
     elif command == "run":
-        generate(directory, args.direction, args.seconds, progress, resume=resume)
+        generate(
+            directory,
+            args.direction,
+            args.seconds,
+            progress,
+            resume=resume,
+            mode=getattr(args, "mode", "auto"),
+            remove_no_speech=getattr(args, "remove_no_speech", False),
+            speed=getattr(args, "speed", 1),
+            shot_seconds=getattr(args, "shot_seconds", 0.5),
+        )
     elif command == "edit":
         edit(
             directory,
@@ -86,6 +96,8 @@ def execute(args, resume=False):
             args.warmth,
             progress=progress,
             resume=resume,
+            instruction=getattr(args, "instruction", ""),
+            speed=getattr(args, "speed", None),
         )
     elif command == "undo":
         cut = undo(directory)
@@ -108,7 +120,17 @@ def execute(args, resume=False):
             if command == "analyze":
                 analyze(directory, project, progress, force=args.force)
             elif command == "plan":
-                make_plan(directory, project, args.direction, args.seconds, progress)
+                make_plan(
+                    directory,
+                    project,
+                    args.direction,
+                    args.seconds,
+                    progress,
+                    mode=getattr(args, "mode", "auto"),
+                    remove_no_speech=getattr(args, "remove_no_speech", False),
+                    speed=getattr(args, "speed", 1),
+                    shot_seconds=getattr(args, "shot_seconds", 0.5),
+                )
             elif command == "render":
                 plan = Plan.model_validate(read_json(directory / "plan.json"))
                 render(directory, project, plan, load_reviews(directory), progress)
@@ -118,7 +140,7 @@ def report_error(exc, language):
     message = (
         str(exc) if isinstance(exc, (VlogiiError, OSError, ValueError)) else type(exc).__name__
     )
-    print(say(language, f"Error: {message}", f"操作失败：{message}"))
+    print(say(language, f"Error: {message}", f"操作失败：{translate(message, language)}"))
     print(
         say(
             language,
@@ -226,18 +248,74 @@ def interactive_session(projects, language):
         if choice in {"q", "退出"}:
             return 0
         if choice in {"g", "生成"}:
+            choice_mode = (
+                input(
+                    say(
+                        language,
+                        "Mode [1 auto / 2 opening highlights / 3 keep most / 4 keep all] (1): ",
+                        "模式 [1 AI自动 / 2 开头快剪 / 3 保留大部分 / 4 完整保留] (1)：",
+                    )
+                ).strip()
+                or "1"
+            )
+            modes = {"1": "auto", "2": "highlights", "3": "keep_most", "4": "keep_all"}
+            if choice_mode not in modes:
+                print(say(language, "Choose 1–4.", "请选择 1–4。"))
+                continue
+            mode = modes[choice_mode]
             direction = input(
                 say(language, "Direction (optional): ", "想保留什么/怎样表达（可留空）：")
             ).strip()
             seconds = (
-                input(say(language, "Target seconds [30]: ", "目标秒数 [30]：")).strip() or "30"
+                input(
+                    say(
+                        language,
+                        "Target seconds (blank = mode decides): ",
+                        "目标秒数（留空按模式决定）：",
+                    )
+                ).strip()
+                if mode in {"auto", "highlights"}
+                else ""
             )
-            if not seconds.isdigit() or not 5 <= int(seconds) <= 300:
+            if seconds and (not seconds.isdigit() or not 1 <= int(seconds) <= 1800):
                 print(
                     say(
                         language,
-                        "Choose 5–300 seconds.",
-                        "请输入 5–300 秒；这是输出目标，不是素材时长限制。",
+                        "Choose 1–1800 seconds, or leave blank.",
+                        "请输入 1–1800 秒，或留空；保留模式不设目标时长。",
+                    )
+                )
+                continue
+            try:
+                speed = float(
+                    input(
+                        say(language, "Video speed 0.25–8 (1): ", "视频速度 0.25–8 倍（1）：")
+                    ).strip()
+                    or "1"
+                )
+                shot_seconds = (
+                    float(
+                        input(
+                            say(
+                                language,
+                                "Maximum shot seconds 0.15–1 (0.5): ",
+                                "每镜头最多停留 0.15–1 秒（0.5）：",
+                            )
+                        ).strip()
+                        or "0.5"
+                    )
+                    if mode == "highlights"
+                    else 0.5
+                )
+                from .models import Selection
+
+                Selection(speed=speed, shot_seconds=shot_seconds)
+            except ValueError:
+                print(
+                    say(
+                        language,
+                        "Choose valid speed/shot values.",
+                        "请填写范围内的速度和镜头秒数。",
                     )
                 )
                 continue
@@ -246,7 +324,10 @@ def interactive_session(projects, language):
                 projects=projects,
                 name=name,
                 direction=direction,
-                seconds=int(seconds),
+                seconds=int(seconds) if seconds else None,
+                mode=mode,
+                speed=speed,
+                shot_seconds=shot_seconds,
                 language=language,
             )
 
@@ -296,7 +377,14 @@ def interactive_session(projects, language):
                 .lower()
             )
             warmth = 0.5 if warmer in {"y", "yes", "是"} else None
-            if title is None and not excluded and warmth is None:
+            instruction = input(
+                say(
+                    language,
+                    "Time edits (delete 00:12-00:18 / speed up 00:12-00:18 to 2x): ",
+                    "成片时间修改（可留空，例如 删掉00:12到00:18 / 00:12到00:18加速到2倍）：",
+                )
+            ).strip()
+            if title is None and not excluded and warmth is None and not instruction:
                 continue
 
             args = argparse.Namespace(
@@ -307,6 +395,7 @@ def interactive_session(projects, language):
                 title=title,
                 exclude_clip_ids=excluded,
                 warmth=warmth,
+                instruction=instruction,
             )
 
             def last_action(resume, args=args):
@@ -346,7 +435,13 @@ def main(argv=None):
         if command in {"plan", "run"}:
             sub.add_argument("--direction", default="")
             sub.add_argument(
-                "--seconds", type=int, default=30, choices=range(5, 301), metavar="5-300"
+                "--mode", choices=["auto", "highlights", "keep_most", "keep_all"], default="auto"
+            )
+            sub.add_argument("--remove-no-speech", action="store_true")
+            sub.add_argument("--speed", type=float, default=1)
+            sub.add_argument("--shot-seconds", type=float, default=0.5)
+            sub.add_argument(
+                "--seconds", type=int, default=None, choices=range(1, 1801), metavar="1-1800"
             )
         if command == "analyze":
             sub.add_argument("--force", action="store_true")
@@ -354,6 +449,8 @@ def main(argv=None):
             sub.add_argument("--title")
             sub.add_argument("--exclude-clip-ids", nargs="*", default=[])
             sub.add_argument("--warmth", type=float)
+            sub.add_argument("--speed", type=float)
+            sub.add_argument("--remove-ranges", "--instruction", dest="instruction", default="")
     args = parser.parse_args(argv)
     if not args.command:
         if sys.stdin.isatty():

@@ -14,14 +14,14 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
-from .models import Model, Settings
+from .editorial import parse_edit_instruction, selection_intent
+from .models import Model, Selection, Settings, Speed, SpeedRange, TimeRange
 from .pipeline import EXTENSIONS, edit, generate, initialize, load_project, undo
 from .storage import VlogiiError, locked, project_path, read_json, write_json
 
 
-class GenerateRequest(Model):
-    direction: str = Field(default="A calm chronological diary of my day.", max_length=2000)
-    target_seconds: int = Field(default=30, ge=5, le=300)
+class GenerateRequest(Selection):
+    direction: str = Field(default="", max_length=2000)
     language: Literal["en", "zh"] = "en"
 
 
@@ -29,6 +29,10 @@ class EditRequest(Model):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     exclude_clip_ids: list[str] = Field(default_factory=list, max_length=50)
     warmth: float | None = Field(default=None, ge=0, le=1)
+    remove_ranges: list[TimeRange] = Field(default_factory=list, max_length=50)
+    instruction: str = Field(default="", max_length=1000)
+    speed: Speed | None = None
+    speed_ranges: list[SpeedRange] = Field(default_factory=list, max_length=50)
     language: Literal["en", "zh"] = "en"
 
 
@@ -60,6 +64,7 @@ class ProjectView(Model):
     latest: VersionHistory | None
     video_url: str | None
     duration_seconds: float | None
+    selection: Selection | None = None
 
 
 def public_job(job):
@@ -135,6 +140,11 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             "settings": project.settings.model_dump(),
             "job": public_job(job) if job else None,
             "latest": latest,
+            "selection": (
+                read_json(directory / "cuts" / latest["cut"] / "selection.json")
+                if latest and (directory / "cuts" / latest["cut"] / "selection.json").is_file()
+                else None
+            ),
             "duration_seconds": (
                 read_json(directory / "cuts" / latest["cut"] / "verification.json").get("duration")
                 if latest and (directory / "cuts" / latest["cut"] / "verification.json").is_file()
@@ -242,6 +252,10 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     request.warmth,
                     progress=progress,
                     resume=job.get("resume", False),
+                    remove_ranges=request.remove_ranges,
+                    instruction=request.instruction,
+                    speed=request.speed,
+                    speed_ranges=request.speed_ranges,
                 )
             else:
                 generate(
@@ -250,6 +264,10 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     request.target_seconds,
                     progress=progress,
                     resume=job.get("resume", False),
+                    mode=request.mode,
+                    remove_no_speech=request.remove_no_speech,
+                    speed=request.speed,
+                    shot_seconds=request.shot_seconds,
                 )
             write_json(
                 directory / "job.json",
@@ -282,6 +300,13 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     message = (
                         "Keep at least one selected clip. Change the selection and apply again."
                     )
+                elif (
+                    "Time range" in str(exc)
+                    or "Time edit" in str(exc)
+                    or "Speed ranges" in str(exc)
+                    or "Nothing remains" in str(exc)
+                ):
+                    message = str(exc)
             print(f"Vlogii job failed: {exc}", flush=True)
             write_json(
                 directory / "job.json",
@@ -290,7 +315,16 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     "status": "failed",
                     "message": message,
                     "error": message,
-                    "retryable": "Keep at least" not in str(exc),
+                    "retryable": not any(
+                        label in str(exc)
+                        for label in (
+                            "Keep at least",
+                            "Time range",
+                            "Time edit",
+                            "Speed ranges",
+                            "Nothing remains",
+                        )
+                    ),
                 },
             )
 
@@ -330,6 +364,17 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
     @app.post("/api/vlogii/projects/{name}/generate", status_code=202, response_model=JobState)
     def start(name: str, request: GenerateRequest):
         directory = existing(name)
+        try:
+            selection_intent(
+                request.direction,
+                request.mode,
+                request.target_seconds,
+                request.remove_no_speech,
+                request.speed,
+                request.shot_seconds,
+            )
+        except ValueError as exc:
+            raise VlogiiError("Choose a target between 1 and 1800 seconds.") from exc
         if not (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")):
             raise HTTPException(400, "Set GEMINI_API_KEY in .env and restart the server.")
         return enqueue(directory, request)
@@ -350,7 +395,17 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
         directory = existing(name)
         if not (directory / "latest.json").exists():
             raise HTTPException(400, "Generate a film before editing.")
-        if request.title is None and request.warmth is None and not request.exclude_clip_ids:
+        if request.instruction:
+            parse_edit_instruction(request.instruction)
+        if (
+            request.title is None
+            and request.warmth is None
+            and not request.exclude_clip_ids
+            and request.speed is None
+            and not request.speed_ranges
+            and not request.remove_ranges
+            and not request.instruction.strip()
+        ):
             raise HTTPException(400, "Choose at least one change.")
         return enqueue(directory, request)
 

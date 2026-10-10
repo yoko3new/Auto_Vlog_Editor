@@ -20,12 +20,17 @@ def compile_timeline(project: Project, plan: Plan, reviews: list[Review]) -> Tim
         end = round(segment.out_sec * fps)
         if end <= start or end > round(clip.duration * fps):
             raise VlogiiError(f"Segment {index} has an invalid frame range.")
-        duration = (end - start) / fps
+        source_frames = end - start
+        frames = round(source_frames / segment.speed)
+        if frames < 1:
+            raise VlogiiError(f"Segment {index} is shorter than one output frame at this speed.")
+        effective_speed = source_frames / frames
+        duration = source_frames / fps
         for overlay in segment.overlays:
             if overlay.end > duration + 0.001:
                 raise VlogiiError(f"Overlay in segment {index} extends beyond its segment.")
         captions = []
-        review = review_map.get(clip.id)
+        review = review_map.get(clip.id) if plan.captions else None
         for speech in review.speech if review else []:
             if speech.end > clip.duration + 0.001:
                 raise VlogiiError(f"Transcript extends beyond clip {clip.id}.")
@@ -33,20 +38,29 @@ def compile_timeline(project: Project, plan: Plan, reviews: list[Review]) -> Tim
             right = min(speech.end, end / fps)
             if right > left:
                 captions.append(
-                    Text(start=left - start / fps, end=right - start / fps, text=speech.text)
+                    Text(
+                        start=(left - start / fps) / effective_speed,
+                        end=(right - start / fps) / effective_speed,
+                        text=speech.text,
+                    )
                 )
         segments.append(
             TimelineSegment(
                 clip_id=clip.id,
                 source_start=start,
+                source_frames=source_frames,
+                speed=segment.speed,
                 start=cursor,
-                frames=end - start,
+                frames=frames,
                 purpose=segment.purpose,
-                overlays=segment.overlays,
+                overlays=[
+                    Text(start=t.start / effective_speed, end=t.end / effective_speed, text=t.text)
+                    for t in segment.overlays
+                ],
                 captions=captions,
             )
         )
-        cursor += end - start
+        cursor += frames
     return Timeline(title=plan.title, fps=fps, total_frames=cursor, segments=segments)
 
 

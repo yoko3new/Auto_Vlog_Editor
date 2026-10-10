@@ -1,6 +1,6 @@
 # 已上传 MVP 的功能覆盖
 
-[返回总览](../README.md) · [当前进度](status.md) · [分工](collaboration.md)
+[返回总览](../README.md) · [本地新增剪辑模式](editing-modes.md) · [当前进度](status.md) · [分工](collaboration.md)
 
 上传基线：`kang` 的 `ec21851`（2026-10-10，America/New_York）。这是 Vlogii 本地网页 MVP。下表描述已上传基线；随后授权的 [本地体验修复](mvp-fixes.md)增加 Retry、中英文、独立语音与字幕适配，尚未提交或推送。基线和本轮证据分别记录，私人原始材料不上传，不将小样本推广为全部输入已验证。
 

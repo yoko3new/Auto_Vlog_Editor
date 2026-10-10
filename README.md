@@ -51,6 +51,8 @@ Run one server process. This unauthenticated release is bound to localhost and i
 - Full FFmpeg logs and output verification; failures preserve previous successful films.
 - Retry failed generation or edits with their saved request, plan and completed segments.
 - Chinese/English interface switching and a bilingual interactive CLI; creative direction is optional.
+- AI auto, opening highlights, keep most or keep all; optional duration and clickable input examples.
+- Delete precise ranges from the current film with timestamps or supported Chinese/English phrases.
 
 Default models: `gemini-3.8-flash` for video/planning and `gemini-3.5-transcribe` for speech. Both use the same Gemini API key and are configurable. New model access passed a one-clip live run; accuracy still needs human-ground-truth evaluation; see [MVP fixes and model choices](docs/mvp-fixes.md).
 
@@ -70,6 +72,7 @@ Tests include real FFmpeg exports. Provider test doubles verify failure handling
 ## Documentation and scope
 
 - [MVP feature coverage and remaining competition gaps](docs/mvp-coverage.md)
+- [Editing modes, longer films and time-range changes](docs/editing-modes.md)
 - [Free font/BGM candidates and default/upload design](docs/free-resources.md)
 - [Team ownership and handoff](docs/collaboration.md): Yang Kang owns the video pipeline, AI, backend, renderer and integration; the teammate owns the frontend.
 - [Setup, modules, CLI, supported formats and limitations](docs/vlogii-guide.md)
@@ -82,3 +85,5 @@ This branch implements the local vlog web MVP requested after VX validation. Exi
 BGM, beat matching, magazine decorations, arbitrary natural-language editing, authentication, cloud storage, Replit deployment and NLE exports are outside this release. The original competition MVP is not presented as fully delivered.
 
 Only source, dependency locks, English documentation and non-sensitive verification summaries are published. Footage, transcripts, AI caches, generated videos and keys are excluded.
+
+当前产品方向：[生活记录 Shorts](docs/shorts-direction.md)（封面、闪切、正文）；已实现的速度与剪辑选项见[规则](docs/editing-modes.md)。

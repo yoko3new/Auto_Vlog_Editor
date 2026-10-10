@@ -48,7 +48,7 @@ def test_no_key_is_explicit_and_generate_validation_is_enforced(tmp_path, monkey
         assert client.post("/api/vlogii/projects/day/generate", json={}).status_code == 400
         assert (
             client.post(
-                "/api/vlogii/projects/day/generate", json={"target_seconds": 999}
+                "/api/vlogii/projects/day/generate", json={"target_seconds": 1801}
             ).status_code
             == 422
         )

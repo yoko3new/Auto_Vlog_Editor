@@ -5,10 +5,35 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 
 Seconds = Annotated[FiniteFloat, Field(ge=0)]
+Speed = Annotated[FiniteFloat, Field(ge=0.25, le=8)]
+EditMode = Literal["auto", "highlights", "keep_most", "keep_all"]
 
 
 class Model(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class Selection(Model):
+    mode: EditMode = "auto"
+    target_seconds: Annotated[FiniteFloat, Field(ge=1, le=1800)] | None = None
+    remove_no_speech: bool = False
+    speed: Speed = 1
+    shot_seconds: Annotated[FiniteFloat, Field(ge=0.15, le=1)] = 0.5
+
+
+class TimeRange(Model):
+    start: Seconds
+    end: Seconds
+
+    @model_validator(mode="after")
+    def ordered(self):
+        if self.end <= self.start:
+            raise ValueError("Range end must be greater than start.")
+        return self
+
+
+class SpeedRange(TimeRange):
+    speed: Speed
 
 
 class Clip(Model):
@@ -65,6 +90,7 @@ class Review(Model):
 
 
 class Segment(Model):
+    speed: Speed = 1
     clip_id: str
     in_sec: Seconds
     out_sec: Seconds
@@ -79,6 +105,8 @@ class Segment(Model):
 
 
 class Plan(Model):
+    mute_source_audio: bool = False
+    captions: bool = True
     schema_version: Literal[1] = 1
     title: str = Field(min_length=1, max_length=160)
     reasoning: str
@@ -88,6 +116,8 @@ class Plan(Model):
 class TimelineSegment(Model):
     clip_id: str
     source_start: int
+    source_frames: int = Field(gt=0)
+    speed: Speed = 1
     start: int
     frames: int = Field(gt=0)
     purpose: str

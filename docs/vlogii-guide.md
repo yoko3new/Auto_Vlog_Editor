@@ -52,7 +52,7 @@ On macOS the app automatically prefers Homebrew's `ffmpeg-full`, so no manual `b
 ## What works
 
 - Upload MP4, MOV, M4V or MKV footage, inspect its actual metadata and deduplicate identical files.
-- Creative direction is optional; blank input allows automatic editing. A target duration has a default. The target guides the AI; it is not a guaranteed duration. Insufficient footage is not repeated to fill time.
+- Creative direction and target duration are optional. Choose AI auto, opening highlights, keep most or keep all. Without a target, AI auto decides the length, highlights aims for 12 seconds and retention modes preserve content. Clickable examples populate the input and mode without submitting. See [editing modes and time changes](editing-modes.md).
 - Gemini watches proxy videos and describes visible events. A separate Gemini speech request processes original audio extracted as PCM. Captions retain the source language. `VLOGII_SPEECH_LANGUAGE=auto` supports mixed languages; use a supported BCP-47 code for an explicit hint. The renderer measures complete text against output width and height and selects Arial Unicode on macOS or Noto CJK on Linux; set `VLOGII_FONT` to override the font. Speech transcription needs human review.
 - The AI selects source intervals and occasional factual text. Python validates references, ranges and overlays, then computes all output timing in integer frames.
 - FFmpeg preserves original audio, adds silence to clips without audio, burns text and captions, normalizes segments and joins them.
@@ -63,7 +63,7 @@ On macOS the app automatically prefers Homebrew's `ffmpeg-full`, so no manual `b
 - The browser offers Chinese/English switching, saved locally. Unicode project names and creative direction are supported. UI language does not force speech language.
 - Local project records, analysis caches, plans, timelines, full FFmpeg logs and successful versions are stored under `projects/` and ignored by Git.
 
-Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage, and target durations of 5–300 seconds. Warmth edits use SDR output. Re-generating an AI plan uses the original imported clip set; removing a clip is a version edit, not a permanent deletion of source footage.
+Limits: 50 clips, 512 MB per clip, 2 GB per upload, 30 minutes of source footage, and optional target durations of 1–1800 seconds for AI auto/highlights. Warmth edits use SDR output. Re-generating an AI plan uses the original imported clip set; removing a clip is a version edit, not a permanent deletion of source footage.
 
 ## Scope and compatibility
 
@@ -81,6 +81,7 @@ src/vlogii/
   ai.py           Gemini video reviews and validated planning
   speech.py       Independent original-audio Gemini transcription
   i18n.py         Chinese CLI status messages
+  editorial.py    Retention modes, black detection and time-range changes
   timeline.py     Deterministic frame timing and caption remapping
   render.py       Text, audio, HDR, encoding and output verification
   pipeline.py     Analysis caching, generation, edits and undo
@@ -115,7 +116,9 @@ The web app and CLI use the same modules:
 
 ```sh
 uv run vlogii init my-day /absolute/path/to/footage --color sdr
-uv run vlogii run my-day --seconds 30 --direction "A quiet chronological diary"
+uv run vlogii run my-day --mode keep_all
+uv run vlogii run my-day --mode highlights --seconds 12
+uv run vlogii run my-day --seconds 120 --direction "A chronological diary"
 uv run vlogii retry my-day  # Resume the saved failed generation or edit
 uv run vlogii edit my-day --title "Slow Sunday" --warmth 0.5
 uv run vlogii status my-day
@@ -125,12 +128,20 @@ uv run vlogii undo my-day
 
 Use `vlogii --projects /another/local/directory ...` to choose a different workspace. This release supports macOS and Linux; Windows project locking is not implemented.
 
-Run `uv run vlogii` in a terminal to choose Chinese/English and stay in an interactive generate/retry/edit/undo session. Commands accept `--language zh` or `--language en`; descriptions can use either language regardless of the interface. For example: `uv run vlogii --language zh run 周末 --direction "保留早餐和散步"`. Failed interactive commands offer retry without exiting; non-interactive use prints an explicit retry command. The 5–300 second constraint applies to target output, not input clip length.
+Run `uv run vlogii` in a terminal to choose Chinese/English and stay in an interactive generate/retry/edit/undo session. Commands accept `--language zh` or `--language en`; descriptions can use either language regardless of the interface. For example: `uv run vlogii --language zh run 周末 --direction "保留早餐和散步"`. Failed interactive commands offer retry without exiting; non-interactive use prints an explicit retry command. The 1–1800 second constraint applies only to an explicit target in AI auto/highlights; retention modes do not set a target.
 
 The retry API is `POST /api/vlogii/projects/{name}/retry`, with no body. `JobState` adds `retryable` and `kind`; generation/edit accept optional `language`. Existing requests remain valid. The saved request stays private in local job records. Current retry has no old-contract `request_id` idempotency guarantee; the backend prevents simultaneous work on one project. Frontend controls and [OpenAPI](vlogii.openapi.json) use the same fields.
+
+Generate requests add `mode` and `remove_no_speech`; `target_seconds` is now optional (default null). Edit requests add `remove_ranges` in current-film seconds and `instruction` for supported time deletion phrases. `ProjectView.selection` describes the latest version’s resolved mode. This changes the omitted-target behavior; callers requiring the old default must send 30 explicitly. See [editing semantics](editing-modes.md) and the updated [OpenAPI](vlogii.openapi.json).
 
 ## Data and publishing
 
 Only source code, dependency locks, English documentation, API schema and non-sensitive verification summaries belong in Git. No API keys, footage, private prompts, transcripts, generated videos, analysis caches or local absolute paths are part of the published project.
 
 This first release is suitable for local testing and iteration. Successful decoding is not proof of good editorial choices, correct transcription, performance on every input or production readiness.
+
+### Flash cuts and playback speed
+
+`run/plan --speed 1 --shot-seconds 0.5` changes export speed and the maximum output shot length for highlights. `edit --speed 1` restores source speed; `edit --instruction "00:12到00:18加速到2倍"` changes only that interval in the current film. Rates are absolute; subtitles and audio follow the frame timeline. The web UI offers separate radio groups for cadence and speed. See [editing rules](editing-modes.md) and the [Shorts direction](shorts-direction.md); cover styling and automatic opening/body assembly are still pending.
+
+Highlights exports now mute source audio by default, preserving that choice through edits/retries. Normal body/retention modes keep source audio. A silent AAC track keeps the MP4 suitable for future opening/body concatenation; BGM is still pending.
