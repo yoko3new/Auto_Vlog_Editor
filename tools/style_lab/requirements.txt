@@ -1,0 +1,11 @@
+# Style lab tools: local development only, not the app runtime. Versions as tested.
+# Install into the ignored work/.venv: python3 -m venv work/.venv && work/.venv/bin/pip install -r tools/style_lab/requirements.txt
+numpy==2.5.4
+scipy==1.18.1
+librosa==1.0.0
+soundfile==0.14.0
+pillow==12.3.0
+# Optional: voice detection in analyze_reference.py (bundles the Silero VAD model; no download)
+faster-whisper==1.2.1
+# Optional: fetching a public reference reel into work/references for analysis
+yt-dlp==2026.8.19

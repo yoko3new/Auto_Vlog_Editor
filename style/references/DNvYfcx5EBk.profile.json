@@ -1,0 +1,526 @@
+{
+  "profile_version": 1,
+  "source": {
+    "url": "https://www.instagram.com/reel/DNvYfcx5EBk/",
+    "file_name": "DNvYfcx5EBk.mp4",
+    "note": "Measurements of a third-party reel for style reference only; the media is not stored in Git."
+  },
+  "media": {
+    "duration_s": 15.303991,
+    "has_video": true,
+    "has_audio": true,
+    "tags": {
+      "major_brand": "isom",
+      "minor_version": "512",
+      "compatible_brands": "isomiso2mp41",
+      "encoder": "Lavf60.16.100"
+    },
+    "width": 1080,
+    "height": 1920,
+    "rotation": 0,
+    "fps": 30.0,
+    "video_codec": "vp9",
+    "color_transfer": "bt709",
+    "audio_codec": "aac",
+    "sample_rate": 44100
+  },
+  "shots": {
+    "count": 24,
+    "mean_s": 0.636,
+    "median_s": 0.667,
+    "p10_s": 0.467,
+    "p90_s": 0.823,
+    "min_s": 0.067,
+    "max_s": 0.9,
+    "duration_beats_histogram": {
+      "1.5": 11,
+      "2": 7,
+      "1": 3,
+      "0.5": 1
+    }
+  },
+  "structure": {
+    "hook": null,
+    "body_median_shot_s": 0.7,
+    "end_card": {
+      "duration_s": 0.067
+    }
+  },
+  "pacing_by_window": [
+    {
+      "start_s": 0.0,
+      "shots": 9,
+      "median_shot_s": 0.633
+    },
+    {
+      "start_s": 5.0,
+      "shots": 8,
+      "median_shot_s": 0.65
+    },
+    {
+      "start_s": 10.0,
+      "shots": 6,
+      "median_shot_s": 0.8
+    },
+    {
+      "start_s": 15.0,
+      "shots": 1,
+      "median_shot_s": 0.067
+    }
+  ],
+  "colour": {
+    "luma": 0.447,
+    "contrast": 0.21,
+    "saturation": 0.461,
+    "warmth": 0.222
+  },
+  "audio": {
+    "loudness": {
+      "integrated_lufs": -14.0,
+      "loudness_range_lu": 1.7,
+      "true_peak_dbtp": -1.2
+    },
+    "mix_shape": {
+      "body_level_dbfs": -13.9,
+      "level_p10_p90_dbfs": [
+        -16.4,
+        -12.3
+      ],
+      "audio_starts_at_s": 0.0,
+      "fade_in_s": 0.0,
+      "fade_out_s": 0.0,
+      "dips": []
+    },
+    "voice": {
+      "status": "ok",
+      "voice_ratio": 0.0,
+      "segments_s": [],
+      "note": "Sung vocals also count as voice; confirm narration by listening or captions."
+    },
+    "music": {
+      "tempo_bpm": 143.55,
+      "beat_period_s": 0.4154,
+      "beat_interval_cv": 0.0237,
+      "downbeat_phase": 3,
+      "downbeat_confidence": 0.781
+    }
+  },
+  "cut_sync": {
+    "tolerance_s": 0.06,
+    "cuts_measured": 23,
+    "downbeat": {
+      "hit_rate": 0.087,
+      "chance_rate": 0.072,
+      "median_offset_s_of_hits": 0.014
+    },
+    "beat": {
+      "hit_rate": 0.13,
+      "chance_rate": 0.289,
+      "median_offset_s_of_hits": 0.024
+    },
+    "half_beat": {
+      "hit_rate": 0.348,
+      "chance_rate": 0.578,
+      "median_offset_s_of_hits": 0.002
+    },
+    "quarter_beat": {
+      "hit_rate": 0.957,
+      "chance_rate": 1.0,
+      "median_offset_s_of_hits": 0.004
+    },
+    "any_onset": {
+      "hit_rate": 0.348,
+      "chance_rate": 0.324
+    },
+    "strong_accent": {
+      "hit_rate": 0.043,
+      "chance_rate": 0.097
+    },
+    "accent_alignment": {
+      "onset_z_near_cuts": 0.106,
+      "random_p95": 0.599,
+      "best_lag_s": -0.018,
+      "locked": false
+    }
+  },
+  "beat_grid": {
+    "beats_s": [
+      0.039,
+      0.479,
+      0.924,
+      1.367,
+      1.806,
+      2.237,
+      2.666,
+      3.096,
+      3.522,
+      3.94,
+      4.353,
+      4.763,
+      5.173,
+      5.584,
+      5.996,
+      6.409,
+      6.822,
+      7.232,
+      7.645,
+      8.06,
+      8.476,
+      8.891,
+      9.307,
+      9.722,
+      10.14,
+      10.555,
+      10.971,
+      11.383,
+      11.796,
+      12.209,
+      12.622,
+      13.035,
+      13.446,
+      13.858,
+      14.272,
+      14.691
+    ],
+    "downbeats_s": [
+      1.367,
+      3.096,
+      4.763,
+      6.409,
+      8.06,
+      9.722,
+      11.383,
+      13.035,
+      14.691
+    ],
+    "strong_accents_s": [
+      0.093,
+      0.186,
+      0.348,
+      0.511,
+      0.58,
+      0.906,
+      1.091,
+      1.231,
+      1.463,
+      1.602,
+      3.135,
+      9.915,
+      13.05
+    ]
+  },
+  "shot_list": [
+    {
+      "index": 0,
+      "start_frame": 0,
+      "end_frame": 20,
+      "start_s": 0.0,
+      "duration_s": 0.667,
+      "motion": 0.0105,
+      "luma": 0.423,
+      "contrast": 0.224,
+      "saturation": 0.655,
+      "warmth": 0.335,
+      "duration_beats": 1.61
+    },
+    {
+      "index": 1,
+      "start_frame": 20,
+      "end_frame": 34,
+      "start_s": 0.667,
+      "duration_s": 0.467,
+      "motion": 0.011,
+      "luma": 0.459,
+      "contrast": 0.14,
+      "saturation": 0.462,
+      "warmth": 0.239,
+      "duration_beats": 1.12
+    },
+    {
+      "index": 2,
+      "start_frame": 34,
+      "end_frame": 50,
+      "start_s": 1.133,
+      "duration_s": 0.533,
+      "motion": 0.0031,
+      "luma": 0.474,
+      "contrast": 0.154,
+      "saturation": 0.499,
+      "warmth": 0.254,
+      "duration_beats": 1.28
+    },
+    {
+      "index": 3,
+      "start_frame": 50,
+      "end_frame": 72,
+      "start_s": 1.667,
+      "duration_s": 0.733,
+      "motion": 0.0066,
+      "luma": 0.426,
+      "contrast": 0.227,
+      "saturation": 0.442,
+      "warmth": 0.213,
+      "duration_beats": 1.76
+    },
+    {
+      "index": 4,
+      "start_frame": 72,
+      "end_frame": 91,
+      "start_s": 2.4,
+      "duration_s": 0.633,
+      "motion": 0.0027,
+      "luma": 0.567,
+      "contrast": 0.199,
+      "saturation": 0.268,
+      "warmth": 0.168,
+      "duration_beats": 1.52
+    },
+    {
+      "index": 5,
+      "start_frame": 91,
+      "end_frame": 107,
+      "start_s": 3.033,
+      "duration_s": 0.533,
+      "motion": 0.008,
+      "luma": 0.525,
+      "contrast": 0.209,
+      "saturation": 0.277,
+      "warmth": 0.151,
+      "duration_beats": 1.28
+    },
+    {
+      "index": 6,
+      "start_frame": 107,
+      "end_frame": 116,
+      "start_s": 3.567,
+      "duration_s": 0.3,
+      "motion": 0.0055,
+      "luma": 0.522,
+      "contrast": 0.206,
+      "saturation": 0.328,
+      "warmth": 0.184,
+      "duration_beats": 0.72
+    },
+    {
+      "index": 7,
+      "start_frame": 116,
+      "end_frame": 143,
+      "start_s": 3.867,
+      "duration_s": 0.9,
+      "motion": 0.0079,
+      "luma": 0.46,
+      "contrast": 0.225,
+      "saturation": 0.438,
+      "warmth": 0.234,
+      "duration_beats": 2.17
+    },
+    {
+      "index": 8,
+      "start_frame": 143,
+      "end_frame": 164,
+      "start_s": 4.767,
+      "duration_s": 0.7,
+      "motion": 0.0143,
+      "luma": 0.451,
+      "contrast": 0.204,
+      "saturation": 0.284,
+      "warmth": 0.141,
+      "duration_beats": 1.69
+    },
+    {
+      "index": 9,
+      "start_frame": 164,
+      "end_frame": 178,
+      "start_s": 5.467,
+      "duration_s": 0.467,
+      "motion": 0.0053,
+      "luma": 0.391,
+      "contrast": 0.18,
+      "saturation": 0.38,
+      "warmth": 0.171,
+      "duration_beats": 1.12
+    },
+    {
+      "index": 10,
+      "start_frame": 178,
+      "end_frame": 193,
+      "start_s": 5.933,
+      "duration_s": 0.5,
+      "motion": 0.0028,
+      "luma": 0.368,
+      "contrast": 0.194,
+      "saturation": 0.376,
+      "warmth": 0.161,
+      "duration_beats": 1.2
+    },
+    {
+      "index": 11,
+      "start_frame": 193,
+      "end_frame": 214,
+      "start_s": 6.433,
+      "duration_s": 0.7,
+      "motion": 0.0035,
+      "luma": 0.408,
+      "contrast": 0.186,
+      "saturation": 0.429,
+      "warmth": 0.132,
+      "duration_beats": 1.69
+    },
+    {
+      "index": 12,
+      "start_frame": 214,
+      "end_frame": 233,
+      "start_s": 7.133,
+      "duration_s": 0.633,
+      "motion": 0.0016,
+      "luma": 0.397,
+      "contrast": 0.205,
+      "saturation": 0.495,
+      "warmth": 0.213,
+      "duration_beats": 1.52
+    },
+    {
+      "index": 13,
+      "start_frame": 233,
+      "end_frame": 252,
+      "start_s": 7.767,
+      "duration_s": 0.633,
+      "motion": 0.0019,
+      "luma": 0.408,
+      "contrast": 0.211,
+      "saturation": 0.47,
+      "warmth": 0.167,
+      "duration_beats": 1.52
+    },
+    {
+      "index": 14,
+      "start_frame": 252,
+      "end_frame": 273,
+      "start_s": 8.4,
+      "duration_s": 0.7,
+      "motion": 0.0032,
+      "luma": 0.418,
+      "contrast": 0.226,
+      "saturation": 0.594,
+      "warmth": 0.318,
+      "duration_beats": 1.69
+    },
+    {
+      "index": 15,
+      "start_frame": 273,
+      "end_frame": 294,
+      "start_s": 9.1,
+      "duration_s": 0.7,
+      "motion": 0.003,
+      "luma": 0.568,
+      "contrast": 0.235,
+      "saturation": 0.451,
+      "warmth": 0.252,
+      "duration_beats": 1.69
+    },
+    {
+      "index": 16,
+      "start_frame": 294,
+      "end_frame": 314,
+      "start_s": 9.8,
+      "duration_s": 0.667,
+      "motion": 0.0048,
+      "luma": 0.467,
+      "contrast": 0.228,
+      "saturation": 0.476,
+      "warmth": 0.256,
+      "duration_beats": 1.61
+    },
+    {
+      "index": 17,
+      "start_frame": 314,
+      "end_frame": 338,
+      "start_s": 10.467,
+      "duration_s": 0.8,
+      "motion": 0.0048,
+      "luma": 0.403,
+      "contrast": 0.225,
+      "saturation": 0.625,
+      "warmth": 0.305,
+      "duration_beats": 1.93
+    },
+    {
+      "index": 18,
+      "start_frame": 338,
+      "end_frame": 362,
+      "start_s": 11.267,
+      "duration_s": 0.8,
+      "motion": 0.0077,
+      "luma": 0.446,
+      "contrast": 0.15,
+      "saturation": 0.491,
+      "warmth": 0.245,
+      "duration_beats": 1.93
+    },
+    {
+      "index": 19,
+      "start_frame": 362,
+      "end_frame": 388,
+      "start_s": 12.067,
+      "duration_s": 0.867,
+      "motion": 0.0051,
+      "luma": 0.486,
+      "contrast": 0.154,
+      "saturation": 0.49,
+      "warmth": 0.254,
+      "duration_beats": 2.09
+    },
+    {
+      "index": 20,
+      "start_frame": 388,
+      "end_frame": 413,
+      "start_s": 12.933,
+      "duration_s": 0.833,
+      "motion": 0.0017,
+      "luma": 0.451,
+      "contrast": 0.199,
+      "saturation": 0.497,
+      "warmth": 0.19,
+      "duration_beats": 2.01
+    },
+    {
+      "index": 21,
+      "start_frame": 413,
+      "end_frame": 436,
+      "start_s": 13.767,
+      "duration_s": 0.767,
+      "motion": 0.0018,
+      "luma": 0.409,
+      "contrast": 0.203,
+      "saturation": 0.506,
+      "warmth": 0.222,
+      "duration_beats": 1.85
+    },
+    {
+      "index": 22,
+      "start_frame": 436,
+      "end_frame": 456,
+      "start_s": 14.533,
+      "duration_s": 0.667,
+      "motion": 0.0039,
+      "luma": 0.446,
+      "contrast": 0.201,
+      "saturation": 0.5,
+      "warmth": 0.217,
+      "duration_beats": 1.61
+    },
+    {
+      "index": 23,
+      "start_frame": 456,
+      "end_frame": 458,
+      "start_s": 15.2,
+      "duration_s": 0.067,
+      "motion": 0.0,
+      "luma": 0.005,
+      "contrast": 0.042,
+      "saturation": 0.0,
+      "warmth": -0.0,
+      "duration_beats": 0.16
+    }
+  ]
+}
