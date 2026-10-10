@@ -6,7 +6,7 @@
 
 ## 当前快照
 
-- 当前阶段：开发准备。真实应用尚未开始，36 小时比赛计时尚未记录开始时间。
+- 当前阶段：开发准备。原团队比赛 MVP 未验收；`kang` 分支现有独立 Vlogii 本地网页实现，见下方英文记录。36 小时比赛计时尚未记录开始时间。
 - 已有：拆分文档、数据/API 契约、开发替身与检查工具；本次检查结果见下方。
 - 尚未完成：真实上传、AI 接入、FFmpeg 出片、网页、Replit 正式部署与恢复测试。
 - 人员：A 待填写；B 待填写。共享仓库：[yoko3new/Auto_Vlog_Editor](https://github.com/yoko3new/Auto_Vlog_Editor)，集成分支 `main`；最新文档提交作为开发准备基线，开工时记录具体 SHA。
@@ -43,3 +43,14 @@
 ## 更新规则
 
 任务开始、完成、失败、移交或发生决定时更新相关行；无新证据时不机械追加。保持本页为短快照；长日志和已结束批次放入独立记录并链接。变更需求/架构写 [decisions.md](decisions.md)，不要在这里复制整份规范。两台电脑只能根据已同步提交和证据汇总，不猜对方尚未推送的进展。
+
+
+## Vlogii implementation on kang — 2026-10-10
+
+The user authorized an independent local web implementation after validating VX.
+The checkout named `vlogii` contains new React/TypeScript, FastAPI and Python video-processing code.
+It uses `/api/vlogii` and separate local models; the original team contracts remain unchanged.
+This scope does not establish acceptance of the original magazine/BGM/Replit competition MVP.
+
+See [Vlogii validation](vlogii-validation.md) for actual evidence and limitations,
+and [the implementation guide](vlogii-guide.md) for startup and debugging.

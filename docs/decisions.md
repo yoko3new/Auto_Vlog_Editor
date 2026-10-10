@@ -33,3 +33,17 @@
 | 2026-10-09 | 共享项目文档、契约与通用 AGENTS.md；个人角色和调度设置留本地 | 两人可使用不同开发工具；共同遵守文件归属、接口和验收 | 已接受；共享内容以 GitHub 当前提交为准 |
 
 AI 供应商、具体模型 ID、真实运行时版本和部署配置仍需实际测试后填写，不把候选当成已选定。
+
+
+## Vlogii local web implementation — 2026-10-10
+
+At the user's request, branch `kang` adds an independent local web MVP based on the
+successfully exercised VX workflow. The core renderer is shared by FastAPI and a
+small debugging CLI. New source and notes are English. No VX source is copied.
+The user clarified that the product should be a website, so this release includes
+React upload, real job status, playback, version edits, undo and download.
+
+The existing competition product and public API contracts are preserved.
+Vlogii's separately versioned `/api/vlogii` interface is documented by its own
+OpenAPI snapshot. Replit, App Storage, BGM and magazine styling remain outside
+this local release and are not marked accepted.
