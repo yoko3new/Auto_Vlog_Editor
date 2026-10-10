@@ -78,10 +78,10 @@ def display_names(project_dir: Path) -> dict:
 
 
 def required_seconds(template: dict) -> float:
-    """Footage the body needs at the template's shortest length."""
+    """Footage the body needs at the template's shortest length, with the planner's gaps."""
     fixed = sum(s["length_s"] or 0 for s in template["sections"])
     fixed += template["end_card"]["length_s"] if template["end_card"] else 0
-    return max(1.0, template["duration"]["min_s"] - fixed)
+    return max(1.0, template["duration"]["min_s"] - fixed) / planner.FILL
 
 
 def fallback_selection(project: Project) -> StyleSelection:
@@ -124,7 +124,9 @@ def choose_moments(
         )
     finally:
         director.close()
-    write_json(checkpoint_path, {"context": context, "selection": selection})
+    write_json(
+        checkpoint_path, {"context": context, "selection": selection.model_dump(mode="json")}
+    )
     return selection, True
 
 

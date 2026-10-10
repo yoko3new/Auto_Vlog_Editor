@@ -28,11 +28,17 @@ PLAN_VERSION = 1
 AUDIO_SR = 22050
 VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".mkv", ".webm"}
 EDGE_TRIM_S = 0.15
+# Shots use at most this share of each clip, leaving gaps so cuts read as cuts.
+FILL = 0.9
 TEXT_FIELDS = ("kicker", "title", "subtitle", "time_range", "location", "end_card")
 
 
 class PlanError(VlogiiError):
     pass
+
+
+class FitError(PlanError):
+    """The shots cannot be split over the clips at this length; a shorter film may fit."""
 
 
 @dataclass
@@ -309,6 +315,35 @@ def place_hook(grid: Grid, start: float, lengths: list[float], clips: list[Clip]
     return shots
 
 
+def split_shots(seconds: list[float], capacity: np.ndarray, ideal: np.ndarray) -> list[int] | None:
+    """Split shots, in order, into one non-empty run per clip that fits the clip's capacity.
+
+    Dynamic programming finds the split closest to ``ideal`` shot counts, so a valid split
+    is always found when one exists. Returns shot counts per clip, or None.
+    """
+    clips, shots = len(capacity), len(seconds)
+    prefix = np.concatenate([[0.0], np.cumsum(seconds)])
+    best = np.full((clips + 1, shots + 1), np.inf)
+    choice = np.zeros((clips + 1, shots + 1), dtype=int)
+    best[0, 0] = 0.0
+    for k in range(clips):
+        for j in range(1, shots + 1):
+            i = j - 1
+            while i >= 0 and prefix[j] - prefix[i] <= capacity[k] + 1e-9:
+                cost = best[k, i] + (j - i - ideal[k]) ** 2
+                if cost < best[k + 1, j]:
+                    best[k + 1, j], choice[k + 1, j] = cost, i
+                i -= 1
+    if not np.isfinite(best[clips, shots]):
+        return None
+    counts, j = [], shots
+    for k in range(clips, 0, -1):
+        i = choice[k, j]
+        counts.append(j - i)
+        j = i
+    return counts[::-1]
+
+
 def place_body(
     grid: Grid, start: float, lengths: list[float], clips: list[Clip], warnings: list[str]
 ) -> list[dict]:
@@ -324,32 +359,11 @@ def place_body(
         skipped = [clips[i].name for i in range(len(clips)) if i not in indices]
         warnings.append(f"Not enough time for every clip; skipped {', '.join(skipped)}.")
     usable = np.array([clips[i].usable_s for i in indices])
-    raw = np.maximum(1.0, len(lengths) * usable / usable.sum())
-    counts = np.floor(raw).astype(int)
-    while counts.sum() > len(lengths):
-        counts[np.argmax(np.where(counts > 1, counts - raw, -np.inf))] -= 1
-    for i in np.argsort(-(raw - counts))[: len(lengths) - counts.sum()]:
-        counts[i] += 1
     positions = np.cumsum([start] + lengths[:-1])
     seconds = [grid.seconds(p, p + m) for p, m in zip(positions, lengths, strict=True)]
-
-    def demand() -> np.ndarray:
-        bounds = np.concatenate([[0], np.cumsum(counts)])
-        return np.array([sum(seconds[bounds[k] : bounds[k + 1]]) for k in range(len(counts))])
-
-    for _ in range(4 * len(lengths)):
-        over = demand() - 0.95 * usable
-        if (over <= 0).all():
-            break
-        k = int(np.argmax(over))
-        slack = 0.95 * usable - demand()
-        neighbours = [j for j in (k - 1, k + 1) if 0 <= j < len(counts)]
-        if counts[k] <= 1 or not neighbours:
-            raise PlanError(f"{clips[indices[k]].name} is too short for its shots; add footage.")
-        counts[k] -= 1
-        counts[max(neighbours, key=lambda j: slack[j])] += 1
-    else:
-        raise PlanError("The footage is too short to fill the film without repeating frames.")
+    counts = split_shots(seconds, FILL * usable, len(lengths) * usable / usable.sum())
+    if counts is None:
+        raise FitError("The footage is too short to fill the film without repeating frames.")
 
     shots, pos, n = [], start, 0
     for k, count in zip(indices, counts, strict=True):
@@ -406,6 +420,31 @@ def output_for(template: dict, size: tuple[int, int] | None) -> dict:
     return out
 
 
+def lay_out(grid, sections, fixed, body_beats, clips, rng, warnings):
+    shots, section_rows, pos = [], [], 0.0
+    for section in sections:
+        beats_here = fixed.get(section["role"], body_beats)
+        start, end = pos, pos + beats_here
+        lengths = shot_lengths(grid, start, end, section, rng)
+        if section["role"] == "hook":
+            placed = place_hook(grid, start, lengths, clips)
+        else:
+            placed = place_body(grid, start, lengths, clips, warnings)
+        for shot in placed:
+            shot["section"] = section["role"]
+        shots += placed
+        section_rows.append(
+            {
+                "role": section["role"],
+                "start_frame": grid.frame(start),
+                "end_frame": grid.frame(end),
+                "beats": beats_here,
+            }
+        )
+        pos = end
+    return shots, section_rows, pos
+
+
 def plan(
     template: dict,
     music_path: Path,
@@ -448,7 +487,7 @@ def plan(
     dur = template["duration"]
     target_s = min(max(duration or dur["target_s"], dur["min_s"]), dur["max_s"])
     body_rule = next(s for s in sections if s["role"] == "body")
-    material = sum(c.usable_s for c in clips)
+    material = FILL * sum(c.usable_s for c in clips)
     body_target_s = max(target_s - (sum(fixed.values()) + end_card_beats) * period, 0)
     if len(clips) * body_rule["shot"]["target_s"] > body_target_s:
         grown = min(
@@ -484,39 +523,40 @@ def plan(
         body_beats = total_beats - sum(fixed.values()) - end_card_beats
     if body_beats * period > material:
         raise PlanError(
-            f"Not enough footage: this style needs {body_beats * period:.1f}s, "
-            f"the selected clips give {material:.1f}s."
+            f"Not enough footage: this style needs {body_beats * period / FILL:.1f}s, "
+            f"the selected clips give {material / FILL:.1f}s."
         )
     if total_beats < music_limited:
         warnings.append(f"Shortened to {total_beats * period:.1f}s because the footage runs out.")
 
-    start_index = choose_start(
-        music, y, music_start or template["music"]["start"], total_beats, music_dur
-    )
-    grid = Grid(beat_times, start_index, fps)
-    rng = np.random.default_rng(sum(map(ord, template["id"])))
-
-    shots, section_rows, pos = [], [], 0.0
-    for section in sections:
-        beats_here = fixed.get(section["role"], body_beats)
-        start, end = pos, pos + beats_here
-        lengths = shot_lengths(grid, start, end, section, rng)
-        if section["role"] == "hook":
-            placed = place_hook(grid, start, lengths, clips)
-        else:
-            placed = place_body(grid, start, lengths, clips, warnings)
-        for shot in placed:
-            shot["section"] = section["role"]
-        shots += placed
-        section_rows.append(
-            {
-                "role": section["role"],
-                "start_frame": grid.frame(start),
-                "end_frame": grid.frame(end),
-                "beats": beats_here,
-            }
+    seed = sum(map(ord, template["id"]))
+    fitted = total_beats
+    while True:
+        start_index = choose_start(
+            music, y, music_start or template["music"]["start"], total_beats, music_dur
         )
-        pos = end
+        grid = Grid(beat_times, start_index, fps)
+        attempt_warnings: list[str] = []
+        try:
+            shots, section_rows, pos = lay_out(
+                grid,
+                sections,
+                fixed,
+                body_beats,
+                clips,
+                np.random.default_rng(seed),
+                attempt_warnings,
+            )
+            break
+        except FitError:
+            # Beat-length shots leave unusable remainders in short clips; try one bar less.
+            if total_beats - beats.BEATS_PER_BAR < min_beats:
+                raise
+            total_beats -= beats.BEATS_PER_BAR
+            body_beats -= beats.BEATS_PER_BAR
+    warnings += attempt_warnings
+    if total_beats < fitted:
+        warnings.append(f"Shortened to {total_beats * period:.1f}s so every shot fits its clip.")
     for i in sorted({shot["clip_index"] for shot in shots}):
         clips[i].grade = grade_for(clips[i], template, warmth)
 

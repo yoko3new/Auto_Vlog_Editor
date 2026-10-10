@@ -200,6 +200,7 @@ export function localizeMessage(message: string, language: Language): string {
     [/^The music is ([\d.]+)s; this style needs at least ([\d.]+)s after the first downbeat\.$/, '音乐长 $1 秒，这个风格从第一个强拍起至少需要 $2 秒。'],
     [/^Shortened to ([\d.]+)s to fit the music\.$/, '为配合音乐缩短到 $1 秒。'],
     [/^Shortened to ([\d.]+)s because the footage runs out\.$/, '素材不够，缩短到 $1 秒。'],
+    [/^Shortened to ([\d.]+)s so every shot fits its clip\.$/, '为让每个镜头都放得进所选片段，缩短到 $1 秒。'],
     [/^Length raised from ([\d.]+)s to ([\d.]+)s so every clip gets a shot\.$/, '为让每段素材都出现，时长从 $1 秒增加到 $2 秒。'],
     [/^Not enough time for every clip; skipped (.+)\.$/, '时长不够放下全部素材，跳过了：$1。'],
     [/^No stamps: the clips have no .+\.$/, '没有时间戳：素材缺少拍摄时间或标签。'],

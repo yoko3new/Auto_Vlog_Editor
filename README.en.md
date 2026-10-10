@@ -78,7 +78,7 @@ npm --prefix frontend run build
 python3 tools/check_docs.py
 ```
 
-The latest code validation recorded **114 Python tests**, including real FFmpeg exports and style films (one caption-layout case depends on the Noto CJK font that CI installs), and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
+The latest code validation recorded **116 Python tests**, including real FFmpeg exports and style films (one caption-layout case depends on the Noto CJK font that CI installs), and a successful frontend build. Provider test doubles validate program behavior only; AI quality and remaining limitations are in the [validation record](docs/vlogii-validation.md).
 
 ## Documentation and ownership
 

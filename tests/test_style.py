@@ -101,6 +101,16 @@ def test_shot_lengths_fill_sections_exactly_on_the_grid():
     assert grid.frame(1.5) == round(1.5 * BEAT * 30)
 
 
+def test_shots_split_over_clips_in_order_within_capacity():
+    seconds = [0.9, 0.6, 0.6, 1.2, 0.6, 0.9]
+    counts = planner.split_shots(seconds, np.full(3, 2.0), np.full(3, 2.0))
+    assert counts is not None and sum(counts) == 6 and min(counts) >= 1
+    bounds = np.concatenate([[0], np.cumsum(counts)])
+    assert all(sum(seconds[bounds[k] : bounds[k + 1]]) <= 2.0 for k in range(3))
+    # Ten one-second shots cannot fit three two-second clips without repeating frames.
+    assert planner.split_shots([1.0] * 10, np.full(3, 2.0), np.full(3, 10 / 3)) is None
+
+
 def test_project_size_must_match_style_orientation():
     template = templates.load("ig_cozy_night_study")
     assert planner.output_for(template, (1080, 1920))["width"] == 1080
@@ -226,6 +236,42 @@ def test_style_job_runs_without_a_key_and_reports_plan_errors(tmp_path, monkeypa
             time.sleep(0.01)
         assert job["status"] == "failed"
         assert "Not enough footage" in job["message"] and job["retryable"] is False
+
+
+def test_ai_choice_is_saved_and_reused_on_retry(tmp_path, monkeypatch):
+    directory = seed(tmp_path)
+    monkeypatch.setenv("GEMINI_API_KEY", "test-placeholder")
+    monkeypatch.setattr(film, "analyze", lambda *args, **kwargs: None)
+    monkeypatch.setattr(film, "load_reviews", lambda *args, **kwargs: [])
+    calls = []
+
+    class Director:
+        def __init__(self, evidence):
+            pass
+
+        def style_selection(self, project, reviews, template, direction, required):
+            calls.append(direction)
+            return to_selection(
+                AiStyleChoice(
+                    title="day in my life",
+                    moments=[AiMoment(clip_id="one", in_sec=0, out_sec=3, label="Coffee")],
+                )
+            )
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr("vlogii.ai.Director", Director)
+    project_model = Project.model_validate(read_json(directory / "project.json"))
+    template = templates.load("ig_cozy_night_study")
+    first, ai = film.choose_moments(directory, project_model, template, "", print, resume=False)
+    assert ai and first.moments[0].label == "coffee"
+    saved = read_json(directory / "style-checkpoint.json")
+    assert saved["selection"]["text"]["title"] == "day in my life"
+    again, _ = film.choose_moments(directory, project_model, template, "", print, resume=True)
+    assert again == first and calls == [""]
+    film.choose_moments(directory, project_model, template, "new idea", print, resume=True)
+    assert calls == ["", "new idea"]
 
 
 @pytest.fixture

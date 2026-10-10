@@ -78,7 +78,7 @@ npm --prefix frontend run build
 python3 tools/check_docs.py
 ```
 
-最近代码验证记录为 **114 项 Python 测试**（含真实 FFmpeg 导出与风格成片；其中一项字幕排版测试依赖 CI 安装的 Noto CJK 字体）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
+最近代码验证记录为 **116 项 Python 测试**（含真实 FFmpeg 导出与风格成片；其中一项字幕排版测试依赖 CI 安装的 Noto CJK 字体）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
 
 ## 文档与分工
 
