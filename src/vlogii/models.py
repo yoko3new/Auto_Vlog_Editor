@@ -1,4 +1,4 @@
-"""Local application models, separate from the team's web API contracts."""
+"""Validated project, editing, media and timeline models."""
 
 from typing import Annotated, Literal
 

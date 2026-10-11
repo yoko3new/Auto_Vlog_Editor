@@ -1,41 +1,31 @@
-work/
-outputs/
-output/
-__pycache__/
-*.pyc
+# Credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
 .DS_Store
-.env
-.env.*
-!.env.example
-node_modules/
-frontend/dist/
-fixtures/media/
-fixtures/local-paths.json
-fixtures/ai-selection/private/
 
-# Personal coding-agent setup and historical material stay local.
-agent-roles/
-docs/agent-workflow.md
-docs/archive/
-.codex/
-.agents/
-LOCAL-DEVELOPMENT.md
-
-# Vlogii local application
+# Dependencies and generated build/test files
 .venv/
-.env
-.env.*
-!.env.example
+node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+.coverage
+htmlcov/
 dist/
 build/
+
+# User footage, project state, exports and private validation evidence
 projects/
+work/
+outputs/
+output/
 local-evidence/
-.DS_Store
+fixtures/media/
+fixtures/local-paths.json
+fixtures/ai-selection/private/
 *.mp4
 *.mov
 *.MOV
@@ -43,6 +33,16 @@ local-evidence/
 *.mkv
 *.wav
 *.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
 !src/vlogii/assets/music/*.mp3
-frontend/node_modules/
-frontend/dist/
+
+# Personal coding-assistant configuration and historical notes
+agent-roles/
+docs/agent-workflow.md
+docs/archive/
+.codex/
+.agents/
+LOCAL-DEVELOPMENT.md

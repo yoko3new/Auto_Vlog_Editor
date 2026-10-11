@@ -1,0 +1,2021 @@
+{
+  "components": {
+    "schemas": {
+      "Appearance": {
+        "additionalProperties": false,
+        "properties": {
+          "duck_music": {
+            "default": true,
+            "title": "Duck Music",
+            "type": "boolean"
+          },
+          "font": {
+            "default": "default",
+            "enum": [
+              "default",
+              "noto-sans",
+              "noto-serif",
+              "ma-shan-zheng",
+              "zcool-xiaowei",
+              "caveat",
+              "playfair-display",
+              "tinos",
+              "eb-garamond",
+              "libre-baskerville",
+              "lora",
+              "cinzel",
+              "cormorant-garamond",
+              "montserrat",
+              "source-sans-3"
+            ],
+            "title": "Font",
+            "type": "string"
+          },
+          "music": {
+            "default": "none",
+            "enum": [
+              "uploaded",
+              "none",
+              "auto",
+              "holizna-dreams",
+              "holizna-day-jobs",
+              "holizna-dancing",
+              "holizna-deja-vu",
+              "holizna-childhood",
+              "holizna-advertisements"
+            ],
+            "title": "Music",
+            "type": "string"
+          },
+          "music_volume": {
+            "default": 0.16,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Music Volume",
+            "type": "number"
+          }
+        },
+        "title": "Appearance",
+        "type": "object"
+      },
+      "Body_add_music_api_vlogii_projects__name__music_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_add_music_api_vlogii_projects__name__music_post",
+        "type": "object"
+      },
+      "Body_upload_api_vlogii_projects_post": {
+        "properties": {
+          "color": {
+            "default": "sdr",
+            "title": "Color",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Files",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "orientation": {
+            "default": "portrait",
+            "title": "Orientation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "files"
+        ],
+        "title": "Body_upload_api_vlogii_projects_post",
+        "type": "object"
+      },
+      "Chapter": {
+        "additionalProperties": false,
+        "properties": {
+          "clip_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Clip Ids",
+            "type": "array"
+          },
+          "end": {
+            "minimum": 0.0,
+            "title": "End",
+            "type": "number"
+          },
+          "kind": {
+            "default": "scene",
+            "enum": [
+              "scene",
+              "hook",
+              "body",
+              "end_card",
+              "cover"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "number"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "title",
+          "summary"
+        ],
+        "title": "Chapter",
+        "type": "object"
+      },
+      "ChapterEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "remove",
+              "remove_range",
+              "speed",
+              "instruction"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "chapter_index": {
+            "minimum": 0.0,
+            "title": "Chapter Index",
+            "type": "integer"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "instruction": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "type": "string"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "maximum": 8.0,
+                "minimum": 0.25,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          }
+        },
+        "required": [
+          "chapter_index",
+          "action"
+        ],
+        "title": "ChapterEdit",
+        "type": "object"
+      },
+      "Cover": {
+        "additionalProperties": false,
+        "properties": {
+          "font": {
+            "default": "noto-serif",
+            "enum": [
+              "default",
+              "noto-sans",
+              "noto-serif",
+              "ma-shan-zheng",
+              "zcool-xiaowei",
+              "caveat",
+              "playfair-display",
+              "tinos",
+              "eb-garamond",
+              "libre-baskerville",
+              "lora",
+              "cinzel",
+              "cormorant-garamond",
+              "montserrat",
+              "source-sans-3"
+            ],
+            "title": "Font",
+            "type": "string"
+          },
+          "frame_seconds": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Frame Seconds",
+            "type": "number"
+          },
+          "kicker": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Kicker",
+            "type": "string"
+          },
+          "show_intro": {
+            "default": true,
+            "title": "Show Intro",
+            "type": "boolean"
+          },
+          "style": {
+            "default": "clean",
+            "enum": [
+              "clean",
+              "editorial",
+              "playful"
+            ],
+            "title": "Style",
+            "type": "string"
+          },
+          "subtitle": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "Cover",
+        "type": "object"
+      },
+      "CoverPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "base_cut": {
+            "pattern": "^cut_\\d{3,}$",
+            "title": "Base Cut",
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/Cover"
+          }
+        },
+        "required": [
+          "cover",
+          "base_cut"
+        ],
+        "title": "CoverPreviewRequest",
+        "type": "object"
+      },
+      "EditRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Appearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "base_cut": {
+            "anyOf": [
+              {
+                "pattern": "^cut_\\d{3,}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Cut"
+          },
+          "chapter_edits": {
+            "items": {
+              "$ref": "#/components/schemas/ChapterEdit"
+            },
+            "maxItems": 50,
+            "title": "Chapter Edits",
+            "type": "array"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cover"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exclude_clip_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Exclude Clip Ids",
+            "type": "array"
+          },
+          "included_clip_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Included Clip Ids"
+          },
+          "instruction": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "type": "string"
+          },
+          "language": {
+            "default": "en",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "remove_ranges": {
+            "items": {
+              "$ref": "#/components/schemas/TimeRange"
+            },
+            "maxItems": 50,
+            "title": "Remove Ranges",
+            "type": "array"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "maximum": 8.0,
+                "minimum": 0.25,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "speed_ranges": {
+            "items": {
+              "$ref": "#/components/schemas/SpeedRange"
+            },
+            "maxItems": 50,
+            "title": "Speed Ranges",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "video_filter": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "bright",
+                  "warm",
+                  "cool_white"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Filter"
+          },
+          "warmth": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warmth"
+          }
+        },
+        "title": "EditRequest",
+        "type": "object"
+      },
+      "GenerateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Appearance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "direction": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Direction",
+            "type": "string"
+          },
+          "included_clip_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Included Clip Ids"
+          },
+          "language": {
+            "default": "en",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "mode": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "highlights",
+              "keep_most",
+              "keep_all"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "opening_highlights": {
+            "default": false,
+            "title": "Opening Highlights",
+            "type": "boolean"
+          },
+          "remove_no_speech": {
+            "default": false,
+            "title": "Remove No Speech",
+            "type": "boolean"
+          },
+          "shot_seconds": {
+            "default": 0.5,
+            "maximum": 1.0,
+            "minimum": 0.15,
+            "title": "Shot Seconds",
+            "type": "number"
+          },
+          "speed": {
+            "default": 1,
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed",
+            "type": "number"
+          },
+          "style_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9_]{3,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style Id"
+          },
+          "target_seconds": {
+            "anyOf": [
+              {
+                "maximum": 1800.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Seconds"
+          },
+          "video_filter": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "bright",
+                  "warm",
+                  "cool_white"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Filter"
+          }
+        },
+        "title": "GenerateRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobState": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "generate",
+                  "edit"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "complete",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "message"
+        ],
+        "title": "JobState",
+        "type": "object"
+      },
+      "LocalizeChaptersRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "base_cut": {
+            "pattern": "^cut_\\d{3,}$",
+            "title": "Base Cut",
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "base_cut"
+        ],
+        "title": "LocalizeChaptersRequest",
+        "type": "object"
+      },
+      "LocalizedChapters": {
+        "additionalProperties": false,
+        "properties": {
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/Chapter"
+            },
+            "title": "Chapters",
+            "type": "array"
+          },
+          "cut": {
+            "title": "Cut",
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cut",
+          "language",
+          "chapters"
+        ],
+        "title": "LocalizedChapters",
+        "type": "object"
+      },
+      "MusicView": {
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "title": "Duration",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "duration"
+        ],
+        "title": "MusicView",
+        "type": "object"
+      },
+      "PresetEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "license": {
+            "title": "License",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "source",
+          "license",
+          "sha256",
+          "bytes"
+        ],
+        "title": "PresetEntry",
+        "type": "object"
+      },
+      "PresetLibrary": {
+        "additionalProperties": false,
+        "properties": {
+          "fonts": {
+            "items": {
+              "$ref": "#/components/schemas/PresetEntry"
+            },
+            "title": "Fonts",
+            "type": "array"
+          },
+          "music": {
+            "items": {
+              "$ref": "#/components/schemas/PresetEntry"
+            },
+            "title": "Music",
+            "type": "array"
+          }
+        },
+        "required": [
+          "fonts",
+          "music"
+        ],
+        "title": "PresetLibrary",
+        "type": "object"
+      },
+      "ProjectView": {
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "$ref": "#/components/schemas/Appearance"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/Chapter"
+            },
+            "title": "Chapters",
+            "type": "array"
+          },
+          "clips": {
+            "items": {
+              "$ref": "#/components/schemas/WebClip"
+            },
+            "title": "Clips",
+            "type": "array"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "film_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Film Title"
+          },
+          "included_clip_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Included Clip Ids",
+            "type": "array"
+          },
+          "job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionHistory"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "music": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MusicView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "selection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Selection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "settings": {
+            "$ref": "#/components/schemas/Settings"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "video_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Url"
+          }
+        },
+        "required": [
+          "name",
+          "clips",
+          "settings",
+          "job",
+          "latest",
+          "video_url",
+          "duration_seconds"
+        ],
+        "title": "ProjectView",
+        "type": "object"
+      },
+      "Selection": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "highlights",
+              "keep_most",
+              "keep_all"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "opening_highlights": {
+            "default": false,
+            "title": "Opening Highlights",
+            "type": "boolean"
+          },
+          "remove_no_speech": {
+            "default": false,
+            "title": "Remove No Speech",
+            "type": "boolean"
+          },
+          "shot_seconds": {
+            "default": 0.5,
+            "maximum": 1.0,
+            "minimum": 0.15,
+            "title": "Shot Seconds",
+            "type": "number"
+          },
+          "speed": {
+            "default": 1,
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed",
+            "type": "number"
+          },
+          "target_seconds": {
+            "anyOf": [
+              {
+                "maximum": 1800.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Seconds"
+          }
+        },
+        "title": "Selection",
+        "type": "object"
+      },
+      "Settings": {
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "$ref": "#/components/schemas/Appearance"
+          },
+          "color": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "sdr",
+              "hlg"
+            ],
+            "title": "Color",
+            "type": "string"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cover"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "encoder": {
+            "default": "auto",
+            "enum": [
+              "auto",
+              "software"
+            ],
+            "title": "Encoder",
+            "type": "string"
+          },
+          "fps": {
+            "default": 30,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Fps",
+            "type": "integer"
+          },
+          "height": {
+            "default": 1920,
+            "maximum": 3840.0,
+            "minimum": 64.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "video_filter": {
+            "default": "none",
+            "enum": [
+              "none",
+              "bright",
+              "warm",
+              "cool_white"
+            ],
+            "title": "Video Filter",
+            "type": "string"
+          },
+          "warmth": {
+            "default": 0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Warmth",
+            "type": "number"
+          },
+          "width": {
+            "default": 1080,
+            "maximum": 3840.0,
+            "minimum": 64.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "title": "Settings",
+        "type": "object"
+      },
+      "SpeedRange": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "minimum": 0.0,
+            "title": "End",
+            "type": "number"
+          },
+          "speed": {
+            "maximum": 8.0,
+            "minimum": 0.25,
+            "title": "Speed",
+            "type": "number"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "speed"
+        ],
+        "title": "SpeedRange",
+        "type": "object"
+      },
+      "StyleDuration": {
+        "additionalProperties": false,
+        "properties": {
+          "max": {
+            "title": "Max",
+            "type": "number"
+          },
+          "min": {
+            "title": "Min",
+            "type": "number"
+          },
+          "target": {
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "min",
+          "target",
+          "max"
+        ],
+        "title": "StyleDuration",
+        "type": "object"
+      },
+      "StyleOption": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "duration": {
+            "$ref": "#/components/schemas/StyleDuration"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "orientation": {
+            "enum": [
+              "portrait",
+              "landscape"
+            ],
+            "title": "Orientation",
+            "type": "string"
+          },
+          "reference_url": {
+            "title": "Reference Url",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "voiceover": {
+            "title": "Voiceover",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "name",
+          "description",
+          "reference_url",
+          "orientation",
+          "duration",
+          "voiceover"
+        ],
+        "title": "StyleOption",
+        "type": "object"
+      },
+      "StyleVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_selected": {
+            "title": "Ai Selected",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "loudness_lufs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Loudness Lufs"
+          },
+          "music": {
+            "title": "Music",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "tempo_bpm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tempo Bpm"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ai_selected",
+          "music",
+          "tempo_bpm",
+          "loudness_lufs",
+          "warnings"
+        ],
+        "title": "StyleVersion",
+        "type": "object"
+      },
+      "TimeRange": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "minimum": 0.0,
+            "title": "End",
+            "type": "number"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "TimeRange",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "cut": {
+            "title": "Cut",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "type": "string"
+            },
+            "title": "History",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cut",
+          "history"
+        ],
+        "title": "VersionHistory",
+        "type": "object"
+      },
+      "WebClip": {
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "title": "Duration",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "duration"
+        ],
+        "title": "WebClip",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Vlogii Local API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/vlogii/health": {
+      "get": {
+        "operationId": "health_api_vlogii_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/api/vlogii/presets": {
+      "get": {
+        "operationId": "presets_api_vlogii_presets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresetLibrary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Presets"
+      }
+    },
+    "/api/vlogii/presets/{kind}/{identifier}": {
+      "get": {
+        "operationId": "preset_file_api_vlogii_presets__kind___identifier__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preset File"
+      }
+    },
+    "/api/vlogii/projects": {
+      "get": {
+        "operationId": "projects_api_vlogii_projects_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectView"
+                  },
+                  "title": "Response Projects Api Vlogii Projects Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Projects"
+      },
+      "post": {
+        "operationId": "upload_api_vlogii_projects_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_api_vlogii_projects_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload"
+      }
+    },
+    "/api/vlogii/projects/{name}": {
+      "get": {
+        "operationId": "project_api_vlogii_projects__name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Project"
+      }
+    },
+    "/api/vlogii/projects/{name}/chapters/localize": {
+      "post": {
+        "operationId": "localize_chapter_view_api_vlogii_projects__name__chapters_localize_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalizeChaptersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalizedChapters"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Localize Chapter View"
+      }
+    },
+    "/api/vlogii/projects/{name}/cover/preview": {
+      "post": {
+        "operationId": "cover_preview_api_vlogii_projects__name__cover_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoverPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cover Preview"
+      }
+    },
+    "/api/vlogii/projects/{name}/cuts/{cut}/cover.png": {
+      "get": {
+        "operationId": "cover_image_api_vlogii_projects__name__cuts__cut__cover_png_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cut",
+            "required": true,
+            "schema": {
+              "title": "Cut",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Download",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cover Image"
+      }
+    },
+    "/api/vlogii/projects/{name}/cuts/{cut}/film.mp4": {
+      "get": {
+        "operationId": "film_api_vlogii_projects__name__cuts__cut__film_mp4_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cut",
+            "required": true,
+            "schema": {
+              "title": "Cut",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Download",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Film"
+      }
+    },
+    "/api/vlogii/projects/{name}/edit": {
+      "post": {
+        "operationId": "edit_film_api_vlogii_projects__name__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Film"
+      }
+    },
+    "/api/vlogii/projects/{name}/generate": {
+      "post": {
+        "operationId": "start_api_vlogii_projects__name__generate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start"
+      }
+    },
+    "/api/vlogii/projects/{name}/music": {
+      "post": {
+        "operationId": "add_music_api_vlogii_projects__name__music_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_music_api_vlogii_projects__name__music_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Music"
+      }
+    },
+    "/api/vlogii/projects/{name}/retry": {
+      "post": {
+        "operationId": "retry_job_api_vlogii_projects__name__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Job"
+      }
+    },
+    "/api/vlogii/projects/{name}/undo": {
+      "post": {
+        "operationId": "undo_version_api_vlogii_projects__name__undo_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Undo Version"
+      }
+    },
+    "/api/vlogii/styles": {
+      "get": {
+        "operationId": "styles_api_vlogii_styles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StyleOption"
+                  },
+                  "title": "Response Styles Api Vlogii Styles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Styles"
+      }
+    }
+  }
+}

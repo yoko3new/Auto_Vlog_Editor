@@ -1,13 +1,15 @@
 name: Vlogii checks
 on:
   push:
-    branches: [kang]
+    branches: [main, kang, codex/integrate-feng-ui]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   local-mvp:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,11 +23,10 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
       - run: python -m pip install uv
       - run: uv sync --frozen --extra dev
-      - run: uv run ruff check src/vlogii tests
-      - run: uv run ruff format --check src/vlogii tests
+      - run: uv run ruff check src/vlogii tests tools/check_docs.py tools/export_openapi.py
+      - run: uv run ruff format --check src/vlogii tests tools/check_docs.py tools/export_openapi.py
       - run: uv run pytest -q
       - run: npm ci && npm run build
         working-directory: frontend
-      - run: python contracts/validate_examples.py
-      - run: python contracts/collaboration/validate_collaboration.py
       - run: python tools/check_docs.py
+      - run: uv run python tools/export_openapi.py --check

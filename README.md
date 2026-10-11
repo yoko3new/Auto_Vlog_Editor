@@ -1,94 +1,147 @@
 # Vlogii
 
-**中文** · [English](README.en.md)
+![Vlogii](frontend/public/brand/vlogii-logo.png)
 
-![Vlogii logo](resources/branding/vlogii-logo.png)
+**Turn everyday footage into an editable short film.** Vlogii is a local video editor with a React interface, a FastAPI backend, Gemini analysis and real FFmpeg exports. The web app and CLI support English and Chinese.
 
-将日常素材剪成可预览、修改和导出的生活类短视频。当前为本地网页 MVP，页面和 CLI 均支持中英文。
+把日常素材剪成可预览、修改、撤销和导出的短片。当前是本地网页 MVP；本 README 集中说明启动、功能、代码入口和验证边界。
 
-**上传 → Gemini 画面分析与语音转录 → 选片与帧时间线 → FFmpeg 导出 → 预览、修改、重试、撤销、下载。**
+Upload clips → analyze pictures and speech → validate a frame-based timeline → render → refine, undo and download.
 
-产品方向是「艺术字/贴画封面 → 开头快剪 → 字幕与少量标注正文」。目前快剪单独导出；封面和自动拼接正文仍待实现，详见 [Shorts 方向](docs/shorts-direction.md)。已确定的薄荷绿标识见 [品牌规范](docs/visual-design.md#brand-logo)。
+## Quick start
 
-集成分支 `codex/integrate-feng-ui` 将队友的杂志式前端与 `kang` 的生成、重试和编辑能力结合：薄荷绿页面、章节导航、宽幅播放器和内置网页字体。
-
-## 本地启动
-
-需要 macOS 或 Linux、Python 3.11+、Node.js 20+、[uv](https://docs.astral.sh/uv/) 和支持文字、音频、H.264/HEVC 的 FFmpeg。Ubuntu 安装见 [使用指南](docs/vlogii-guide.zh.md)。
+Requirements: **Python 3.11+, Node.js 20+, uv, FFmpeg and FFprobe** on macOS or Linux. FFmpeg needs `drawtext`, `zscale`, `tonemap`, `libx264`, AAC and `libass` for style titles; HLG export also needs `libx265`.
 
 ```sh
 # macOS
-brew install ffmpeg-full
-git clone --branch codex/integrate-feng-ui https://github.com/yoko3new/Auto_Vlog_Editor.git vlogii
-cd vlogii
+brew install uv ffmpeg-full
+
+# Ubuntu / Debian: install uv separately, then install media tools
+# sudo apt-get update
+# sudo apt-get install -y ffmpeg fontconfig fonts-dejavu-core fonts-noto-cjk
+
+git clone https://github.com/yoko3new/Auto_Vlog_Editor.git
+cd Auto_Vlog_Editor
 uv sync --frozen --extra dev
+npm --prefix frontend ci
 cp .env.example .env
 ```
 
-在本地 `.env` 填写 `GEMINI_API_KEY`，然后构建并启动：
+Set `GEMINI_API_KEY` in your local `.env`, and choose models available to your account. Then:
 
 ```sh
-npm --prefix frontend ci
 npm --prefix frontend run build
-uv run vlogii doctor
-uv run vlogii serve
+uv run vlogii --language en doctor
+uv run vlogii --language en serve
 ```
 
-打开 **http://127.0.0.1:8000**。macOS 自动优先使用 Homebrew 的 `ffmpeg-full`。只运行一个服务进程；当前没有认证，适用于本地使用。
+Open **http://127.0.0.1:8000**. FastAPI serves the built frontend and the API. Interactive API documentation is at **http://127.0.0.1:8000/docs**.
 
-## 当前功能
+The service binds to localhost. Run one process: rendering uses one worker, with up to eight pending jobs and one active job per project. This MVP has no authentication and is intended for local use.
 
-- 导入 MP4、MOV、M4V、MKV，读取元数据并去重；Gemini 分别处理画面代理和原声，字幕保留源语言并按输出尺寸排版。
-- 中英文切换、可选创作描述、可点击输入示例；示例填入后由用户确认提交。
-- 内置 6 款免费字体、6 首 CC0 纯音乐：自动加载、字体预览、音乐试听、配乐音量与口播压低；已有成片可更换并撤销。
-- 横竖屏、原声字幕与少量文字；默认 SDR/H.264，可选全 HLG 素材的 10-bit HEVC 输出。
-- 修改标题、暖度、排除素材、删除成片时间区间、整片或局部调速；字幕和原声跟随时间线。
-- 成功版本、预览、撤销、下载；失败保留旧片，Retry 复用原请求、有效分析缓存和已完成渲染片段。
-- 从 Instagram 参考片学到的风格成片：加入音乐、选择风格，每一刀都落在节拍上；100% 音量时音乐目标为 −14 LUFS，真峰值不超过 −1 dBTP，素材原声静音。Gemini 挑选片段、标签和标题，未配置密钥时按导入顺序使用素材。见 [风格模板](docs/style-templates.md)。
+For frontend development, keep the backend running and use `npm --prefix frontend run dev`; Vite proxies `/api` to port 8000. After changing frontend code, rebuild to update the page served by FastAPI.
 
-| 生成模式 | 默认行为 |
+## What you can do
+
+1. Create a project and upload MP4, MOV, M4V or MKV clips. Imports inspect metadata and deduplicate files.
+2. Choose portrait or landscape output, included clips, creative direction, font, music, filter and editing mode.
+3. Generate a film; follow the actual analysis, planning and rendering stages, then preview and download the MP4.
+4. Refine chapters, remove a chapter or time range, change speed, adjust titles or appearance, and apply edits as a batch.
+5. Create a cover with a frame from the film, title, subtitle, label, font and decoration. Download the PNG or add/replace a one-second intro.
+6. Undo to an earlier successful version, or retry failed work using the saved request and valid caches. A failed render preserves the previous successful film.
+
+| Mode | Behavior |
 | --- | --- |
-| AI 自动 | 根据素材与描述决定内容和时长，不再默认限制为 30 秒 |
-| 开头快剪 | 约 5 秒的独立合集；默认每镜头最多约 **0.5 秒、1 倍速、静音**，不叠口播字幕 |
-| 保留大部分 | 按导入顺序去黑场、修剪口播长停顿；默认保留无口播风景，可选择删除所有未识别到语音的区间 |
-| 完整保留 | 按导入顺序保留全部已导入素材区间；倍速会改变成片长度 |
+| AI auto (`auto`) | Gemini selects and orders moments using your direction and optional target duration. |
+| Opening montage (`highlights`) | A standalone, roughly five-second montage; default shots are at most about 0.5 seconds at normal speed, with source audio muted and no speech captions. |
+| Keep most (`keep_most`) | Keeps import order, trims black frames and long speech pauses; optionally removes intervals with no recognized speech. |
+| Keep all (`keep_all`) | Keeps all included source intervals in import order; playback speed changes output length. |
 
-AI 自动/快剪可指定 1–1800 秒的近似目标；保留模式按内容决定时长，不重复素材凑时长。网页提供节奏和速度单选栏。时间修改以**当前成功成片**为坐标，如「删掉00:12到00:18」「00:12到00:18加速到2倍」，详见 [剪辑规则](docs/editing-modes.md)。
+Retention modes can prepend an optional five-second highlight montage. The opening is muted; the body retains its configured audio and captions. Auto/montage targets accept 1–1800 seconds and are approximate; retention duration follows the footage. Footage is not repeated to fill a requested duration.
 
-配置默认模型为 `gemini-3.8-flash`（画面/规划）和 `gemini-3.5-transcribe`（语音），共用 Gemini key，可在 `.env` 修改。真实小样已跑通，准确率仍需人工对照，见 [修复记录](docs/mvp-fixes.md)。Gemini 接收画面代理与音频；密钥、素材、转录、缓存、成片不提交 Git。
+The renderer supports source-language captions, portrait/landscape layout, original/bright/warm/cool-white filters, **14 bundled fonts and six CC0 instrumental tracks**, music looping and speech ducking. Chapter titles and summaries can be localized separately from the original speech captions.
 
-上传限制：50 段、单段 512 MB、单次 2 GB、原素材总长 30 分钟。暖度修改使用 SDR；HEVC 播放取决于浏览器与设备。
+Three reference styles provide music-driven cuts, titles and clock labels: `ig_city_day_in_life`, `ig_cozy_night_study` and `ig_narrated_college_day`. Python computes their beat grid and cut timing. Style films mute clip audio; the music target at full volume is −14 LUFS with a −1 dBTP true-peak ceiling. With no Gemini key, style mode uses clips in import order and default text; this fallback does not perform AI selection.
 
-## CLI 与检查
+## Configuration and data
+
+Start from [.env.example](.env.example). Keys stay on the backend.
+
+| Setting | Purpose |
+| --- | --- |
+| `GEMINI_API_KEY` | Gemini credential for picture analysis, planning, speech recognition and chapter localization. |
+| `VLOGII_MODEL` | Picture/planning model; the example defaults to `gemini-3.8-flash`. |
+| `VLOGII_SPEECH_MODEL` | Separate original-audio recognition model; the example defaults to `gemini-3.5-transcribe`. |
+| `VLOGII_SPEECH_LANGUAGE` | Recognition language hint; `auto` by default. |
+| `VLOGII_THINKING` | Thinking level for picture/planning requests. |
+| `VLOGII_LANGUAGE` | Default CLI language; `--language en` or `--language zh` overrides it. |
+| `VLOGII_FFMPEG`, `VLOGII_FFPROBE` | Optional absolute executable paths. macOS prefers Homebrew `ffmpeg-full` automatically. |
+| `VLOGII_FONT` | Optional caption font override. |
+
+Model access, API cost and recognition quality depend on your provider account. `doctor` checks local configuration and media capabilities; it does not prove model access or AI quality. Video proxies and original audio are sent to Gemini when their analysis is enabled.
+
+Project files live under ignored `projects/`: imported footage, analysis/transcription caches, plans, job state, version history, logs and exported media. Use `uv run vlogii --projects /absolute/path/to/projects serve` to choose a different directory. Keep this directory when restarting or backing up your work.
+
+Web uploads allow **50 clips, 512 MiB per clip, 2 GiB per upload and 30 minutes of source footage**. Uploaded style music accepts MP3/M4A/AAC/WAV/FLAC/OGG, up to 200 MiB and 10 seconds–15 minutes.
+
+## CLI examples
 
 ```sh
-uv run vlogii                          # Interactive language selection
-uv run vlogii --language zh init my-day /absolute/path/to/footage --color sdr
-uv run vlogii --language zh run my-day --mode keep_all
-uv run vlogii --language zh run my-day --mode highlights --shot-seconds 0.5 --speed 1
-uv run vlogii --language zh run my-day --style ig_city_day_in_life --music ~/Music/song.mp3
+uv run vlogii --language zh                           # Interactive session
+uv run vlogii --language en init my-day /absolute/path/to/footage --color sdr
+uv run vlogii --language en run my-day --mode keep_all
+uv run vlogii --language en run my-day --mode highlights --shot-seconds 0.5 --speed 1
+uv run vlogii --language en run my-day --style ig_city_day_in_life --music /absolute/path/to/song.mp3
 uv run vlogii --language zh edit my-day --instruction "00:12到00:18加速到2倍"
-uv run vlogii --language zh retry my-day
+uv run vlogii --language en retry my-day
+uv run vlogii --language en undo my-day
+uv run vlogii --language en styles
 ```
 
+Time edits use the **currently successful film's timestamps**, including any cover intro. Supported instructions are explicit time-range removal/speed operations in English or Chinese. Arbitrary semantic editing is not implemented. Style films currently reject chapter time/speed refinement.
+
+## Code review guide
+
+The active HTTP interface is `/api/vlogii`. The [OpenAPI snapshot](api/openapi.json) is generated from the running application's models and routes. The repository contains the current implementation; historical competition plans and the unused alternative API contract have been removed.
+
+| Area | Entry points |
+| --- | --- |
+| API, uploads, jobs and media responses | [api.py](src/vlogii/api.py) |
+| Shared models and validation | [models.py](src/vlogii/models.py) |
+| Generation, retry, editing and undo | [pipeline.py](src/vlogii/pipeline.py), [storage.py](src/vlogii/storage.py) |
+| Gemini analysis and separate speech recognition | [ai.py](src/vlogii/ai.py), [speech.py](src/vlogii/speech.py) |
+| Deterministic timeline, range edits and clip inclusion | [timeline.py](src/vlogii/timeline.py), [editorial.py](src/vlogii/editorial.py), [inclusion.py](src/vlogii/inclusion.py) |
+| Chapter refinement and localization | [chapters.py](src/vlogii/chapters.py), [refinement.py](src/vlogii/refinement.py), [localization.py](src/vlogii/localization.py) |
+| Rendering, audio, covers and filters | [render.py](src/vlogii/render.py), [music.py](src/vlogii/music.py), [cover.py](src/vlogii/cover.py), [grading.py](src/vlogii/grading.py) |
+| Beat planning, style rendering and templates | [src/vlogii/style/](src/vlogii/style/) |
+| React application and editors | [frontend/src/](frontend/src/) |
+| Regression and real-media integration checks | [tests/](tests/) |
+| Optional reference analysis tools and measured profiles | [tools/style_lab/](tools/style_lab/), [style/references/](style/references/) |
+
+AI proposes content; Python validates source references and intervals and computes integer-frame timing; FFmpeg executes the timeline. Only verified successful renders become the latest version. Public request/response changes should update backend models, frontend calls, the snapshot and relevant tests together.
+
 ```sh
+uv run ruff check src/vlogii tests tools/check_docs.py tools/export_openapi.py
+uv run ruff format --check src/vlogii tests tools/check_docs.py tools/export_openapi.py
 uv run pytest -q
-uv run ruff check src/vlogii tests
-uv run ruff format --check src/vlogii tests
 npm --prefix frontend run build
 python3 tools/check_docs.py
+uv run python tools/export_openapi.py --check
 ```
 
-最近代码验证记录为 **124 项 Python 测试通过**（含真实 FFmpeg 导出）、前端构建通过。提供方替身仅验证程序行为；AI 质量与未验项见 [验证记录](docs/vlogii-validation.zh.md)。
+To refresh the API snapshot: `uv run python tools/export_openapi.py`. [GitHub Actions](.github/workflows/vlogii.yml) runs these checks on `main`, the integration branch and pull requests using Python 3.12, Node.js 22 and Ubuntu FFmpeg. Local validation on 2026-10-11: **164 Python tests passed**, Ruff checks and the frontend build passed. The test suite includes synthetic media rendered and decoded with real FFmpeg; provider substitutes validate program behavior, not live Gemini quality. `uv run pytest -q -m "not media"` selects the tests outside the explicit media marker; FFmpeg is still required by some API/import checks.
 
-## 文档与分工
+Optional style research dependencies: `uv sync --frozen --extra dev --extra style-lab`. Reference profiles contain measurements and source URLs; reference videos are not distributed.
 
-各文档页首提供中英文切换；代码、字段名与命令保持英文。
+## Current limits
 
-- [Mac / Safari 入门](docs/vlogii-mac-setup.md) · [使用指南](docs/vlogii-guide.zh.md) · [功能覆盖](docs/mvp-coverage.md) · [当前进度](docs/status.md)
-- [剪辑规则](docs/editing-modes.md) · [风格模板](docs/style-templates.md) · [产品定义](docs/product.md) · [架构](docs/architecture.md)
-- [免费字体/BGM 与许可](docs/free-resources.md)：已内置字体/纯音乐与混音，按需加载；风格模式支持上传音乐和节拍卡点。
-- [协作交接](docs/collaboration.md)：杨康负责视频、AI、后端、渲染与集成；队友负责前端。
-- [现行 OpenAPI](docs/vlogii.openapi.json)：`/api/vlogii`，运行时 `/docs`；[旧比赛契约](docs/contracts.md)作为规划参考。
+- Local filesystem storage only; authentication, cloud storage, public deployment and multi-worker execution are not implemented.
+- Default web output is 1080×1920, 30 fps, SDR/H.264/AAC. All-HLG inputs can use 10-bit HEVC; mixed inputs use SDR, and HEVC playback depends on the browser/device. Filters that require SDR reject incompatible HLG settings.
+- No automatic person cutout, custom sticker/font upload, arbitrary semantic editing or exact-duration guarantee.
+- Automated checks do not establish real-footage aesthetics, transcription accuracy, native Safari/mobile compatibility or production load capacity. Live Gemini and manual browser acceptance need separate review with your own footage.
 
-待实现：艺术字/贴画封面、自动快剪接正文、任意语义自然语言修改、认证、云端存储与正式部署。原比赛完整验收尚未完成；现行实现与旧 `/api` 契约有独立边界。
+## Bundled assets
+
+Runtime font/music provenance, hashes and license identifiers are recorded in [assets/manifest.json](src/vlogii/assets/manifest.json). Full notices remain in [assets/licenses/](src/vlogii/assets/licenses/), [style/fonts/](src/vlogii/style/fonts/), [frontend/public/fonts/](frontend/public/fonts/) and [frontend/public/font-licenses/](frontend/public/font-licenses/). Preserve these notices when distributing bundled assets. The repository does not currently declare a project-wide code license.
+
+Credentials, uploaded media, generated films, caches and private validation records are excluded from Git.
