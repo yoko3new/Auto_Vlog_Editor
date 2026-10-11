@@ -12,7 +12,13 @@ from .timeline import compile_timeline
 
 
 def selection_intent(
-    direction: str, mode="auto", target=None, remove_no_speech=False, speed=1, shot_seconds=0.5
+    direction: str,
+    mode="auto",
+    target=None,
+    remove_no_speech=False,
+    speed=1,
+    shot_seconds=0.5,
+    opening_highlights=False,
 ) -> Selection:
     """Explicit controls take precedence; recognize common bilingual retention requests."""
     text = direction.lower()
@@ -44,6 +50,7 @@ def selection_intent(
                 minutes, seconds, seconds_only = duration.groups()
                 target = float(minutes or 0) * 60 + float(seconds or seconds_only or 0)
     result = Selection(
+        opening_highlights=opening_highlights,
         mode=mode,
         speed=speed,
         shot_seconds=shot_seconds,
@@ -54,6 +61,8 @@ def selection_intent(
         raise VlogiiError(
             "Retention modes have no target duration. Clear the target or choose AI auto/highlights."
         )
+    if opening_highlights and mode not in {"keep_all", "keep_most"}:
+        raise VlogiiError("Opening highlights require Keep everything or Keep most.")
     return result
 
 
@@ -298,9 +307,18 @@ def transform_output_ranges(
             ]
             segments.append(
                 Segment(
+                    mute_source_audio=original.mute_source_audio,
                     clip_id=original.clip_id,
-                    in_sec=(compiled.source_start + source_left) / fps,
-                    out_sec=(compiled.source_start + source_right) / fps,
+                    in_sec=(
+                        original.in_sec
+                        if source_left == 0
+                        else (compiled.source_start + source_left) / fps
+                    ),
+                    out_sec=(
+                        original.out_sec
+                        if source_right == compiled.source_frames
+                        else (compiled.source_start + source_right) / fps
+                    ),
                     purpose=original.purpose,
                     speed=rate,
                     overlays=overlays,

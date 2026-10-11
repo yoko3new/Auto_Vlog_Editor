@@ -345,10 +345,28 @@ def test_real_style_film_on_the_beat_with_edits_and_undo(tmp_path, tools, monkey
     assert clip_id not in {s["clip_id"] for s in read_json(second / "style-plan.json")["shots"]}
     with pytest.raises(VlogiiError, match="Style films"):
         edit(directory, None, [], None, progress=lambda _: None, speed=2)
+    all_ids = [c["id"] for c in read_json(first / "project.json")["clips"]]
+    restored = edit(
+        directory,
+        None,
+        [],
+        None,
+        progress=lambda _: None,
+        included_clip_ids=all_ids,
+        video_filter="cool_white",
+    )
+    restored_plan = read_json(restored / "style-plan.json")
+    assert clip_id in {shot["clip_id"] for shot in restored_plan["shots"]}
+    assert restored_plan["video_filter"] == "cool_white"
+    chapters = read_json(restored / "chapters.json")
+    assert chapters[0]["start"] == 0
+    assert chapters[-1]["end"] == pytest.approx(restored_plan["total_frames"] / 30)
+    assert read_json(restored / "style.json")["warmth"] == 0
+    assert undo(directory) == second.name
     assert undo(directory) == first.name
     assert (first / "film.mp4").is_file()
 
-    from vlogii.models import Appearance
+    from vlogii.models import Appearance, Cover
     from vlogii.presets import asset
 
     third = edit(
@@ -358,6 +376,7 @@ def test_real_style_film_on_the_beat_with_edits_and_undo(tmp_path, tools, monkey
         None,
         progress=lambda _: None,
         appearance=Appearance(font="ma-shan-zheng", music="holizna-dancing", music_volume=0.4),
+        cover=Cover(title="我的一天", font="ma-shan-zheng", style="editorial", frame_seconds=2),
     )
     assert (
         read_json(third / "style.json")["music"]["sha256"]
@@ -372,3 +391,9 @@ def test_real_style_film_on_the_beat_with_edits_and_undo(tmp_path, tools, monkey
             directory, None, [], None, progress=lambda _: None, appearance=Appearance(music="none")
         )
     assert read_json(directory / "latest.json")["cut"] == third.name
+    covered_plan = read_json(third / "style-plan.json")
+    assert read_json(third / "verification.json")["duration"] == pytest.approx(
+        covered_plan["total_frames"] / covered_plan["output"]["fps"] + 1, abs=0.1
+    )
+    assert read_json(third / "chapters.json")[0]["kind"] == "cover"
+    assert read_json(third / "chapters.json")[1]["start"] == 1

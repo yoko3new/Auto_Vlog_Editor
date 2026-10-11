@@ -29,7 +29,8 @@ def caption_entries(words: list[dict], duration: float) -> list[Text]:
         if not group:
             return
         text = "".join(w["text"] for w in group).strip()
-        start, end = group[0]["start"], group[-1]["end"]
+        start = min(w["start"] for w in group)
+        end = max(w["end"] for w in group)
         if text and end > start:
             entries.append(Text(start=start, end=end, text=text))
         group.clear()
@@ -49,9 +50,17 @@ def caption_entries(words: list[dict], duration: float) -> list[Text]:
             raise VlogiiError("Speech provider did not return word timestamps.")
         if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
             raise VlogiiError("Speech provider returned invalid timestamps.")
-        if not math.isfinite(start) or not math.isfinite(end) or end < start or start < 0:
+        if not math.isfinite(start) or not math.isfinite(end) or min(start, end) < 0:
             raise VlogiiError("Speech provider returned invalid timestamps.")
-        if end > duration + 0.25 or start < previous_end - 0.05:
+        # Provider word offsets can overlap or invert by one 0.1-second tick.
+        # Preserve both
+        # supplied boundaries and use their union for the phrase caption.
+        tick = 0.1 + 1e-9
+        if end < start:
+            if start - end > tick:
+                raise VlogiiError("Speech provider returned invalid timestamps.")
+            start, end = end, start
+        if end > duration + 0.25 or start < previous_end - tick:
             raise VlogiiError("Speech provider returned out-of-order or out-of-range timestamps.")
         start, end = min(start, duration), min(end, duration)
         if group and (
@@ -61,7 +70,7 @@ def caption_entries(words: list[dict], duration: float) -> list[Text]:
         ):
             flush()
         group.append({"text": text, "start": start, "end": end})
-        previous_end = end
+        previous_end = max(previous_end, end)
         if text.rstrip().endswith(("。", "！", "？", ".", "!", "?")):
             flush()
     flush()
@@ -154,6 +163,26 @@ def transcription_request(uri: str, config: dict, key: str) -> dict:
     raise VlogiiError("Gemini speech recognition failed.")
 
 
+def timed_transcription(
+    uri: str, config: dict, key: str, duration: float, evidence: Path
+) -> list[Text]:
+    """Retry timings that remain invalid after bounded word-offset normalization."""
+    for attempt in range(3):
+        result = transcription_request(uri, config, key)
+        write_json(evidence.with_name(f"{evidence.stem}-{attempt}.json"), result)
+        write_json(evidence, result)
+        try:
+            return caption_entries(transcription_words(result), duration)
+        except VlogiiError as exc:
+            if attempt == 2:
+                raise VlogiiError(
+                    "Gemini speech timestamps failed validation after three attempts. "
+                    "Retry this step."
+                ) from exc
+            time.sleep(2**attempt)
+    raise VlogiiError("Gemini speech recognition failed.")
+
+
 def transcribe(clip: Clip, directory: Path, config: dict) -> list[Text]:
     if not clip.audio:
         return []
@@ -203,10 +232,13 @@ def transcribe(clip: Clip, directory: Path, config: dict) -> list[Text]:
         if uploaded.state and uploaded.state.name != "ACTIVE":
             raise VlogiiError("Gemini could not process the speech audio. Retry this step.")
         if config["model"].endswith("transcribe"):
-            result = transcription_request(uploaded.uri, config, key)
-            entries = caption_entries(transcription_words(result), clip.duration)
-            write_json(directory / "speech-evidence" / f"{clip.id}.json", result)
-            return entries
+            return timed_transcription(
+                uploaded.uri,
+                config,
+                key,
+                clip.duration,
+                directory / "speech-evidence" / f"{clip.id}.json",
+            )
         # Explicit compatibility choice for accounts without the dedicated model.
         prompt = (
             f"Transcribe only the audible speech in this audio. clip_id={clip.id}, duration={clip.duration:.3f} seconds. "

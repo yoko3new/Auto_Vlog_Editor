@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, model_validator
 Seconds = Annotated[FiniteFloat, Field(ge=0)]
 Speed = Annotated[FiniteFloat, Field(ge=0.25, le=8)]
 EditMode = Literal["auto", "highlights", "keep_most", "keep_all"]
+VideoFilter = Literal["none", "bright", "warm", "cool_white"]
 FontPreset = Literal[
     "default",
     "noto-sans",
@@ -15,6 +16,14 @@ FontPreset = Literal[
     "zcool-xiaowei",
     "caveat",
     "playfair-display",
+    "tinos",
+    "eb-garamond",
+    "libre-baskerville",
+    "lora",
+    "cinzel",
+    "cormorant-garamond",
+    "montserrat",
+    "source-sans-3",
 ]
 MusicPreset = Literal[
     "uploaded",
@@ -41,6 +50,7 @@ class Appearance(Model):
 
 
 class Selection(Model):
+    opening_highlights: bool = False
     mode: EditMode = "auto"
     target_seconds: Annotated[FiniteFloat, Field(ge=1, le=1800)] | None = None
     remove_no_speech: bool = False
@@ -63,6 +73,35 @@ class SpeedRange(TimeRange):
     speed: Speed
 
 
+class ChapterEdit(Model):
+    chapter_index: int = Field(ge=0)
+    action: Literal["remove", "remove_range", "speed", "instruction"]
+    start: Seconds | None = None
+    end: Seconds | None = None
+    speed: Speed | None = None
+    instruction: str = Field(default="", max_length=1000)
+
+    @model_validator(mode="after")
+    def complete_action(self):
+        if (self.start is None) != (self.end is None):
+            raise ValueError("Choose both start and end.")
+        if self.start is not None and self.end <= self.start:
+            raise ValueError("Range end must be greater than start.")
+        if self.action == "remove_range" and self.start is None:
+            raise ValueError("Choose a removal range.")
+        if self.action == "speed" and self.speed is None:
+            raise ValueError("Choose a speed.")
+        if self.action == "instruction" and not self.instruction.strip():
+            raise ValueError("Enter a chapter instruction.")
+        if self.action in {"remove", "instruction"} and self.start is not None:
+            raise ValueError("This action does not use a structured time range.")
+        if self.action != "speed" and self.speed is not None:
+            raise ValueError("Only speed actions accept a speed.")
+        if self.action != "instruction" and self.instruction:
+            raise ValueError("Only instruction actions accept text.")
+        return self
+
+
 class Clip(Model):
     id: str
     path: str
@@ -75,7 +114,28 @@ class Clip(Model):
     color: Literal["sdr", "hlg", "pq"] = "sdr"
 
 
+class Cover(Model):
+    title: str = Field(min_length=1, max_length=100)
+    subtitle: str = Field(default="", max_length=160)
+    kicker: str = Field(default="", max_length=80)
+    font: FontPreset = "noto-serif"
+    style: Literal["clean", "editorial", "playful"] = "clean"
+    frame_seconds: Seconds = 0
+    show_intro: bool = True
+
+    @model_validator(mode="after")
+    def clean_text(self):
+        self.title = self.title.strip()
+        self.subtitle = self.subtitle.strip()
+        self.kicker = self.kicker.strip()
+        if not self.title:
+            raise ValueError("Enter a cover title.")
+        return self
+
+
 class Settings(Model):
+    cover: Cover | None = None
+    video_filter: VideoFilter = "none"
     appearance: Appearance = Field(default_factory=Appearance)
     width: int = Field(default=1080, ge=64, le=3840)
     height: int = Field(default=1920, ge=64, le=3840)
@@ -96,6 +156,25 @@ class Project(Model):
     name: str
     clips: list[Clip] = Field(min_length=1)
     settings: Settings = Field(default_factory=Settings)
+    included_clip_ids: list[str] | None = Field(default=None, min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def valid_inclusion(self):
+        if self.included_clip_ids is not None:
+            if len(set(self.included_clip_ids)) != len(self.included_clip_ids) or set(
+                self.included_clip_ids
+            ) - {clip.id for clip in self.clips}:
+                raise ValueError("Choose unique clips from this project.")
+        return self
+
+
+class Chapter(Model):
+    start: Seconds
+    end: Seconds
+    title: str
+    summary: str
+    clip_ids: list[str] = Field(default_factory=list)
+    kind: Literal["scene", "hook", "body", "end_card", "cover"] = "scene"
 
 
 class Text(Model):
@@ -118,6 +197,7 @@ class Review(Model):
 
 
 class Segment(Model):
+    mute_source_audio: bool = False
     speed: Speed = 1
     clip_id: str
     in_sec: Seconds
@@ -142,6 +222,7 @@ class Plan(Model):
 
 
 class TimelineSegment(Model):
+    mute_source_audio: bool = False
     clip_id: str
     source_start: int
     source_frames: int = Field(gt=0)

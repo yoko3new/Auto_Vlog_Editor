@@ -289,6 +289,75 @@ def test_word_annotations_keep_bilingual_text_and_validate_timings():
         caption_entries([{"type": "word", "text": "bad", "start": 0, "end": 2}], 1)
 
 
+def test_invalid_word_timings_retry_and_keep_raw_evidence(tmp_path, monkeypatch):
+    from vlogii.speech import timed_transcription
+
+    def response(start):
+        return {
+            "status": "completed",
+            "steps": [
+                {
+                    "type": "model_output",
+                    "content": [
+                        {
+                            "text": "Birthday",
+                            "annotations": [
+                                {
+                                    "type": "word_info",
+                                    "text": "Birthday",
+                                    "start_offset": f"{start}s",
+                                    "end_offset": "0.8s",
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+
+    calls = []
+    responses = iter([response(-0.2), response(0.1)])
+
+    def request(*args):
+        calls.append(args)
+        return next(responses)
+
+    monkeypatch.setattr("vlogii.speech.transcription_request", request)
+    monkeypatch.setattr("vlogii.speech.time.sleep", lambda _: None)
+    evidence = tmp_path / "clip.json"
+    entries = timed_transcription("audio", {}, "placeholder", 1, evidence)
+    assert len(calls) == 2
+    assert [(entry.start, entry.end, entry.text) for entry in entries] == [(0.1, 0.8, "Birthday")]
+    assert read_json(tmp_path / "clip-0.json") == response(-0.2)
+    assert read_json(evidence) == response(0.1)
+
+    calls.clear()
+    monkeypatch.setattr(
+        "vlogii.speech.transcription_request", lambda *args: calls.append(args) or response(-0.2)
+    )
+    with pytest.raises(VlogiiError, match="after three attempts"):
+        timed_transcription("audio", {}, "placeholder", 1, evidence)
+    assert len(calls) == 3
+
+
+def test_one_tick_word_inversion_preserves_text_and_phrase_boundaries():
+    words = [
+        {"type": "word", "text": "A ", "start": 0.8, "end": 0.9},
+        {"type": "word", "text": "birthday ", "start": 1.3, "end": 1.2},
+        {"type": "word", "text": "wish.", "start": 1.2, "end": 1.3},
+    ]
+    entries = caption_entries(words, 2)
+    assert [(entry.start, entry.end, entry.text) for entry in entries] == [
+        (0.8, 1.3, "A birthday wish.")
+    ]
+    words[1]["start"] = 1.4
+    with pytest.raises(VlogiiError, match="invalid timestamps"):
+        caption_entries(words, 2)
+    words[1].update(start=1.4, end=1.5)
+    with pytest.raises(VlogiiError, match="out-of-order"):
+        caption_entries(words, 2)
+
+
 @pytest.mark.parametrize("size", [(1080, 1920), (1920, 1080), (96, 128)])
 def test_caption_layout_keeps_all_characters_inside_video(size):
     from vlogii.render import text_layout

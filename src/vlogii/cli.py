@@ -107,6 +107,8 @@ def execute(args, resume=False):
             )
         )
     elif command == "run" and getattr(args, "style", None):
+        if getattr(args, "opening_highlights", False):
+            raise VlogiiError("Style films use their own opening highlights.")
         from typing import get_args
 
         from .models import MusicPreset
@@ -145,6 +147,7 @@ def execute(args, resume=False):
             remove_no_speech=getattr(args, "remove_no_speech", False),
             speed=getattr(args, "speed", 1),
             shot_seconds=getattr(args, "shot_seconds", 0.5),
+            opening_highlights=getattr(args, "opening_highlights", False),
             appearance=selected_appearance(args, directory),
         )
     elif command == "edit":
@@ -190,6 +193,7 @@ def execute(args, resume=False):
                     remove_no_speech=getattr(args, "remove_no_speech", False),
                     speed=getattr(args, "speed", 1),
                     shot_seconds=getattr(args, "shot_seconds", 0.5),
+                    opening_highlights=getattr(args, "opening_highlights", False),
                 )
             elif command == "render":
                 plan = Plan.model_validate(read_json(directory / "plan.json"))
@@ -527,6 +531,7 @@ def main(argv=None):
             sub.add_argument("--remove-no-speech", action="store_true")
             sub.add_argument("--speed", type=float, default=1)
             sub.add_argument("--shot-seconds", type=float, default=0.5)
+            sub.add_argument("--opening-highlights", action="store_true")
             sub.add_argument(
                 "--seconds", type=int, default=None, choices=range(1, 1801), metavar="1-1800"
             )

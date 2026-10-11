@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 
 from .ai import Director
+from .chapters import version_chapters
+from .cover import body_ranges
 from .editorial import (
     black_ranges,
     parse_edit_instruction,
@@ -11,8 +13,23 @@ from .editorial import (
     selection_intent,
     transform_output_ranges,
 )
+from .grading import apply_filter
+from .inclusion import edit_recoverable, included_ids, selected_project, set_included, visible_plan
 from .media import Tools, build_proxy, inspect_clip
-from .models import Appearance, Plan, Project, Review, Settings, SpeedRange, Text, TimeRange
+from .models import (
+    Appearance,
+    ChapterEdit,
+    Cover,
+    Plan,
+    Project,
+    Review,
+    Settings,
+    SpeedRange,
+    Text,
+    TimeRange,
+    VideoFilter,
+)
+from .refinement import chapter_ranges
 from .render import render
 from .speech import speech_config, transcribe
 from .storage import VlogiiError, locked, read_json, write_json
@@ -48,11 +65,12 @@ def load_project(project_dir: Path) -> Project:
     return Project.model_validate(read_json(project_dir / "project.json"))
 
 
-def load_reviews(project_dir: Path) -> list[Review]:
+def load_reviews(project_dir: Path, project: Project | None = None) -> list[Review]:
     return [
         Review.model_validate(read_json(p))
         for p in sorted((project_dir / "reviews").glob("*.json"))
         if not p.name.endswith(".meta.json")
+        and (project is None or p.stem in {c.id for c in project.clips})
     ]
 
 
@@ -132,11 +150,14 @@ def make_plan(
     remove_no_speech=False,
     speed=1,
     shot_seconds=0.5,
+    opening_highlights=False,
 ):
-    reviews = load_reviews(project_dir)
+    reviews = load_reviews(project_dir, project)
     if {r.clip_id for r in reviews} != {c.id for c in project.clips}:
         raise VlogiiError("Analyze every clip before planning.")
-    selection = selection_intent(direction, mode, target, remove_no_speech, speed, shot_seconds)
+    selection = selection_intent(
+        direction, mode, target, remove_no_speech, speed, shot_seconds, opening_highlights
+    )
     if selection.mode in {"keep_all", "keep_most"}:
         black = {}
         if selection.mode == "keep_most":
@@ -145,6 +166,30 @@ def make_plan(
                 black[clip.id] = black_ranges(project_dir, clip)
         plan = retention_plan(project, reviews, selection, black)
         plan = transform_output_ranges(project, plan, [], speed=selection.speed)
+        if selection.opening_highlights:
+            director = Director(project_dir / "ai-evidence")
+            try:
+                progress("Planning your opening highlights")
+                opening = director.plan(
+                    project,
+                    reviews,
+                    direction,
+                    5,
+                    mode="highlights",
+                    speed=1,
+                    shot_seconds=selection.shot_seconds,
+                )
+                for segment in opening.segments:
+                    segment.mute_source_audio = True
+                    segment.overlays = []
+                plan = Plan(
+                    title=opening.title,
+                    reasoning="Opening highlights, followed by the retained footage in import order. "
+                    + plan.reasoning,
+                    segments=[*opening.segments, *plan.segments],
+                )
+            finally:
+                director.close()
         write_json(project_dir / "plan.json", plan)
         return plan
     director = Director(project_dir / "ai-evidence")
@@ -177,12 +222,20 @@ def generate(
     speed=1,
     shot_seconds=0.5,
     appearance: Appearance | None = None,
+    included_clip_ids: list[str] | None = None,
+    video_filter: VideoFilter | None = None,
+    opening_highlights=False,
 ):
     with locked(project_dir):
         project = load_project(project_dir)
         if appearance is not None:
             project.settings.appearance = Appearance.model_validate(appearance)
-        selection = selection_intent(direction, mode, target, remove_no_speech, speed, shot_seconds)
+        set_included(project, included_clip_ids)
+        apply_filter(project, video_filter)
+        planning_project = selected_project(project)
+        selection = selection_intent(
+            direction, mode, target, remove_no_speech, speed, shot_seconds, opening_highlights
+        )
         context = {
             "direction": direction,
             "target": target,
@@ -202,8 +255,13 @@ def generate(
             output = project_dir / "cuts" / checkpoint["cut"]
             if (output / "film.mp4").is_file():
                 return output
-        analyze(project_dir, project, progress, visual=selection.mode in {"auto", "highlights"})
-        reviews = load_reviews(project_dir)
+        analyze(
+            project_dir,
+            planning_project,
+            progress,
+            visual=selection.opening_highlights or selection.mode in {"auto", "highlights"},
+        )
+        reviews = load_reviews(project_dir, planning_project)
         review_data = [r.model_dump(mode="json") for r in reviews]
         if checkpoint.get("plan") and checkpoint.get("reviews") == review_data:
             progress("Resuming the saved plan")
@@ -211,7 +269,7 @@ def generate(
         else:
             plan = make_plan(
                 project_dir,
-                project,
+                planning_project,
                 direction,
                 target,
                 progress,
@@ -219,6 +277,7 @@ def generate(
                 remove_no_speech=remove_no_speech,
                 speed=speed,
                 shot_seconds=shot_seconds,
+                opening_highlights=opening_highlights,
             )
             checkpoint.update(
                 plan=plan.model_dump(mode="json"), reviews=review_data, status="rendering"
@@ -227,6 +286,8 @@ def generate(
         plan.mute_source_audio = selection.mode == "highlights"
         output = render(project_dir, project, plan, reviews, progress)
         write_json(output / "selection.json", selection)
+        write_json(output / "recoverable-plan.json", plan)
+        write_json(project_dir / "project.json", project)
         checkpoint.update(status="complete", cut=output.name)
         write_json(checkpoint_path, checkpoint)
         return output
@@ -239,6 +300,13 @@ def undo(project_dir: Path):
         if len(history) < 2:
             raise VlogiiError("No earlier successful version is available.")
         write_json(project_dir / "latest.json", {"cut": history[-2], "history": history[:-1]})
+        restored = load_project(project_dir)
+        previous = Project.model_validate(
+            read_json(project_dir / "cuts" / history[-2] / "project.json")
+        )
+        restored.included_clip_ids = previous.included_clip_ids
+        restored.settings = previous.settings
+        write_json(project_dir / "project.json", restored)
         return history[-2]
 
 
@@ -254,14 +322,25 @@ def edit(
     speed: float | None = None,
     speed_ranges: list[SpeedRange] | None = None,
     appearance: Appearance | None = None,
+    included_clip_ids: list[str] | None = None,
+    video_filter: VideoFilter | None = None,
+    chapter_edits: list[ChapterEdit] | None = None,
+    base_cut: str | None = None,
+    cover: Cover | None = None,
 ):
     with locked(project_dir):
         latest = read_json(project_dir / "latest.json")
         checkpoint_path = project_dir / "edit-checkpoint.json"
         parsed_removed, parsed_sped = parse_edit_instruction(instruction)
+        chapter_edits = [ChapterEdit.model_validate(item) for item in chapter_edits or []]
         ranges = [TimeRange.model_validate(r) for r in remove_ranges or []] + parsed_removed
         sped = [SpeedRange.model_validate(r) for r in speed_ranges or []] + parsed_sped
         request = {
+            "chapter_edits": [item.model_dump() for item in chapter_edits or []],
+            "base_cut": base_cut,
+            "cover": Cover.model_validate(cover).model_dump() if cover is not None else None,
+            "included_clip_ids": included_clip_ids,
+            "video_filter": video_filter,
             "title": title,
             "excluded": excluded,
             "warmth": warmth,
@@ -277,9 +356,24 @@ def edit(
                 return project_dir / "cuts" / latest["cut"]
         if checkpoint.get("request") == request and checkpoint.get("base") != latest["cut"]:
             raise VlogiiError("The base version changed. Apply a new edit instead of retrying.")
+        if base_cut is not None and base_cut != latest["cut"]:
+            raise VlogiiError(
+                "Time edits refer to an older film. Refresh and edit the current version."
+            )
         checkpoint = {"request": request, "base": latest["cut"], "status": "rendering"}
         write_json(checkpoint_path, checkpoint)
         version = project_dir / "cuts" / latest["cut"]
+        if chapter_edits:
+            if (version / "style.json").exists():
+                raise VlogiiError(
+                    "Style films do not support chapter time or speed refinement yet."
+                )
+            chapter_removed, chapter_sped = chapter_ranges(
+                version_chapters(version, load_reviews(project_dir)), chapter_edits
+            )
+            ranges.extend(chapter_removed)
+            sped.extend(chapter_sped)
+        ranges, sped = body_ranges(version, ranges, sped)
         if (version / "style.json").exists():
             if ranges or sped or speed is not None:
                 raise VlogiiError(
@@ -289,31 +383,46 @@ def edit(
             from .style.film import edit_style
 
             output = edit_style(
-                project_dir, version, title, excluded, warmth, progress, appearance=appearance
+                project_dir,
+                version,
+                title,
+                excluded,
+                warmth,
+                progress,
+                appearance=appearance,
+                included_clip_ids=included_clip_ids,
+                video_filter=video_filter,
+                cover=cover,
             )
             checkpoint.update(status="complete", cut=output.name)
             write_json(checkpoint_path, checkpoint)
             return output
         project = Project.model_validate(read_json(version / "project.json"))
+        if cover is not None:
+            project.settings.cover = Cover.model_validate(cover)
         if appearance is not None:
             project.settings.appearance = Appearance.model_validate(appearance)
-        plan = Plan.model_validate(read_json(version / "plan.json"))
+        recovery = version / "recoverable-plan.json"
+        plan = Plan.model_validate(
+            read_json(recovery if recovery.exists() else version / "plan.json")
+        )
         if (version / "selection.json").is_file() and read_json(version / "selection.json").get(
             "mode"
         ) == "highlights":
             plan.mute_source_audio = True
-        if set(excluded) - {c.id for c in project.clips}:
-            raise VlogiiError("An excluded clip is not part of this project.")
-        # Ranges refer to the currently visible film, before simultaneous clip exclusions.
-        plan = transform_output_ranges(project, plan, ranges, sped, speed)
-        remaining = [s for s in plan.segments if s.clip_id not in excluded]
-        if not remaining:
-            raise VlogiiError("Keep at least one selected clip.")
-        plan.segments = remaining
+        old_ids = included_ids(project)
+        # Translate time edits before changing inclusion; timestamps refer to the visible cut.
+        full_plan = edit_recoverable(project, plan, old_ids, ranges, sped, speed)
+        set_included(project, included_clip_ids, excluded)
+        plan = visible_plan(full_plan, included_ids(project))
         if title:
             plan.title = title
+            full_plan.title = title
             first = plan.segments[0]
             first.overlays = [Text(start=0, end=min(2, first.out_sec - first.in_sec), text=title)]
+            next(
+                s for s in full_plan.segments if s.clip_id in included_ids(project)
+            ).overlays = first.overlays
         if warmth is not None:
             if project.settings.color == "hlg":
                 raise VlogiiError(
@@ -324,7 +433,10 @@ def edit(
             )
             # Applying warmth to HDR inputs uses the supported tone-mapped SDR path.
             project.settings.color = "sdr"
+        apply_filter(project, video_filter)
         output = render(project_dir, project, plan, load_reviews(project_dir), progress)
+        write_json(output / "recoverable-plan.json", full_plan)
+        write_json(project_dir / "project.json", project)
         if (version / "selection.json").exists():
             write_json(output / "selection.json", read_json(version / "selection.json"))
         checkpoint.update(status="complete", cut=output.name)

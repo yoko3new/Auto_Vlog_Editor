@@ -7,7 +7,7 @@ export function jobProgress(message: string) {
   else if (/^Speech (recognition|cached)/.test(message)) stage = 'speech';
   else if (/^(AI analysis|Analysis cached|Checking black frames)/.test(message)) stage = 'visual';
   else if (/^(Planning your film|Resuming the saved plan|Choosing moments|No Gemini key|Finding the beat)/.test(message)) stage = 'planning';
-  else if (/^(Rendering|Joining segments|Mixing background music|Checking video and audio|Complete:|Setting the titles|Mixing the music|Finishing the film)/.test(message)) stage = 'render';
+  else if (/^(Rendering|Creating cover|Joining segments|Mixing background music|Checking video and audio|Complete:|Setting the titles|Mixing the music|Finishing the film)/.test(message)) stage = 'render';
   const counts = message.match(/^(?:Preparing video|Inspecting|AI analysis|Analysis cached:|Speech recognition|Speech cached:|Checking black frames|Rendering(?: cached)?) (\d+)\/(\d+)/);
   if (!counts || Number(counts[2]) < 1 || Number(counts[1]) < 1 || Number(counts[1]) > Number(counts[2])) return { stage, current: null, total: null, percent: null };
   const current = Number(counts[1]), total = Number(counts[2]);

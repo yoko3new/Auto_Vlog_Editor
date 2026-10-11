@@ -30,7 +30,9 @@ def compile_timeline(project: Project, plan: Plan, reviews: list[Review]) -> Tim
             if overlay.end > duration + 0.001:
                 raise VlogiiError(f"Overlay in segment {index} extends beyond its segment.")
         captions = []
-        review = review_map.get(clip.id) if plan.captions else None
+        review = (
+            review_map.get(clip.id) if plan.captions and not segment.mute_source_audio else None
+        )
         for speech in review.speech if review else []:
             if speech.end > clip.duration + 0.001:
                 raise VlogiiError(f"Transcript extends beyond clip {clip.id}.")
@@ -46,6 +48,7 @@ def compile_timeline(project: Project, plan: Plan, reviews: list[Review]) -> Tim
                 )
         segments.append(
             TimelineSegment(
+                mute_source_audio=segment.mute_source_audio,
                 clip_id=clip.id,
                 source_start=start,
                 source_frames=source_frames,

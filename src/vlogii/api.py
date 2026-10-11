@@ -1,7 +1,10 @@
 """A local-only FastAPI application with persistent status and one render worker."""
 
+import hashlib
+import json
 import os
 import re
+import tempfile
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -14,10 +17,27 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import Field
 
+from .chapters import version_chapters
+from .cover import intro_seconds, poster
 from .editorial import parse_edit_instruction, selection_intent
-from .models import Appearance, Model, Selection, Settings, Speed, SpeedRange, TimeRange
-from .pipeline import EXTENSIONS, edit, generate, initialize, load_project, undo
+from .inclusion import included_ids, set_included
+from .localization import LocalizeChaptersRequest, LocalizedChapters, localize_chapters
+from .models import (
+    Appearance,
+    Chapter,
+    ChapterEdit,
+    Cover,
+    Model,
+    Selection,
+    Settings,
+    Speed,
+    SpeedRange,
+    TimeRange,
+    VideoFilter,
+)
+from .pipeline import EXTENSIONS, edit, generate, initialize, load_project, load_reviews, undo
 from .presets import asset_path, library
+from .refinement import chapter_ranges
 from .storage import VlogiiError, locked, project_path, read_json, write_json
 from .style import film as style_film
 from .style import templates
@@ -26,6 +46,8 @@ from .style.templates import TemplateError
 
 
 class GenerateRequest(Selection):
+    included_clip_ids: list[str] | None = Field(default=None, min_length=1, max_length=50)
+    video_filter: VideoFilter | None = None
     appearance: Appearance | None = None
     direction: str = Field(default="", max_length=2000)
     language: Literal["en", "zh"] = "en"
@@ -33,6 +55,11 @@ class GenerateRequest(Selection):
 
 
 class EditRequest(Model):
+    cover: Cover | None = None
+    chapter_edits: list[ChapterEdit] = Field(default_factory=list, max_length=50)
+    base_cut: str | None = Field(default=None, pattern=r"^cut_\d{3,}$")
+    included_clip_ids: list[str] | None = Field(default=None, min_length=1, max_length=50)
+    video_filter: VideoFilter | None = None
     appearance: Appearance | None = None
     title: str | None = Field(default=None, min_length=1, max_length=100)
     exclude_clip_ids: list[str] = Field(default_factory=list, max_length=50)
@@ -97,6 +124,10 @@ class StyleOption(Model):
 
 
 class ProjectView(Model):
+    cover_url: str | None = None
+    film_title: str | None = None
+    included_clip_ids: list[str] = Field(default_factory=list)
+    chapters: list[Chapter] = Field(default_factory=list)
     name: str
     clips: list[WebClip]
     settings: Settings
@@ -200,7 +231,40 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             and "appearance" not in saved_settings
         ):
             appearance = Appearance(music="uploaded", music_volume=1)
+        version = directory / "cuts" / latest["cut"] if latest else None
+        saved_project = (
+            load_project(version) if version and (version / "project.json").exists() else project
+        )
+        current_ids = included_ids(saved_project)
+        if (
+            version
+            and (version / "style.json").exists()
+            and saved_project.included_clip_ids is None
+        ):
+            excluded = read_json(version / "style.json").get("excluded", [])
+            current_ids = [c.id for c in saved_project.clips if c.id not in excluded]
+        chapters = (
+            (
+                read_json(version / "chapters.json")
+                if (version / "chapters.json").exists()
+                else [c.model_dump() for c in version_chapters(version, load_reviews(directory))]
+            )
+            if version
+            else []
+        )
         return {
+            "film_title": (
+                read_json(version / "plan.json")["title"]
+                if version and (version / "plan.json").exists()
+                else read_json(version / "style.json")["selection"]["text"]["title"]
+                if version and (version / "style.json").exists()
+                else None
+            ),
+            "cover_url": f"/api/vlogii/projects/{project.name}/cuts/{latest['cut']}/cover.png"
+            if version and (version / "cover.png").exists()
+            else None,
+            "included_clip_ids": current_ids,
+            "chapters": chapters,
             "name": project.name,
             "clips": [
                 {
@@ -210,7 +274,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 }
                 for c in project.clips
             ],
-            "settings": project.settings.model_dump(),
+            "settings": saved_project.settings.model_dump(),
             "appearance": appearance.model_dump(),
             "job": public_job(job) if job else None,
             "latest": latest,
@@ -373,7 +437,12 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     instruction=request.instruction,
                     speed=request.speed,
                     speed_ranges=request.speed_ranges,
+                    chapter_edits=request.chapter_edits,
+                    base_cut=request.base_cut,
+                    cover=request.cover,
                     appearance=request.appearance,
+                    included_clip_ids=request.included_clip_ids,
+                    video_filter=request.video_filter,
                 )
             elif request.style_id:
                 style_film.generate_style(
@@ -383,6 +452,8 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     progress=progress,
                     resume=job.get("resume", False),
                     appearance=request.appearance,
+                    included_clip_ids=request.included_clip_ids,
+                    video_filter=request.video_filter,
                 )
             else:
                 generate(
@@ -395,7 +466,10 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                     remove_no_speech=request.remove_no_speech,
                     speed=request.speed,
                     shot_seconds=request.shot_seconds,
+                    opening_highlights=request.opening_highlights,
                     appearance=request.appearance,
+                    included_clip_ids=request.included_clip_ids,
+                    video_filter=request.video_filter,
                 )
             write_json(
                 directory / "job.json",
@@ -499,6 +573,7 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
     @app.post("/api/vlogii/projects/{name}/generate", status_code=202, response_model=JobState)
     def start(name: str, request: GenerateRequest):
         directory = existing(name)
+        set_included(load_project(directory), request.included_clip_ids)
         try:
             selection_intent(
                 request.direction,
@@ -507,10 +582,13 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
                 request.remove_no_speech,
                 request.speed,
                 request.shot_seconds,
+                request.opening_highlights,
             )
         except ValueError as exc:
             raise VlogiiError("Choose a target between 1 and 1800 seconds.") from exc
         if request.style_id:
+            if request.opening_highlights:
+                raise HTTPException(400, "Style films use their own opening highlights.")
             # Styles also work without a key: clips stay in import order with template text.
             template = templates.load(request.style_id)
             settings = load_project(directory).settings
@@ -545,10 +623,31 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
         directory = existing(name)
         if not (directory / "latest.json").exists():
             raise HTTPException(400, "Generate a film before editing.")
+        if request.included_clip_ids is not None:
+            set_included(
+                load_project(directory), request.included_clip_ids, request.exclude_clip_ids
+            )
+        cut = read_json(directory / "latest.json")["cut"]
+        if request.base_cut is not None and request.base_cut != cut:
+            raise VlogiiError(
+                "Time edits refer to an older film. Refresh and edit the current version."
+            )
+        if request.chapter_edits:
+            version = directory / "cuts" / cut
+            if (version / "style.json").exists():
+                raise VlogiiError(
+                    "Style films do not support chapter time or speed refinement yet."
+                )
+            chapter_ranges(
+                version_chapters(version, load_reviews(directory)), request.chapter_edits
+            )
         if request.instruction:
             parse_edit_instruction(request.instruction)
         if (
-            request.title is None
+            not request.chapter_edits
+            and request.title is None
+            and request.video_filter is None
+            and request.included_clip_ids is None
             and request.warmth is None
             and not request.exclude_clip_ids
             and request.speed is None
@@ -556,9 +655,95 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             and not request.remove_ranges
             and not request.instruction.strip()
             and request.appearance is None
+            and request.cover is None
         ):
             raise HTTPException(400, "Choose at least one change.")
         return enqueue(directory, request)
+
+    class CoverPreviewRequest(Model):
+        cover: Cover
+        base_cut: str = Field(pattern=r"^cut_\d{3,}$")
+
+    @app.post(
+        "/api/vlogii/projects/{name}/cover/preview",
+        response_class=FileResponse,
+        responses={200: {"content": {"image/png": {}}}},
+    )
+    def cover_preview(name: str, request: CoverPreviewRequest):
+        from .media import Tools
+
+        directory = existing(name)
+        latest = (
+            read_json(directory / "latest.json") if (directory / "latest.json").exists() else None
+        )
+        if not latest or latest["cut"] != request.base_cut:
+            raise VlogiiError(
+                "Time edits refer to an older film. Refresh and edit the current version."
+            )
+        version = directory / "cuts" / latest["cut"]
+        offset = intro_seconds(version)
+        project = load_project(version)
+        if (version / "style-plan.json").exists():
+            project.settings.fps = read_json(version / "style-plan.json")["output"]["fps"]
+        verification = read_json(version / "verification.json")
+        duration = verification["duration"] - offset
+        if (version / "cover.json").exists():
+            duration = read_json(version / "cover.json")["body_duration_seconds"]
+        elif (version / "timeline.json").exists():
+            timeline = read_json(version / "timeline.json")
+            duration = timeline["total_frames"] / timeline["fps"]
+        key = hashlib.sha256(
+            json.dumps(
+                ["cover-layout-v2", latest["cut"], request.cover.model_dump()], sort_keys=True
+            ).encode()
+        ).hexdigest()
+        output = directory / "cover-previews" / f"{key}.png"
+        if not output.exists():
+            output.parent.mkdir(exist_ok=True)
+            with tempfile.TemporaryDirectory(prefix="vlogii-cover-") as temporary:
+                work = Path(temporary)
+                pending = work / "preview.png"
+                poster(
+                    Tools(),
+                    version / "film.mp4",
+                    pending,
+                    request.cover,
+                    project,
+                    duration,
+                    read_json(version / "state.json").get("color", "sdr"),
+                    work,
+                    work,
+                    offset,
+                )
+                # Same-filesystem replacement exposes only a finished PNG.
+                import shutil
+                import uuid
+
+                staged = output.with_suffix(f".{uuid.uuid4().hex}.pending")
+                shutil.copyfile(pending, staged)
+                staged.replace(output)
+        return FileResponse(output, media_type="image/png")
+
+    @app.post("/api/vlogii/projects/{name}/chapters/localize", response_model=LocalizedChapters)
+    def localize_chapter_view(name: str, request: LocalizeChaptersRequest):
+        directory = existing(name)
+        latest = (
+            read_json(directory / "latest.json") if (directory / "latest.json").exists() else None
+        )
+        if not latest or request.base_cut != latest["cut"]:
+            raise VlogiiError(
+                "Time edits refer to an older film. Refresh and edit the current version."
+            )
+        chapters = version_chapters(directory / "cuts" / latest["cut"], load_reviews(directory))
+        try:
+            translated = localize_chapters(directory, chapters, request.language)
+        except VlogiiError as exc:
+            if "already busy in another process" in str(exc):
+                raise HTTPException(
+                    409, "Chapter translation is already running. Retry shortly."
+                ) from exc
+            raise
+        return LocalizedChapters(cut=latest["cut"], language=request.language, chapters=translated)
 
     @app.post("/api/vlogii/projects/{name}/undo", response_model=ProjectView)
     def undo_version(name: str):
@@ -585,6 +770,27 @@ def create_app(root: Path | None = None, frontend: Path | None = None) -> FastAP
             raise HTTPException(404, "Film file is missing.")
         return FileResponse(
             path, media_type="video/mp4", filename=f"{name}-{cut}.mp4" if download else None
+        )
+
+    @app.get(
+        "/api/vlogii/projects/{name}/cuts/{cut}/cover.png",
+        response_class=FileResponse,
+        responses={200: {"content": {"image/png": {}}}},
+    )
+    def cover_image(name: str, cut: str, download: bool = False):
+        if not re.fullmatch(r"cut_\d{3,}", cut):
+            raise HTTPException(404, "Cover not found.")
+        version = existing(name) / "cuts" / cut
+        if (
+            not (version / "state.json").exists()
+            or read_json(version / "state.json").get("status") != "complete"
+            or not (version / "cover.png").exists()
+        ):
+            raise HTTPException(404, "Cover not found.")
+        return FileResponse(
+            version / "cover.png",
+            media_type="image/png",
+            filename=f"{name}-{cut}-cover.png" if download else None,
         )
 
     if frontend.is_dir():

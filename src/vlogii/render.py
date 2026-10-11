@@ -11,6 +11,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .chapters import version_chapters
+from .cover import apply_cover
+from .grading import filter_args
 from .media import Tools, codec_args, color_args, sha256, tone_map
 from .models import Plan, Project, Review, Text
 from .music import mix_music, speech_ranges
@@ -173,6 +176,8 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
             fallback_used |= actual != font
     selected_music, music, _ = music_source(project_dir, appearance.music, plan.mute_source_audio)
     duck_ranges = speech_ranges(project, plan, reviews) if music and appearance.duck_music else []
+    if project.settings.cover and project.settings.cover.show_intro:
+        duck_ranges = [[start + 1, end + 1] for start, end in duck_ranges]
     if any(s.overlays or s.captions for s in timeline.segments):
         tools.require_filters({"drawtext"})
     if color == "sdr" and any(c.color != "sdr" for c in project.clips):
@@ -209,22 +214,31 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
             for index, segment in enumerate(timeline.segments):
                 progress(f"Rendering {index + 1}/{len(timeline.segments)}: {segment.purpose}")
                 clip = clips[segment.clip_id]
-                source_audio = clip.audio and not plan.mute_source_audio
+                source_audio = clip.audio and not (
+                    plan.mute_source_audio or segment.mute_source_audio
+                )
                 duration = segment.frames / fps
                 source_duration = segment.source_frames / fps
                 effective_speed = segment.source_frames / segment.frames
-                filters = tone_map(clip, color) + [
-                    f"trim=duration={source_duration:.12g}",
-                    f"setpts=(PTS-STARTPTS)/{effective_speed:.12g}",
-                    f"fps={fps}",
-                    f"tpad=stop_mode=clone:stop_duration={1 / fps:.12g}",
-                    f"trim=end_frame={segment.frames}",
-                    "setpts=PTS-STARTPTS",
-                    f"scale={fmt.width}:{fmt.height}:force_original_aspect_ratio=decrease:force_divisible_by=2",
-                    f"pad={fmt.width}:{fmt.height}:(ow-iw)/2:(oh-ih)/2:color=black",
-                    "setsar=1",
-                    "format=yuv420p10le" if color == "hlg" else "format=yuv420p",
-                ]
+                # Select output frames before expensive HDR tone mapping.
+                filters = (
+                    [
+                        f"trim=duration={source_duration:.12g}",
+                        f"setpts=(PTS-STARTPTS)/{effective_speed:.12g}",
+                        f"fps={fps}",
+                        f"tpad=stop_mode=clone:stop_duration={1 / fps:.12g}",
+                        f"trim=end_frame={segment.frames}",
+                        "setpts=PTS-STARTPTS",
+                    ]
+                    + tone_map(clip, color)
+                    + [
+                        f"scale={fmt.width}:{fmt.height}:force_original_aspect_ratio=decrease:force_divisible_by=2",
+                        f"pad={fmt.width}:{fmt.height}:(ow-iw)/2:(oh-ih)/2:color=black",
+                        "setsar=1",
+                        "format=yuv420p10le" if color == "hlg" else "format=yuv420p",
+                    ]
+                )
+                filters.extend(filter_args(fmt.video_filter))
                 if fmt.warmth:
                     filters.append(f"colorbalance=rs={0.04 * fmt.warmth}:bs={-0.03 * fmt.warmth}")
                 for kind, entries in (("overlay", segment.overlays), ("caption", segment.captions)):
@@ -249,11 +263,11 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                 fingerprint = hashlib.sha256(
                     json.dumps(
                         {
-                            "renderer_revision": 6,
+                            "renderer_revision": 8,
                             "mute_source_audio": plan.mute_source_audio,
                             "clip": clip.sha256,
                             "settings": project.settings.model_dump(
-                                mode="json", exclude={"appearance"}
+                                mode="json", exclude={"appearance", "cover"}
                             ),
                             "segment": segment.model_dump(mode="json"),
                             "color": color,
@@ -343,6 +357,9 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
                 version / "logs" / "concat.log",
             )
             duration = timeline.total_frames / fps
+            duration = apply_cover(
+                tools, pending, version, project, duration, color, codec, work, progress
+            )
             if music:
                 progress("Mixing background music")
                 mixed = version / "mixed.mp4"
@@ -367,6 +384,9 @@ def render(project_dir: Path, project: Project, plan: Plan, reviews: list[Review
             pending.replace(version / "film.mp4")
         write_json(version / "verification.json", evidence)
         write_json(version / "state.json", {"status": "complete", "color": color, "encoder": codec})
+        write_json(
+            version / "chapters.json", [c.model_dump() for c in version_chapters(version, reviews)]
+        )
         publish(project_dir, version)
         progress(f"Complete: {version / 'film.mp4'}")
         return version

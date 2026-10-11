@@ -390,6 +390,100 @@
         }
       }
     },
+    "/api/vlogii/projects/{name}/cover/preview": {
+      "post": {
+        "summary": "Cover Preview",
+        "operationId": "cover_preview_api_vlogii_projects__name__cover_preview_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoverPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/png": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/vlogii/projects/{name}/chapters/localize": {
+      "post": {
+        "summary": "Localize Chapter View",
+        "operationId": "localize_chapter_view_api_vlogii_projects__name__chapters_localize_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalizeChaptersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalizedChapters"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/vlogii/projects/{name}/undo": {
       "post": {
         "summary": "Undo Version",
@@ -484,6 +578,60 @@
           }
         }
       }
+    },
+    "/api/vlogii/projects/{name}/cuts/{cut}/cover.png": {
+      "get": {
+        "summary": "Cover Image",
+        "operationId": "cover_image_api_vlogii_projects__name__cuts__cut__cover_png_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "cut",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cut"
+            }
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Download"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/png": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -499,7 +647,15 @@
               "ma-shan-zheng",
               "zcool-xiaowei",
               "caveat",
-              "playfair-display"
+              "playfair-display",
+              "tinos",
+              "eb-garamond",
+              "libre-baskerville",
+              "lora",
+              "cinzel",
+              "cormorant-garamond",
+              "montserrat",
+              "source-sans-3"
             ],
             "title": "Font",
             "default": "default"
@@ -583,8 +739,280 @@
         ],
         "title": "Body_upload_api_vlogii_projects_post"
       },
+      "Chapter": {
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "End"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "clip_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Clip Ids"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "scene",
+              "hook",
+              "body",
+              "end_card",
+              "cover"
+            ],
+            "title": "Kind",
+            "default": "scene"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "title",
+          "summary"
+        ],
+        "title": "Chapter"
+      },
+      "ChapterEdit": {
+        "properties": {
+          "chapter_index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Chapter Index"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "remove",
+              "remove_range",
+              "speed",
+              "instruction"
+            ],
+            "title": "Action"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 8.0,
+                "minimum": 0.25
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Instruction",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "chapter_index",
+          "action"
+        ],
+        "title": "ChapterEdit"
+      },
+      "Cover": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "subtitle": {
+            "type": "string",
+            "maxLength": 160,
+            "title": "Subtitle",
+            "default": ""
+          },
+          "kicker": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Kicker",
+            "default": ""
+          },
+          "font": {
+            "type": "string",
+            "enum": [
+              "default",
+              "noto-sans",
+              "noto-serif",
+              "ma-shan-zheng",
+              "zcool-xiaowei",
+              "caveat",
+              "playfair-display",
+              "tinos",
+              "eb-garamond",
+              "libre-baskerville",
+              "lora",
+              "cinzel",
+              "cormorant-garamond",
+              "montserrat",
+              "source-sans-3"
+            ],
+            "title": "Font",
+            "default": "noto-serif"
+          },
+          "style": {
+            "type": "string",
+            "enum": [
+              "clean",
+              "editorial",
+              "playful"
+            ],
+            "title": "Style",
+            "default": "clean"
+          },
+          "frame_seconds": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Frame Seconds",
+            "default": 0
+          },
+          "show_intro": {
+            "type": "boolean",
+            "title": "Show Intro",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "Cover"
+      },
+      "CoverPreviewRequest": {
+        "properties": {
+          "cover": {
+            "$ref": "#/components/schemas/Cover"
+          },
+          "base_cut": {
+            "type": "string",
+            "pattern": "^cut_\\d{3,}$",
+            "title": "Base Cut"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cover",
+          "base_cut"
+        ],
+        "title": "CoverPreviewRequest"
+      },
       "EditRequest": {
         "properties": {
+          "cover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cover"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chapter_edits": {
+            "items": {
+              "$ref": "#/components/schemas/ChapterEdit"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Chapter Edits"
+          },
+          "base_cut": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^cut_\\d{3,}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Cut"
+          },
+          "included_clip_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 50,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Included Clip Ids"
+          },
+          "video_filter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "bright",
+                  "warm",
+                  "cool_white"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Filter"
+          },
           "appearance": {
             "anyOf": [
               {
@@ -680,6 +1108,11 @@
       },
       "GenerateRequest": {
         "properties": {
+          "opening_highlights": {
+            "type": "boolean",
+            "title": "Opening Highlights",
+            "default": false
+          },
           "mode": {
             "type": "string",
             "enum": [
@@ -722,6 +1155,39 @@
             "minimum": 0.15,
             "title": "Shot Seconds",
             "default": 0.5
+          },
+          "included_clip_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 50,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Included Clip Ids"
+          },
+          "video_filter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "bright",
+                  "warm",
+                  "cool_white"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Filter"
           },
           "appearance": {
             "anyOf": [
@@ -839,6 +1305,61 @@
         ],
         "title": "JobState"
       },
+      "LocalizeChaptersRequest": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language"
+          },
+          "base_cut": {
+            "type": "string",
+            "pattern": "^cut_\\d{3,}$",
+            "title": "Base Cut"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "language",
+          "base_cut"
+        ],
+        "title": "LocalizeChaptersRequest"
+      },
+      "LocalizedChapters": {
+        "properties": {
+          "cut": {
+            "type": "string",
+            "title": "Cut"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh"
+            ],
+            "title": "Language"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/Chapter"
+            },
+            "type": "array",
+            "title": "Chapters"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cut",
+          "language",
+          "chapters"
+        ],
+        "title": "LocalizedChapters"
+      },
       "MusicView": {
         "properties": {
           "name": {
@@ -951,6 +1472,42 @@
       },
       "ProjectView": {
         "properties": {
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
+          "film_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Film Title"
+          },
+          "included_clip_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Included Clip Ids"
+          },
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/Chapter"
+            },
+            "type": "array",
+            "title": "Chapters"
+          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -1056,6 +1613,11 @@
       },
       "Selection": {
         "properties": {
+          "opening_highlights": {
+            "type": "boolean",
+            "title": "Opening Highlights",
+            "default": false
+          },
           "mode": {
             "type": "string",
             "enum": [
@@ -1106,6 +1668,27 @@
       },
       "Settings": {
         "properties": {
+          "cover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cover"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "video_filter": {
+            "type": "string",
+            "enum": [
+              "none",
+              "bright",
+              "warm",
+              "cool_white"
+            ],
+            "title": "Video Filter",
+            "default": "none"
+          },
           "appearance": {
             "$ref": "#/components/schemas/Appearance"
           },

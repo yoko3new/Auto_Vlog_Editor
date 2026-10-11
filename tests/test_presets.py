@@ -17,21 +17,18 @@ from vlogii.storage import VlogiiError, read_json, write_json
 
 def test_bundled_fonts_cover_text_and_english_presets_fall_back(monkeypatch):
     monkeypatch.delenv("VLOGII_FONT", raising=False)
-    assert len(library()["fonts"]) == 6 and len(library()["music"]) == 6
-    for preset in (
-        "noto-sans",
-        "noto-serif",
-        "ma-shan-zheng",
-        "zcool-xiaowei",
-        "caveat",
-        "playfair-display",
-    ):
+    assert len(library()["fonts"]) == 14 and len(library()["music"]) == 6
+    for preset in (f["id"] for f in library()["fonts"]):
         asset_path("fonts", preset)
         text = "今天记录美好时刻。Hello, world!"
         wrapped, _, _, stroke, padding, margin, bbox = text_layout(text, 1080, 1920, True, preset)
         assert "".join(wrapped.split()) == "".join(text.split())
         assert bbox[2] - bbox[0] + 2 * (stroke + padding + margin) <= 1080
-    for preset in ("caveat", "playfair-display"):
+    for preset in (
+        f["id"]
+        for f in library()["fonts"]
+        if f["id"] not in {"noto-sans", "noto-serif", "ma-shan-zheng", "zcool-xiaowei"}
+    ):
         assert font_path("Hello", preset) == asset_path("fonts", preset)
         assert font_path("你好 Hello", preset) == asset_path("fonts", "noto-sans")
     with pytest.raises(ValidationError):
@@ -39,6 +36,25 @@ def test_bundled_fonts_cover_text_and_english_presets_fall_back(monkeypatch):
     for volume in (-1, 1.1, float("nan")):
         with pytest.raises(ValidationError):
             Appearance(music_volume=volume)
+
+
+def test_all_presets_fit_long_english_and_bilingual_titles_and_captions(monkeypatch):
+    monkeypatch.delenv("VLOGII_FONT", raising=False)
+    for preset in (font["id"] for font in library()["fonts"]):
+        for width, height in [(1080, 1920), (1920, 1080)]:
+            for caption in [False, True]:
+                for text in [
+                    "Warm Wonderful Weekends With Wide Windows And Wonderful Memories " * 3,
+                    "今天记录一段很长的中文故事，与朋友一起度过美好的一天。 A little film of my day. "
+                    * 3,
+                ]:
+                    wrapped, size, _, stroke, padding, margin, bbox = text_layout(
+                        text, width, height, caption, preset
+                    )
+                    assert "".join(wrapped.split()) == "".join(text.split())
+                    assert bbox[2] - bbox[0] + 2 * (stroke + padding + margin) <= width
+                    assert bbox[3] - bbox[1] <= round(height * (0.34 if caption else 0.42))
+                    assert size >= 2
 
 
 def test_preset_api_is_allowlisted_and_does_not_expose_local_paths(tmp_path):

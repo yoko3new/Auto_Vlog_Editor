@@ -11,8 +11,21 @@ import tempfile
 import uuid
 from pathlib import Path
 
+from ..chapters import version_chapters
+from ..cover import apply_cover
+from ..grading import apply_filter
+from ..inclusion import included_ids, selected_project, set_included
 from ..media import sha256
-from ..models import Appearance, Music, Project, StyleMoment, StyleRequest, StyleSelection
+from ..models import (
+    Appearance,
+    Cover,
+    Music,
+    Project,
+    StyleMoment,
+    StyleRequest,
+    StyleSelection,
+    VideoFilter,
+)
 from ..pipeline import analyze, load_project, load_reviews
 from ..presets import music_source
 from ..render import check_sources, new_version, publish, verify
@@ -117,7 +130,7 @@ def choose_moments(
             return StyleSelection.model_validate(saved["selection"]), True
     # Clip sound is muted in style films, so only the pictures are analysed.
     analyze(project_dir, project, progress, with_speech=False)
-    reviews = load_reviews(project_dir)
+    reviews = load_reviews(project_dir, project)
     director = Director(project_dir / "ai-evidence")
     try:
         progress("Choosing moments for the style")
@@ -173,6 +186,7 @@ def render_style(project_dir: Path, project: Project, request: StyleRequest, pro
             size=(project.settings.width, project.settings.height),
             warmth=request.warmth,
         )
+        plan["video_filter"] = project.settings.video_filter
         write_json(version / "style-plan.json", plan)
         fps = plan["output"]["fps"]
         duration = plan["total_frames"] / fps
@@ -191,6 +205,17 @@ def render_style(project_dir: Path, project: Project, request: StyleRequest, pro
                 progress,
                 appearance=project.settings.appearance,
             )
+            duration = apply_cover(
+                media.tools(),
+                pending,
+                version,
+                checked,
+                duration,
+                "sdr",
+                "libx264",
+                Path(temporary),
+                progress,
+            )
             progress("Checking video and audio")
             evidence = verify(media.tools(), pending, checked, "sdr", duration)
             media.tools().run(
@@ -200,7 +225,12 @@ def render_style(project_dir: Path, project: Project, request: StyleRequest, pro
             pending.replace(version / "film.mp4")
         write_json(version / "verification.json", {**evidence, "style": report})
         write_json(version / "state.json", {"status": "complete", "color": "sdr"})
+        write_json(
+            version / "chapters.json",
+            [c.model_dump() for c in version_chapters(version, load_reviews(project_dir))],
+        )
         publish(project_dir, version)
+        write_json(project_dir / "project.json", project)
         progress(f"Complete: {version.name}")
         return version
     except BaseException:
@@ -215,9 +245,13 @@ def generate_style(
     progress=print,
     resume: bool = False,
     appearance: Appearance | None = None,
+    included_clip_ids: list[str] | None = None,
+    video_filter: VideoFilter | None = None,
 ) -> Path:
     with locked(project_dir):
         project = load_project(project_dir)
+        set_included(project, included_clip_ids)
+        apply_filter(project, video_filter, style=True)
         template = templates.load(style_id)
         planner.output_for(template, (project.settings.width, project.settings.height))
         project.settings.appearance = appearance or Appearance(music="uploaded", music_volume=1)
@@ -229,13 +263,16 @@ def generate_style(
         destination = folder / music.file
         if source != destination:
             shutil.copyfile(source, destination)
-        selection, ai = choose_moments(project_dir, project, template, direction, progress, resume)
+        selection, ai = choose_moments(
+            project_dir, selected_project(project), template, direction, progress, resume
+        )
         request = StyleRequest(
             style_id=style_id,
             revision=template["revision"],
             music=music,
             selection=selection,
             ai_selected=ai,
+            excluded=[c.id for c in project.clips if c.id not in included_ids(project)],
         )
         return render_style(project_dir, project, request, progress)
 
@@ -248,9 +285,14 @@ def edit_style(
     warmth: float | None,
     progress,
     appearance: Appearance | None = None,
+    included_clip_ids: list[str] | None = None,
+    video_filter: VideoFilter | None = None,
+    cover: Cover | None = None,
 ) -> Path:
     """Title, warmth and clip exclusion on a style version; re-cut on the beat, no AI call."""
     project = Project.model_validate(read_json(version / "project.json"))
+    if cover is not None:
+        project.settings.cover = Cover.model_validate(cover)
     request = StyleRequest.model_validate(read_json(version / "style.json"))
     # Older style versions predate appearance and always used full template volume.
     if "appearance" not in read_json(version / "project.json")["settings"]:
@@ -266,7 +308,13 @@ def edit_style(
         request.music = music
     if set(excluded) - {c.id for c in project.clips}:
         raise VlogiiError("An excluded clip is not part of this project.")
-    request.excluded = sorted(set(request.excluded) | set(excluded))
+    if project.included_clip_ids is None:
+        project.included_clip_ids = [c.id for c in project.clips if c.id not in request.excluded]
+    set_included(project, included_clip_ids, excluded)
+    request.excluded = [c.id for c in project.clips if c.id not in included_ids(project)]
+    apply_filter(project, video_filter, style=True)
+    if video_filter is not None:
+        request.warmth = 0
     if title:
         if len(title) > 40:
             raise VlogiiError("Style titles are limited to 40 characters.")

@@ -15,6 +15,7 @@ from types import SimpleNamespace
 import numpy as np
 from PIL import ImageFont
 
+from ..grading import filter_args
 from ..media import color_args, tone_map
 from ..models import Appearance
 from ..presets import asset_path
@@ -186,6 +187,7 @@ def render_video(plan: dict, work: Path, logs: Path, progress) -> Path:
             f"crop={width}:{height}",
             "setsar=1",
             grade_filter(shot["grade"]),
+            *filter_args(plan.get("video_filter", "none")),
             "format=yuv420p",
         ]
         tools.run(
