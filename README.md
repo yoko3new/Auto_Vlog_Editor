@@ -1,10 +1,12 @@
 # Vlogii
 
+**English** | [简体中文](README.zh-CN.md)
+
 ![Vlogii](frontend/public/brand/vlogii-logo.png)
 
 **Turn everyday footage into an editable short film.** Vlogii is a local video editor with a React interface, a FastAPI backend, Gemini analysis and real FFmpeg exports. The web app and CLI support English and Chinese.
 
-把日常素材剪成可预览、修改、撤销和导出的短片。当前是本地网页 MVP；本 README 集中说明启动、功能、代码入口和验证边界。
+The current release is a local web MVP.
 
 Upload clips → analyze pictures and speech → validate a frame-based timeline → render → refine, undo and download.
 
@@ -87,51 +89,18 @@ Web uploads allow **50 clips, 512 MiB per clip, 2 GiB per upload and 30 minutes 
 ## CLI examples
 
 ```sh
-uv run vlogii --language zh                           # Interactive session
+uv run vlogii --language en                           # Interactive session
 uv run vlogii --language en init my-day /absolute/path/to/footage --color sdr
 uv run vlogii --language en run my-day --mode keep_all
 uv run vlogii --language en run my-day --mode highlights --shot-seconds 0.5 --speed 1
 uv run vlogii --language en run my-day --style ig_city_day_in_life --music /absolute/path/to/song.mp3
-uv run vlogii --language zh edit my-day --instruction "00:12到00:18加速到2倍"
+uv run vlogii --language en edit my-day --instruction "speed up 00:12 to 00:18 to 2x"
 uv run vlogii --language en retry my-day
 uv run vlogii --language en undo my-day
 uv run vlogii --language en styles
 ```
 
 Time edits use the **currently successful film's timestamps**, including any cover intro. Supported instructions are explicit time-range removal/speed operations in English or Chinese. Arbitrary semantic editing is not implemented. Style films currently reject chapter time/speed refinement.
-
-## Code review guide
-
-The active HTTP interface is `/api/vlogii`. The [OpenAPI snapshot](api/openapi.json) is generated from the running application's models and routes. The repository contains the current implementation; historical competition plans and the unused alternative API contract have been removed.
-
-| Area | Entry points |
-| --- | --- |
-| API, uploads, jobs and media responses | [api.py](src/vlogii/api.py) |
-| Shared models and validation | [models.py](src/vlogii/models.py) |
-| Generation, retry, editing and undo | [pipeline.py](src/vlogii/pipeline.py), [storage.py](src/vlogii/storage.py) |
-| Gemini analysis and separate speech recognition | [ai.py](src/vlogii/ai.py), [speech.py](src/vlogii/speech.py) |
-| Deterministic timeline, range edits and clip inclusion | [timeline.py](src/vlogii/timeline.py), [editorial.py](src/vlogii/editorial.py), [inclusion.py](src/vlogii/inclusion.py) |
-| Chapter refinement and localization | [chapters.py](src/vlogii/chapters.py), [refinement.py](src/vlogii/refinement.py), [localization.py](src/vlogii/localization.py) |
-| Rendering, audio, covers and filters | [render.py](src/vlogii/render.py), [music.py](src/vlogii/music.py), [cover.py](src/vlogii/cover.py), [grading.py](src/vlogii/grading.py) |
-| Beat planning, style rendering and templates | [src/vlogii/style/](src/vlogii/style/) |
-| React application and editors | [frontend/src/](frontend/src/) |
-| Regression and real-media integration checks | [tests/](tests/) |
-| Optional reference analysis tools and measured profiles | [tools/style_lab/](tools/style_lab/), [style/references/](style/references/) |
-
-AI proposes content; Python validates source references and intervals and computes integer-frame timing; FFmpeg executes the timeline. Only verified successful renders become the latest version. Public request/response changes should update backend models, frontend calls, the snapshot and relevant tests together.
-
-```sh
-uv run ruff check src/vlogii tests tools/check_docs.py tools/export_openapi.py
-uv run ruff format --check src/vlogii tests tools/check_docs.py tools/export_openapi.py
-uv run pytest -q
-npm --prefix frontend run build
-python3 tools/check_docs.py
-uv run python tools/export_openapi.py --check
-```
-
-To refresh the API snapshot: `uv run python tools/export_openapi.py`. [GitHub Actions](.github/workflows/vlogii.yml) runs these checks on `main`, the integration branch and pull requests using Python 3.12, Node.js 22 and Ubuntu FFmpeg. Local validation on 2026-10-11: **164 Python tests passed**, Ruff checks and the frontend build passed. The test suite includes synthetic media rendered and decoded with real FFmpeg; provider substitutes validate program behavior, not live Gemini quality. `uv run pytest -q -m "not media"` selects the tests outside the explicit media marker; FFmpeg is still required by some API/import checks.
-
-Optional style research dependencies: `uv sync --frozen --extra dev --extra style-lab`. Reference profiles contain measurements and source URLs; reference videos are not distributed.
 
 ## Current limits
 
